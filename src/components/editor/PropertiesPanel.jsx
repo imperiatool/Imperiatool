@@ -15,7 +15,6 @@ export default function PropertiesPanel({ library }) {
   const { palette, assetsById, categoriesById } = library;
   const items = useEditorStore((s) => s.items);
   const selectedId = useEditorStore((s) => s.selectedId);
-  const background = useEditorStore((s) => s.background);
   const st = useEditorStore.getState;
 
   const index = items.findIndex((i) => i.uid === selectedId);
@@ -49,7 +48,7 @@ export default function PropertiesPanel({ library }) {
                         </button>
                       )}
                     </div>
-                    <Swatches palette={palette} value={current} onPick={(hex) => st().setColor(item.uid, slot.id, hex)} size="h-7 w-7" />
+                    <Swatches palette={palette} value={current} onPick={(hex) => st().setColor(item.uid, slot.id, hex)} size="h-9 w-9" />
                   </div>
                 );
               })}
@@ -57,8 +56,11 @@ export default function PropertiesPanel({ library }) {
             </div>
           </section>
 
-          <section className="space-y-3">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-muted">{t('props.transform')}</h3>
+          <details className="group space-y-3 rounded-2xl border border-line bg-white/60 p-3 [&[open]>summary]:mb-3">
+            <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-bold">
+              {t('props.advanced')}
+              <Icon name="down" className="h-4 w-4 transition group-open:rotate-180" />
+            </summary>
             {locked ? (
               <p className="flex items-start gap-2 rounded-xl bg-ink/5 px-3 py-2 text-xs text-muted">
                 <Icon name="lock" className="mt-0.5 h-3.5 w-3.5 shrink-0" /> {t('props.locked')}
@@ -84,7 +86,7 @@ export default function PropertiesPanel({ library }) {
                 </div>
               </>
             )}
-          </section>
+          </details>
 
           <section className="space-y-1.5">
             <div className="grid grid-cols-4 gap-1.5">
@@ -102,7 +104,7 @@ export default function PropertiesPanel({ library }) {
       ) : (
         <section className="rounded-2xl border-2 border-dashed border-line p-4 text-sm text-muted">
           <p className="font-display text-base font-bold text-ink">{t('props.selectTitle')}</p>
-          <p className="mt-1">{t('props.selectHint')}</p>
+          <p className="mt-1">{items.length ? t('props.tapHint') : t('props.selectHint')}</p>
         </section>
       )}
 
@@ -111,25 +113,6 @@ export default function PropertiesPanel({ library }) {
         <LayersPanel library={library} />
       </section>
 
-      <section>
-        <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-muted">{t('props.background')}</h3>
-        <Swatches
-          palette={palette}
-          value={background}
-          onPick={(hex) => st().setBackground(hex)}
-          size="h-7 w-7"
-          extra={
-            <button
-              type="button"
-              onClick={() => st().setBackground(null)}
-              aria-pressed={!background}
-              title={t('props.transparent')}
-              aria-label={t('props.transparent')}
-              className={`checker h-7 w-7 rounded-full border border-ink/20 ${!background ? 'ring-2 ring-ink ring-offset-2 ring-offset-paper' : ''}`}
-            />
-          }
-        />
-      </section>
     </div>
   );
 }

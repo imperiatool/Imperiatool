@@ -46,7 +46,8 @@ describe('i18n', () => {
   it('adds translations to libraries saved before i18n', () => {
     const lib = withLabels({ categories: [{ id: 'cat-occhi', name: 'Occhi' }], palette: [], assets: [{ id: 'a', name: 'Baffo' }] });
     expect(lib.categories[0].labels).toEqual(CATEGORY_LABELS['cat-occhi']);
-    expect(lib.assets[0].labels.en).toBe('Moustache');
+    expect(lib.assets[0].name).toBe('Cavatappi');
+    expect(lib.assets[0].labels.en).toBe('Cavatappi');
   });
 });
 
@@ -75,5 +76,58 @@ describe('layers', () => {
     expect(items.find((i) => i.uid === 'c').locked).toBe(true);
     s.undo();
     expect(useEditorStore.getState().items.find((i) => i.uid === 'c').locked).toBeFalsy();
+  });
+});
+
+import { coverHeightAt, COVER_PATTERNS, COVER_SIZE } from '../lib/cover3d.js';
+import { roundRectArc, roundRectPerimeter, sdRoundRect } from '../lib/three/geometry.js';
+import { ASSET_LABELS } from '../data/labels.js';
+
+describe('phone cover patterns', () => {
+  it('every pattern has relief and none inside the camera opening', () => {
+    const cam = COVER_SIZE.camera;
+    for (const p of COVER_PATTERNS) {
+      let max = 0;
+      for (let x = -30; x <= 30; x += 1.3) for (let y = -70; y <= 0; y += 1.3) max = Math.max(max, coverHeightAt(p, x, y));
+      expect(max, p).toBeGreaterThan(0.5);
+      expect(coverHeightAt(p, cam.x, cam.y), p).toBe(0);
+    }
+  });
+  it('keeps the relief away from the outer edge (no stair-step at the border)', () => {
+    for (const p of COVER_PATTERNS) {
+      expect(coverHeightAt(p, 0, 74 - 0.6), p).toBe(0);
+      expect(coverHeightAt(p, 36 - 0.6, -20), p).toBe(0);
+    }
+  });
+});
+
+describe('rounded-rect helpers', () => {
+  it('arc length grows continuously around the border', () => {
+    const hw = 30, hh = 70, r = 10;
+    const P = roundRectPerimeter(hw, hh, r);
+    const pts = [];
+    for (let a = 0; a < 360; a += 3) {
+      const rad = (a * Math.PI) / 180;
+      // walk clockwise starting near the top-left of the top edge
+      pts.push(roundRectArc(Math.sin(rad) * 100, Math.cos(rad) * 100, 0, 0, hw, hh, r));
+    }
+    const diffs = pts.slice(1).map((v, i) => v - pts[i]).filter((d) => d < -P / 2 === false);
+    expect(Math.max(...pts)).toBeLessThanOrEqual(P + 1e-6);
+    expect(diffs.every((d) => d >= -1e-6)).toBe(true);
+  });
+  it('signed distance is negative inside, positive outside', () => {
+    expect(sdRoundRect(0, 0, 0, 0, 10, 20, 3)).toBeLessThan(0);
+    expect(sdRoundRect(12, 0, 0, 0, 10, 20, 3)).toBeCloseTo(2);
+  });
+});
+
+describe('pasta names', () => {
+  it('renames old sample elements and translates them', () => {
+    const lib = withLabels({ categories: [], palette: [], assets: [{ id: 'a', name: 'Baffo' }, { id: 'b', name: 'Tortellino' }, { id: 'c', name: 'Tortellini tondi' }] });
+    expect(lib.assets.map((a) => a.name)).toEqual(['Cavatappi', 'Raviolo quadrato', 'Ravioli tondi']);
+    expect(lib.assets[0].labels.es).toBe('Sacacorchos');
+  });
+  it('has a translation in every language for every sample element', () => {
+    for (const [name, l] of Object.entries(ASSET_LABELS)) for (const c of ['en', 'it', 'es', 'fr']) expect(l[c], `${name}/${c}`).toBeTruthy();
   });
 });

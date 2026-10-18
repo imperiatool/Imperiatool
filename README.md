@@ -8,18 +8,19 @@ Il **pannello Admin** importa file SVG con più elementi (anche esportati da Ill
 
 ## Funzionalità
 
+L'app ha tre prodotti, nell'ordine delle schede: **Cover** (pagina iniziale), **Charm** e **Sticker**.
+
 | Area | Cosa fa |
 | --- | --- |
-| **Lingue** | Inglese (predefinita), spagnolo, francese, italiano. Selettore nell'header, scelta ricordata nel browser. Anche categorie, elementi e colori hanno un nome per lingua (modificabile in Admin). Dizionari in `src/i18n/`. |
-| **Import SVG (Admin)** | Legge i livelli (`<g>` di primo livello), riconosce quelli nascosti, converte le classi CSS in attributi, separa gli elementi (un `<g>` = un elemento; le forme sciolte vicine vengono unite, es. una coppia di occhi). Distanza di unione regolabile, unione manuale. |
-| **Zone colore** | Ogni coppia (riempimento/tratto, colore) diventa ricolorabile. Le sagome solo-contorno ricevono un riempimento "Base" e passano dietro ai dettagli. |
-| **Livelli stile Photoshop** | Lista livelli (in alto = davanti): trascina la maniglia per riordinare (mouse o dito), porta in primo piano/sullo sfondo, avanti/indietro, nascondi (occhio), blocca (lucchetto). Tutto annullabile. |
-| **Editor** | Maniglie: angoli = scala, quadratini laterali = stiramento X/Y, pallino rosso = rotazione (Shift = 15°). Cursori, specchia/capovolgi, duplica, annulla/ripeti, frecce, aggancio al centro. |
+| **Cover** | Cover per telefono in 3D, ruotabile a 360° con zoom. 6 pattern di pasta in rilievo: Raviolo (bordo pizzicato), Ravioli (cuscinetti trapuntati), Sfoglia (linee tratteggiate), Tagliatelle (onde), Spaghetti (righe sottili), Spighe (trecce). Colore dalla palette del brand, 3 materiali, modello di telefono, prezzo e ordine. I pattern sono generati via codice (`src/lib/cover3d.js`): se ne aggiungono altri scrivendo una funzione d'altezza. |
+| **Charm** | Editor del personaggio a passi guidati (1 Corpo → 2 Occhi → 3 Bocca, con avanzamento automatico), poi "Vedi in 3D e ordina": charm estruso con tratti/contorni in rilievo, forme tonde lisce, 3 materiali. |
+| **Sticker** | Stesso personaggio del Charm; "Scarica lo sticker": PNG trasparente con bordo fustellato completo (sottile/spesso, colore a scelta), sticker WhatsApp, SVG in "Altri formati". |
+| **Materiali** | **Raw**: pasta cruda opaca con grana e puntini di semola visibili zoomando. **Al dente**: plastica morbida satinata. **Overcooked**: silicone morbido, bordi gonfi e rimbalzo "gelatina" quando lo selezioni. Valgono sia per i charm sia per le cover (`src/lib/three/materials.js`). |
+| **Lingue** | Inglese, spagnolo, francese, italiano con bandierine. Alla prima visita si usa automaticamente la lingua del dispositivo (inglese se non è tra le quattro). Nomi di elementi, categorie e colori tradotti; in Admin il pulsante "Traduci automaticamente" usa il traduttore integrato di Chrome/Edge recenti (gratuito, senza chiavi). |
+| **Import SVG (Admin)** | Legge i livelli, riconosce quelli nascosti, converte le classi CSS, separa gli elementi (le forme vicine vengono unite, es. una coppia di occhi). |
+| **Livelli stile Photoshop** | Trascina per riordinare, primo piano/sfondo, nascondi, blocca, annulla/ripeti. |
 | **Palette vincolata** | Solo i colori del brand definiti in Admin → Palette. |
-| **Randomizza** | Combinazioni casuali con colori della palette a buon contrasto. |
-| **Crea Sticker** | PNG (512/1024/2048 px) con bordo fustellato, SVG vettoriale e **sticker WhatsApp** (vedi sotto). |
-| **Ordina Charm 3D** | Anteprima 3D realistica: ogni livello è estruso dalle sue forme SVG con bordi arrotondati, ruotabile e zoomabile. Tre materiali: **Raw** (opaco e granuloso, pasta cruda), **Al dente** (plastica morbida satinata), **Overcooked** (silicone morbido, bordi gonfi). Riepilogo, prezzo, dati cliente; l'anteprima 3D viene allegata all'ordine. |
-| **Admin protetto** | Password (hash SHA-256, mai in chiaro), blocco dopo 5 tentativi, sessione di 8 ore, logout, cambio password. |
+| **Admin protetto** | Password (hash SHA-256), blocco dopo 5 tentativi, sessione di 8 ore, logout, cambio password. |
 
 ### Sticker WhatsApp: come funziona davvero
 
@@ -44,7 +45,7 @@ npm run preview    # anteprima della build
 npm run admin:hash -- "la tua password"   # genera l'hash della password admin
 ```
 
-- Editor: `http://localhost:5173/#/`
+- Cover: `http://localhost:5173/#/cover` · Charm: `#/charm` · Sticker: `#/sticker`
 - Admin: `http://localhost:5173/#/admin`
 
 Al primo accesso ad `/admin` ti viene chiesto di creare la password (se non hai impostato `VITE_ADMIN_PASSWORD_HASH`, vedi sotto).
@@ -68,11 +69,14 @@ imperiatool/
 │   │   ├── seedLibrary.js
 │   │   └── seed/pasta-characters.svg
 │   ├── lib/                       # logica pura, senza React
+│   │   ├── three/                 # studio 3D condiviso, materiali, geometrie
+│   │   ├── cover3d.js             # cover procedurale e pattern di pasta
+│   │   ├── translate.js           # traduttore integrato del browser
 │   │   ├── svgParser.js           # import SVG, livelli, separazione, zone colore
 │   │   ├── composition.js         # posizionamento, Randomizza
 │   │   ├── geometry.js            # trasformazioni
 │   │   ├── exportImage.js         # SVG/PNG, sticker WhatsApp, condivisione
-│   │   ├── charm3d.js             # anteprima 3D (Three.js) e materiali
+│   │   ├── charm3d.js             # charm 3D estruso dagli SVG
 │   │   ├── auth.js                # password admin, sessione, blocco tentativi
 │   │   ├── colors.js · id.js
 │   ├── store/                     # useLibraryStore, useEditorStore (zustand)
@@ -81,8 +85,11 @@ imperiatool/
 │   ├── components/
 │   │   ├── layout/Header.jsx
 │   │   ├── ui/                    # Button, Modal, Slider, Swatches, LabelsEditor…
-│   │   ├── editor/                # EditorPage, StickerCanvas, LayersPanel, PropertiesPanel,
-│   │   │                          # AssetPicker, ExportModal, OrderModal, Charm3DViewer
+│   │   ├── cover/                 # CoverPage, PatternIcon
+│   │   ├── order/                 # CheckoutForm, MaterialPicker (condivisi)
+│   │   ├── three/Viewer3D.jsx     # visore 3D con zoom, ricentra, rotazione
+│   │   ├── editor/                # EditorPage (charm/sticker), StickerCanvas, LayersPanel,
+│   │   │                          # PropertiesPanel, AssetPicker, ExportModal, OrderModal
 │   │   └── admin/                 # AdminPage (+login), Import, Assets, Categories,
 │   │                              # Palette, Orders, Data, Security
 │   └── __tests__/                 # test unitari (Vitest)

@@ -11,17 +11,17 @@ const SEED_LAYERS = [
   {
     layer: 'Body',
     categoryId: 'cat-corpi',
-    names: ['Triangolo', 'Tortellino', 'Cerchio', 'Tagliatella'],
+    names: ['Raviolo triangolare', 'Raviolo quadrato', 'Raviolo tondo', 'Tagliatella'],
   },
   {
     layer: 'Eyes',
     categoryId: 'cat-occhi',
-    names: ['Reginette', 'Bucatini', 'Orecchiette', 'Tortellini quadrati', 'Tortellini triangolari', 'Tortellini tondi'],
+    names: ['Reginette', 'Bucatini', 'Orecchiette', 'Ravioli quadrati', 'Ravioli triangolari', 'Ravioli tondi'],
   },
   {
     layer: 'Mouths',
     categoryId: 'cat-bocche',
-    names: ['Sorriso', 'Stupita', 'Bacio', 'Lasagnetta', 'Baffo', 'Labbra'],
+    names: ['Maccheroni', 'Anelli', 'Conchiglia', 'Lasagnetta', 'Cavatappi', 'Gnocchi'],
   },
 ];
 

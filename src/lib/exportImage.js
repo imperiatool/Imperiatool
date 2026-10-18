@@ -12,7 +12,7 @@ export function buildStickerSvg(items, assetsById, opts = {}) {
   const { outline = { enabled: true, color: '#ffffff', width: 28 }, background = null, crop = true, canvasSize = 1400 } = opts;
   items = items.filter((it) => !it.hidden && assetsById[it.assetId]);
   const box = crop ? contentBox(items, assetsById) : { x: 0, y: 0, width: canvasSize, height: canvasSize };
-  const margin = (outline.enabled ? outline.width : 0) + 24;
+  const margin = opts.pad ?? (outline.enabled ? outline.width : 0) + 24;
   const vb = { x: box.x - margin, y: box.y - margin, width: box.width + margin * 2, height: box.height + margin * 2 };
 
   const body = items
@@ -122,24 +122,63 @@ async function loadSvgImage(svgString) {
 
 const toBlob = (canvas, type, quality) => new Promise((resolve) => canvas.toBlob(resolve, type, quality));
 
+function makeCanvas(w, h) {
+  const c = document.createElement('canvas');
+  c.width = w;
+  c.height = h;
+  return c;
+}
+
+/**
+ * Raster sticker with a die-cut border, always on a transparent background.
+ * The border is built on a canvas (the silhouette is stamped all around in a
+ * circle) instead of an SVG filter: SVG filters get clipped or capped by some
+ * browsers, which left the border incomplete.
+ */
+export async function renderStickerCanvas(items, assetsById, { border = { width: 26, color: '#ffffff' }, maxSide = 1024 } = {}) {
+  const bw = border?.width > 0 ? border.width : 0;
+  const { svg, width, height } = buildStickerSvg(items, assetsById, { outline: { enabled: false }, pad: bw + 8 });
+  const img = await loadSvgImage(svg);
+  const scale = maxSide / Math.max(width, height);
+  const w = Math.max(1, Math.round(width * scale));
+  const h = Math.max(1, Math.round(height * scale));
+  const art = makeCanvas(w, h);
+  art.getContext('2d').drawImage(img, 0, 0, w, h);
+  const out = makeCanvas(w, h);
+  const ctx = out.getContext('2d');
+  if (bw) {
+    const sil = makeCanvas(w, h);
+    const sctx = sil.getContext('2d');
+    sctx.drawImage(art, 0, 0);
+    sctx.globalCompositeOperation = 'source-in';
+    sctx.fillStyle = border.color || '#ffffff';
+    sctx.fillRect(0, 0, w, h);
+    const r = bw * scale;
+    for (const rr of [r, r * 0.7, r * 0.4]) {
+      const n = Math.max(24, Math.ceil((2 * Math.PI * rr) / 1.5));
+      for (let i = 0; i < n; i++) {
+        const a = (i / n) * Math.PI * 2;
+        ctx.drawImage(sil, Math.cos(a) * rr, Math.sin(a) * rr);
+      }
+    }
+    ctx.drawImage(sil, 0, 0);
+  }
+  ctx.drawImage(art, 0, 0);
+  return out;
+}
+
+export const canvasToBlob = (canvas, type = 'image/png', quality) => new Promise((resolve) => canvas.toBlob(resolve, type, quality));
+
 /**
  * Renders the composition as a WhatsApp-ready sticker.
  * Returns { blob, format: 'webp' | 'png', bytes }. Browsers that cannot encode
  * WebP (older Safari) silently return PNG from toBlob → we report it.
  */
-export async function makeWhatsAppSticker(items, assetsById, outline = { enabled: true, color: '#ffffff', width: 26 }) {
-  const { svg, width, height } = buildStickerSvg(items, assetsById, { outline });
-  const img = await loadSvgImage(svg);
+export async function makeWhatsAppSticker(items, assetsById, border = { width: 26, color: '#ffffff' }) {
   const { size, margin, maxBytes } = WA_STICKER;
-  const canvas = document.createElement('canvas');
-  canvas.width = size;
-  canvas.height = size;
-  const ctx = canvas.getContext('2d');
-  const scale = (size - margin * 2) / Math.max(width, height);
-  const w = width * scale;
-  const h = height * scale;
-  ctx.clearRect(0, 0, size, size);
-  ctx.drawImage(img, (size - w) / 2, (size - h) / 2, w, h);
+  const art = await renderStickerCanvas(items, assetsById, { border, maxSide: size - margin * 2 });
+  const canvas = makeCanvas(size, size);
+  canvas.getContext('2d').drawImage(art, (size - art.width) / 2, (size - art.height) / 2);
 
   let blob = null;
   for (const q of [0.92, 0.85, 0.75, 0.65, 0.55, 0.45, 0.35]) {

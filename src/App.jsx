@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Header from './components/layout/Header.jsx';
 import EditorPage from './components/editor/EditorPage.jsx';
+import CoverPage from './components/cover/CoverPage.jsx';
 import AdminPage from './components/admin/AdminPage.jsx';
 import { useLibraryStore } from './store/useLibraryStore.js';
 import { useEditorStore } from './store/useEditorStore.js';
@@ -39,9 +40,12 @@ export default function App() {
       <main className="min-h-0 flex-1 overflow-y-auto lg:overflow-hidden">
         {seeded ? (
           <Routes>
-            <Route path="/" element={<EditorPage />} />
+            <Route path="/" element={<Navigate to="/cover" replace />} />
+            <Route path="/cover" element={<CoverPage />} />
+            <Route path="/charm" element={<EditorPage mode="charm" key="charm" />} />
+            <Route path="/sticker" element={<EditorPage mode="sticker" key="sticker" />} />
             <Route path="/admin/*" element={<AdminPage />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
+            <Route path="*" element={<Navigate to="/cover" replace />} />
           </Routes>
         ) : (
           <div className="grid h-full place-items-center text-muted">{t('common.loading')}</div>

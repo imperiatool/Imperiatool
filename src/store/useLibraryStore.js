@@ -8,7 +8,7 @@ import { buildSeedLibrary } from '../data/seedLibrary.js';
 import { withLabels } from '../data/labels.js';
 
 export const LIBRARY_STORAGE_KEY = 'sticker-builder:library';
-export const LIBRARY_VERSION = 2;
+export const LIBRARY_VERSION = 3;
 
 export const useLibraryStore = create(
   persist(
@@ -127,9 +127,9 @@ export const useLibraryStore = create(
       version: LIBRARY_VERSION,
       storage: createJSONStorage(() => localStorage),
       partialize: ({ seeded, categories, assets, palette }) => ({ seeded, categories, assets, palette }),
-      // v1 → v2: add translations to libraries saved before i18n
+      // v1 → v2: add translations · v2 → v3: pasta names for bodies, eyes and mouths
       migrate: (state, version) => {
-        if (version < 2 && state?.categories) return { ...state, ...withLabels(state) };
+        if (version < 3 && state?.categories) return { ...state, ...withLabels(state) };
         return state;
       },
     },

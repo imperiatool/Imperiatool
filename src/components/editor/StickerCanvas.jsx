@@ -69,7 +69,6 @@ function LockedFrame({ item, asset, unit }) {
 export default function StickerCanvas({ assetsById, svgRef: externalRef, label }) {
   const items = useEditorStore((s) => s.items);
   const selectedId = useEditorStore((s) => s.selectedId);
-  const background = useEditorStore((s) => s.background);
   const localRef = useRef(null);
   const svgRef = externalRef || localRef;
   const drag = useRef(null);
@@ -157,7 +156,6 @@ export default function StickerCanvas({ assetsById, svgRef: externalRef, label }
       role="application"
       aria-label={label}
     >
-      {background && <rect width={CANVAS_SIZE} height={CANVAS_SIZE} fill={background} />}
       <g data-layer="content">
         {items.map((it) =>
           assetsById[it.assetId] && !it.hidden ? <CanvasItem key={it.uid} item={it} asset={assetsById[it.assetId]} onPointerDown={startDrag} /> : null,

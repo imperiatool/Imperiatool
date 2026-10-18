@@ -32,10 +32,17 @@ export default function OrdersTab() {
                 <p className="text-muted">
                   {new Date(o.createdAt).toLocaleString(locale)} · {o.customer?.name} · {o.customer?.email}
                 </p>
-                <p>
-                  {p.quantity}× {p.size} · {p.material ? t(`order.materials.${p.material}.name`) : p.finish} ·{' '}
-                  {p.attachment && t(`order.attachments.${p.attachment}`, {})} — <strong>{typeof p.total === 'number' ? money(p.total) : ''}</strong>
-                </p>
+                {p.type === 'phone-cover' ? (
+                  <p>
+                    <strong>{t('ord.type.cover')}</strong> · {p.quantity}× {t(`cover.p.${p.pattern}`)} · {p.colorName || p.color} · {t(`order.materials.${p.material}.name`)} · {p.model} —{' '}
+                    <strong>{money(p.total)}</strong>
+                  </p>
+                ) : (
+                  <p>
+                    <strong>{t('ord.type.charm')}</strong> · {p.quantity}× {p.size} · {p.material ? t(`order.materials.${p.material}.name`) : p.finish} ·{' '}
+                    {p.attachment && t(`order.attachments.${p.attachment}`, {})} — <strong>{typeof p.total === 'number' ? money(p.total) : ''}</strong>
+                  </p>
+                )}
               </div>
               <span className="rounded-full bg-amber/40 px-2.5 py-1 text-xs font-semibold">{t(`ord.status.${status}`)}</span>
               <Button size="sm" onClick={() => downloadBlob(new Blob([JSON.stringify(o, null, 2)], { type: 'application/json' }), `${o.id}.json`)}>

@@ -16,10 +16,24 @@ export const LANGUAGES = [
 export const DEFAULT_LANG = 'en';
 const DICTS = { en, it, es, fr };
 
+/** First visit: use the device/browser language when we have it, else English. */
+export function detectLang() {
+  try {
+    const prefs = navigator.languages?.length ? navigator.languages : [navigator.language];
+    for (const l of prefs) {
+      const code = String(l || '').slice(0, 2).toLowerCase();
+      if (DICTS[code]) return code;
+    }
+  } catch {
+    /* no navigator (tests) */
+  }
+  return DEFAULT_LANG;
+}
+
 export const useLangStore = create(
   persist(
     (set) => ({
-      lang: DEFAULT_LANG,
+      lang: detectLang(),
       setLang: (lang) => set({ lang: DICTS[lang] ? lang : DEFAULT_LANG }),
     }),
     { name: 'imperia:lang', storage: createJSONStorage(() => localStorage) },

@@ -47,3 +47,25 @@ export const CHARM_OPTIONS = {
   ],
   attachments: [{ id: 'keyring' }, { id: 'chain' }, { id: 'pin' }],
 };
+
+// Phone covers: price, material surcharge and phone models (3D preview is generic).
+export const COVER_OPTIONS = {
+  basePrice: 29.9,
+  materials: [
+    { id: 'raw', surcharge: 0 },
+    { id: 'aldente', surcharge: 3 },
+    { id: 'overcooked', surcharge: 5 },
+  ],
+  patterns: ['raviolo', 'ravioli', 'sfoglia', 'tagliatelle', 'spaghetti', 'spighe'],
+  models: [
+    { id: 'iphone-17-pro', label: 'iPhone 17 Pro' },
+    { id: 'iphone-17', label: 'iPhone 17' },
+    { id: 'iphone-16-pro', label: 'iPhone 16 Pro' },
+    { id: 'iphone-16', label: 'iPhone 16' },
+    { id: 'iphone-15', label: 'iPhone 15' },
+    { id: 'galaxy-s25', label: 'Samsung Galaxy S25' },
+    { id: 'galaxy-s24', label: 'Samsung Galaxy S24' },
+    { id: 'pixel-10', label: 'Google Pixel 10' },
+    { id: 'pixel-9', label: 'Google Pixel 9' },
+  ],
+};
