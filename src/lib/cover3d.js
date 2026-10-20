@@ -1,0 +1,363 @@
+// Procedural 3D phone cover with pasta-inspired relief patterns.
+// Units are millimetres. The relief is a height-field (one function per
+// pattern) laid on the back plate, faded out near the borders and the camera.
+import * as THREE from 'three';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import { makeMaterial, MATERIAL_SHAPE } from './three/materials.js';
+import { roundedRect, sdRoundRect, roundRectArc, roundRectPerimeter, smoothstep, smoothGeometry } from './three/geometry.js';
+
+export const COVER_PATTERNS = ['raviolo', 'ravioli', 'sfoglia', 'tagliatelle', 'spaghetti', 'reginette'];
+
+/*
+ * Phone models: case outer size (mm), corner radius, camera openings and
+ * buttons. Openings are rounded rectangles {x, y, w, h, r} measured from the
+ * case centre (y up); a circle is a square with r = w / 2.
+ */
+const sq = (s, inset, r) => ({ w: s, h: s, r, x: null, y: null, inset });
+export const PHONE_MODELS = {
+  'iphone-17-pro': { w: 74.6, h: 152.6, r: 13, cams: [sq(37.5, 4.8, 9.5)], buttons: 'iphone-cc' },
+  'iphone-17': { w: 74.2, h: 152.2, r: 12.6, cams: [{ w: 20, h: 39, r: 10, inset: 6.2 }], buttons: 'iphone-cc' },
+  'iphone-16-pro': { w: 74.1, h: 152.2, r: 12.6, cams: [sq(35.5, 5.2, 9)], buttons: 'iphone-cc' },
+  'iphone-16': { w: 74.2, h: 150.2, r: 12.2, cams: [{ w: 19.5, h: 36, r: 9.75, inset: 6.4 }], buttons: 'iphone-cc' },
+  'iphone-15': { w: 74.2, h: 150.2, r: 12.2, cams: [sq(30, 5.8, 8)], buttons: 'iphone' },
+  'galaxy-s25': {
+    w: 73.1, h: 149.5, r: 10.5, buttons: 'galaxy',
+    cams: [0, 1, 2].map((i) => ({ w: 11.4, h: 11.4, r: 5.7, inset: 7.8, dy: i * 13.6 })),
+  },
+  'galaxy-s24': {
+    w: 73.2, h: 149.6, r: 10.5, buttons: 'galaxy',
+    cams: [0, 1, 2].map((i) => ({ w: 11.8, h: 11.8, r: 5.9, inset: 7.6, dy: i * 14 })),
+  },
+  'pixel-10': { w: 74.6, h: 155.4, r: 12, cams: [{ w: 56, h: 16, r: 8, inset: 15, center: true }], buttons: 'pixel' },
+  'pixel-9': { w: 74.6, h: 155.4, r: 12, cams: [{ w: 54, h: 16, r: 8, inset: 15, center: true }], buttons: 'pixel' },
+};
+export const DEFAULT_MODEL = 'iphone-17-pro';
+
+// Current model: the pattern functions read these (set by setModel()).
+let W, H, R, CAMS, INNER, GRID;
+const PLATE = 1.8; // back thickness
+const RIM_T = 1.5; // side wall thickness
+const RIM_D = 9.2; // side wall depth (phone thickness + lip)
+const CAM_RING = 1.9;
+const UV_REPEAT = 1 / 9; // grain tile ≈ 9 mm
+
+function setModel(id) {
+  const m = PHONE_MODELS[id] || PHONE_MODELS[DEFAULT_MODEL];
+  W = m.w;
+  H = m.h;
+  R = m.r;
+  CAMS = m.cams.map((c) => ({
+    w: c.w,
+    h: c.h,
+    r: c.r,
+    x: c.center ? 0 : -W / 2 + c.inset + c.w / 2,
+    y: H / 2 - (c.center ? c.inset : c.inset) - c.h / 2 - (c.dy || 0),
+    inset: c.center ? Math.min(c.inset, (W - c.w) / 2) : c.inset,
+  }));
+  INNER = { hw: W / 2 - 2.4, hh: H / 2 - 2.4, r: R - 2.4 };
+  const cols = 4;
+  GRID = { c: (INNER.hw * 2) / cols, x0: -INNER.hw, y0: INNER.hh };
+  return m;
+}
+setModel(DEFAULT_MODEL);
+
+/* ---------------- relief patterns: height in mm at (x, y) ---------------- */
+const fract = (v) => v - Math.floor(v);
+const tri = (v) => Math.abs(fract(v) - 0.5) * 2; // 1 at cell borders, 0 in the middle
+
+function edgeBumps(x, y, { band = 3.7, width = 2.2, height = 1.7, period = 5.6 } = {}) {
+  const d = -sdRoundRect(x, y, 0, 0, W / 2, H / 2, R); // distance inside the outline
+  const across = 1 - ((d - band) / width) ** 2;
+  if (across <= 0) return 0;
+  const P = roundRectPerimeter(W / 2 - band, H / 2 - band, R - band);
+  const n = Math.round(P / period);
+  const s = roundRectArc(x, y, 0, 0, W / 2 - band, H / 2 - band, R - band);
+  const along = 0.5 + 0.5 * Math.cos((2 * Math.PI * n * s) / P);
+  return height * Math.sqrt(across) * (0.3 + 0.7 * along);
+}
+
+function camBumps(x, y, { height = 1.5, period = 5.2 } = {}) {
+  // between the camera and the outer edge there are only a few mm: the border
+  // crimp already covers that strip, so fade these bumps out there
+  const dOut = -sdRoundRect(x, y, 0, 0, W / 2, H / 2, R);
+  const fade = smoothstep(5, 7, dOut);
+  if (fade <= 0) return 0;
+  let best = 0;
+  for (const c of CAMS) {
+    const hw = c.w / 2 + CAM_RING + 2.6;
+    const hh = c.h / 2 + CAM_RING + 2.6;
+    const r = c.r + CAM_RING + 2.6;
+    const d = sdRoundRect(x, y, c.x, c.y, hw, hh, r);
+    const across = 1 - (d / 2.2) ** 2;
+    if (across <= 0) continue;
+    const P = roundRectPerimeter(hw, hh, r);
+    const n = Math.max(3, Math.round(P / period));
+    const s = roundRectArc(x, y, c.x, c.y, hw, hh, r);
+    best = Math.max(best, height * Math.sqrt(across) * (0.3 + 0.7 * (0.5 + 0.5 * Math.cos((2 * Math.PI * n * s) / P))));
+  }
+  return fade * best;
+}
+
+/** signed distance to the nearest camera opening (+ grown by `grow`) */
+function camDist(x, y, grow = 0) {
+  let d = Infinity;
+  for (const c of CAMS) d = Math.min(d, sdRoundRect(x, y, c.x, c.y, c.w / 2 + grow, c.h / 2 + grow, c.r + grow));
+  return d;
+}
+
+function gridCoords(x, y) {
+  const u = (x - GRID.x0) / GRID.c;
+  const v = (GRID.y0 - y) / GRID.c;
+  return { u, v, fu: fract(u), fv: fract(v) };
+}
+
+function dottedLine(dist, along, { pitch = 1.25, radius = 0.42 } = {}) {
+  // dimples every `pitch` mm along a line, `dist` = distance from the line
+  const a = (fract(along / pitch) - 0.5) * pitch;
+  const r2 = (a * a + dist * dist) / (radius * radius);
+  return r2 < 1 ? Math.sqrt(1 - r2) : 0;
+}
+
+const PATTERNS = {
+  // raviolo: crimped raviolo border all around + around the camera, plain inside
+  raviolo: { mask: false, h: (x, y) => Math.max(edgeBumps(x, y), camBumps(x, y)) },
+
+  // ravioli: quilted pillows separated by crimped seams
+  ravioli: {
+    mask: true,
+    h: (x, y) => {
+      const { u, v, fu, fv } = gridCoords(x, y);
+      const seam = 2.6 / GRID.c; // seam width in cell units
+      const a = Math.max(0, (Math.abs(fu - 0.5) * 2 - (1 - seam * 2)) / (seam * 2));
+      const b = Math.max(0, (Math.abs(fv - 0.5) * 2 - (1 - seam * 2)) / (seam * 2));
+      const px = 1 - Math.min(1, (Math.abs(fu - 0.5) * 2) ** 6 / (1 - seam) ** 6);
+      const py = 1 - Math.min(1, (Math.abs(fv - 0.5) * 2) ** 6 / (1 - seam) ** 6);
+      const pillow = Math.max(0, px * py) ** 0.55;
+      let h = 0.55 + 2.4 * pillow;
+      // crimp dots on both sides of every seam
+      const dx = (Math.min(fu, 1 - fu)) * GRID.c; // mm to vertical seam
+      const dy = (Math.min(fv, 1 - fv)) * GRID.c;
+      const dots = Math.max(dottedLine(Math.abs(dx - 0.9), v * GRID.c), dottedLine(Math.abs(dy - 0.9), u * GRID.c));
+      if (Math.max(a, b) > 0 || dots) h -= 0.35 * dots;
+      return h;
+    },
+  },
+
+  // sfoglia: a flat pasta sheet with perforated (dotted) cutting lines
+  sfoglia: {
+    mask: true,
+    h: (x, y) => {
+      const { u, v, fu, fv } = gridCoords(x, y);
+      const dx = Math.min(fu, 1 - fu) * GRID.c;
+      const dy = Math.min(fv, 1 - fv) * GRID.c;
+      const dots = Math.max(dottedLine(dx, v * GRID.c, { pitch: 1.35, radius: 0.48 }), dottedLine(dy, u * GRID.c, { pitch: 1.35, radius: 0.48 }));
+      return 1.1 - 0.95 * dots;
+    },
+  },
+
+  // tagliatelle: wide wavy ribbons, puffy, running top to bottom
+  tagliatelle: {
+    mask: true,
+    h: (x, y) => {
+      const wave = 2.7 * Math.sin((2 * Math.PI * y) / 27);
+      const n = 5;
+      const p = (INNER.hw * 2) / n;
+      const q = (fract((x - wave + INNER.hw) / p) - 0.5) * 2; // -1..1 across a ribbon
+      return 3.1 * Math.pow(Math.max(0, 1 - q * q), 0.55);
+    },
+  },
+
+  // spaghetti: thin round strands side by side
+  spaghetti: {
+    mask: true,
+    h: (x) => {
+      const p = 2.65;
+      const d = (fract((x + INNER.hw) / p) - 0.5) * p;
+      const r = 1.18;
+      return 0.15 + 1.15 * Math.sqrt(Math.max(0, 1 - (d / r) ** 2));
+    },
+  },
+
+  // reginette: flat ribbons with ruffled (frilly) edges, running top to bottom
+  reginette: {
+    mask: true,
+    h: (x, y) => {
+      const n = 4;
+      const p = (INNER.hw * 2) / n;
+      const u = (x + INNER.hw) / p;
+      const q = Math.abs(fract(u) - 0.5) * 2; // 0 centre → 1 gap
+      const ruffle = 0.5 + 0.5 * Math.sin((2 * Math.PI * y) / 3.6 + (Math.floor(u) % 2) * Math.PI);
+      const edge = 0.74 + 0.07 * ruffle; // ribbon half-width wobbles with the frill
+      if (q > edge) return 0;
+      const inEdge = smoothstep(0.5, edge, q); // 0 in the flat middle, 1 at the frill
+      const body = 1.35 * Math.pow(1 - (q / edge) ** 8, 0.5);
+      return body + inEdge * (0.25 + 1.35 * ruffle) * (1 - smoothstep(edge - 0.05, edge, q));
+    },
+  },
+};
+
+function innerMask(x, y) {
+  const dOut = sdRoundRect(x, y, 0, 0, INNER.hw, INNER.hh, INNER.r);
+  const dCam = camDist(x, y, CAM_RING + 1.6);
+  return smoothstep(0, 2.2, -dOut) * smoothstep(0, 2.2, dCam);
+}
+
+/* ---------------- geometry ---------------------------------------------- */
+function reliefGeometry(pattern, { reliefScale = 1, smooth = 0 } = {}) {
+  const def = PATTERNS[pattern] || PATTERNS.raviolo;
+  const step = 0.36;
+  const x0 = -W / 2 + 0.8;
+  const y0 = -H / 2 + 0.8;
+  const nx = Math.ceil((W - 1.6) / step) + 1;
+  const ny = Math.ceil((H - 1.6) / step) + 1;
+  const heights = new Float32Array(nx * ny);
+  const keep = new Uint8Array(nx * ny);
+  for (let j = 0; j < ny; j++) {
+    const y = y0 + j * step;
+    for (let i = 0; i < nx; i++) {
+      const x = x0 + i * step;
+      const idx = j * nx + i;
+      const out = sdRoundRect(x, y, 0, 0, W / 2, H / 2, R);
+      const inCam = camDist(x, y, CAM_RING);
+      keep[idx] = out < -0.9 && inCam > 0.4 ? 1 : 0;
+      let h = def.h(x, y);
+      if (def.mask) h *= innerMask(x, y);
+      heights[idx] = Math.max(0, h) * reliefScale;
+    }
+  }
+  if (smooth) {
+    // soften the relief (silicone flows and rounds everything)
+    const tmp = new Float32Array(heights);
+    for (let j = 1; j < ny - 1; j++) {
+      for (let i = 1; i < nx - 1; i++) {
+        const k = j * nx + i;
+        heights[k] = (tmp[k] * 4 + tmp[k - 1] + tmp[k + 1] + tmp[k - nx] + tmp[k + nx]) / 8;
+      }
+    }
+  }
+  const pos = new Float32Array(nx * ny * 3);
+  for (let j = 0; j < ny; j++) {
+    for (let i = 0; i < nx; i++) {
+      const k = j * nx + i;
+      pos[k * 3] = x0 + i * step;
+      pos[k * 3 + 1] = y0 + j * step;
+      pos[k * 3 + 2] = PLATE - 0.25 + heights[k];
+    }
+  }
+  const index = [];
+  for (let j = 0; j < ny - 1; j++) {
+    for (let i = 0; i < nx - 1; i++) {
+      const a = j * nx + i;
+      const b = a + 1;
+      const c = a + nx;
+      const d = c + 1;
+      if (keep[a] && keep[b] && keep[c] && keep[d]) index.push(a, b, d, a, d, c);
+    }
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  g.setIndex(index);
+  g.computeVertexNormals();
+  const uv = new Float32Array(nx * ny * 2);
+  for (let k = 0; k < nx * ny; k++) {
+    uv[k * 2] = pos[k * 3];
+    uv[k * 2 + 1] = pos[k * 3 + 1];
+  }
+  g.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+  return g;
+}
+
+function extrude(shape, depth, bevel, z, thinnest = Infinity) {
+  // the inward bevel must stay well under half of the thinnest wall,
+  // otherwise the offset contours cross and the mesh folds over itself
+  bevel = Math.min(bevel, thinnest * 0.3, depth * 0.45);
+  const g = new THREE.ExtrudeGeometry(shape, {
+    depth: Math.max(0.1, depth - bevel * 2),
+    bevelEnabled: true,
+    bevelThickness: bevel,
+    bevelSize: bevel,
+    bevelOffset: -bevel,
+    bevelSegments: 6,
+    curveSegments: 18,
+  });
+  const s = smoothGeometry(g);
+  s.translate(0, 0, z + bevel);
+  return s;
+}
+
+/**
+ * @param pattern   one of COVER_PATTERNS
+ * @param color     palette hex
+ * @param material  'raw' | 'aldente' | 'overcooked'
+ * @param model     key of PHONE_MODELS (size, corners, camera, buttons)
+ */
+export function buildCover({ pattern = 'raviolo', color = '#ffb548', material = 'aldente', model = DEFAULT_MODEL } = {}) {
+  const spec = setModel(model);
+  const hints = MATERIAL_SHAPE[material] || MATERIAL_SHAPE.aldente;
+  const mat = () => makeMaterial(color, material, UV_REPEAT);
+  const group = new THREE.Group();
+  const bevel = material === 'overcooked' ? 0.85 : material === 'raw' ? 0.35 : 0.6;
+  const thinnest = Math.min(...CAMS.map((c) => c.inset), ...CAMS.flatMap((a) => CAMS.filter((b) => b !== a).map((b) => Math.abs(a.y - b.y) - (a.h + b.h) / 2)));
+
+  // back plate with the camera openings
+  const back = roundedRect(0, 0, W, H, R);
+  for (const c of CAMS) back.holes.push(roundedRect(c.x, c.y, c.w, c.h, c.r, true));
+  group.add(new THREE.Mesh(extrude(back, PLATE, bevel, 0, thinnest), mat()));
+
+  // side walls
+  const wall = roundedRect(0, 0, W, H, R);
+  wall.holes.push(roundedRect(0, 0, W - RIM_T * 2, H - RIM_T * 2, R - RIM_T, true));
+  group.add(new THREE.Mesh(extrude(wall, RIM_D, bevel, -RIM_D + PLATE * 0.6, RIM_T), mat()));
+  // front lip that holds the phone
+  const lip = roundedRect(0, 0, W - RIM_T * 2 + 0.2, H - RIM_T * 2 + 0.2, R - RIM_T);
+  lip.holes.push(roundedRect(0, 0, W - RIM_T * 2 - 2.2, H - RIM_T * 2 - 2.2, R - RIM_T - 1.1, true));
+  group.add(new THREE.Mesh(extrude(lip, 1.2, 0.35, -RIM_D + PLATE * 0.6, 1.1), mat()));
+
+  // raised ring around every camera opening
+  for (const c of CAMS) {
+    const ring = roundedRect(c.x, c.y, c.w + CAM_RING * 2, c.h + CAM_RING * 2, c.r + CAM_RING);
+    ring.holes.push(roundedRect(c.x, c.y, c.w, c.h, c.r, true));
+    group.add(new THREE.Mesh(extrude(ring, 1.5 * hints.depth, bevel * 0.9, PLATE - 0.3, CAM_RING), mat()));
+  }
+
+  // side buttons (seen from the back: x > 0 is the phone's left side)
+  const btn = (side, fromTop, len) => {
+    const g = new RoundedBoxGeometry(1.6, len, 3.2, 3, 0.7);
+    const m = new THREE.Mesh(g, mat());
+    m.position.set(side * (W / 2 + 0.35), H / 2 - fromTop - len / 2, -RIM_D / 2 + 1);
+    group.add(m);
+  };
+  const L = 1; // phone's left edge (volume on iPhone), seen from the back
+  if (spec.buttons.startsWith('iphone')) {
+    btn(-L, 33, 17); // power (right side of the phone)
+    btn(L, 34, 10); // volume +
+    btn(L, 47, 10); // volume −
+    btn(L, 20, 5.5); // action
+    if (spec.buttons === 'iphone-cc') btn(-L, 92, 14); // camera control
+  } else if (spec.buttons === 'galaxy') {
+    btn(-L, 30, 21); // volume
+    btn(-L, 55, 12); // power
+  } else {
+    btn(-L, 36, 11); // power
+    btn(-L, 52, 21); // volume
+  }
+
+  // relief
+  const relief = reliefGeometry(pattern, { reliefScale: hints.relief, smooth: hints.smoothRelief });
+  group.add(new THREE.Mesh(relief, mat()));
+  return group;
+}
+
+/** Pure height function, exported for tests. */
+export function coverHeightAt(pattern, x, y, model = DEFAULT_MODEL) {
+  setModel(model);
+  const def = PATTERNS[pattern];
+  const h = def.h(x, y);
+  return Math.max(0, def.mask ? h * innerMask(x, y) : h);
+}
+/** Size and camera openings of a model (mm), exported for tests and the packaging. */
+export function coverSize(model = DEFAULT_MODEL) {
+  setModel(model);
+  return { W, H, R, cameras: CAMS.map((c) => ({ ...c })), camera: { x: CAMS[0].x, y: CAMS[0].y } };
+}
+export const COVER_SIZE = coverSize();
