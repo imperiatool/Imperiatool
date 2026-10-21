@@ -7,6 +7,7 @@ import { renderAssetMarkup } from './svgParser.js';
 import { itemTransform } from './geometry.js';
 import { makeMaterial, MATERIAL_SHAPE } from './three/materials.js';
 import { resampleShape, samplePath, smoothGeometry } from './three/geometry.js';
+import logoUrl from '../assets/imperia-logo.svg?url';
 
 // canvas units per mm: a 1000-unit body ≈ 40 mm charm → grain tile of ~8 mm
 const UV_REPEAT = 1 / 200;
@@ -113,13 +114,18 @@ export function buildCharm(items, assetsById, materialId = 'aldente', { attachme
   /* ---- strokes → rounded piping ---------------------------------------- */
   for (const s of strokes) {
     const r = Math.max(s.width * 0.6, 3.2);
-    const z = (s.pieceIndex != null ? pieces[s.pieceIndex].top : itemTop.get(s.item) ?? 0) - r * 0.35;
     for (const sub of s.path.subPaths) {
       const pts = samplePath(sub, Math.max(2, r * 0.8));
       if (pts.length < 2) continue;
       const first = sub.getPoint(0);
       const lastP = sub.getPoint(1);
       const closed = sub.autoClose || first.distanceTo(lastP) < 0.5;
+      // the outline of a filled shape sits on that shape; inner lines (shell,
+      // gnocchi…) go on top of the whole element so a thick, puffy finish
+      // (overcooked) never swallows them
+      const own = closed && s.pieceIndex != null;
+      const base = own ? pieces[s.pieceIndex].top : Math.max(itemTop.get(s.item) ?? 0, s.pieceIndex != null ? pieces[s.pieceIndex].top : 0);
+      const z = base - r * (own ? 0.35 : materialId === 'overcooked' ? -0.15 : 0.2);
       const curve = new THREE.CatmullRomCurve3(pts.map((p) => new THREE.Vector3(p.x, p.y, z)), closed, 'centripetal');
       const segments = Math.min(2400, Math.max(16, Math.round(curve.getLength() / (r * 0.7))));
       const tube = new THREE.TubeGeometry(curve, segments, r, 10, closed);
@@ -140,7 +146,9 @@ export function buildCharm(items, assetsById, materialId = 'aldente', { attachme
   root.scale.set(1, -1, 1);
   const wrapper = new THREE.Group();
   wrapper.add(root);
-  if (attachment) {
+  // Imperia logo printed on the back, centred on the body
+  addBackLogo(wrapper);
+  if (attachment && attachment !== 'none') {
     const box = new THREE.Box3().setFromObject(wrapper);
     const size = box.getSize(new THREE.Vector3());
     const mm = Math.max(size.x, size.y) / sizeMm; // SVG units per millimetre
@@ -149,6 +157,30 @@ export function buildCharm(items, assetsById, materialId = 'aldente', { attachme
     wrapper.add(buildAttachment(attachment, top, mm));
   }
   return wrapper;
+}
+
+/* ---- back logo ---------------------------------------------------------- */
+let logoTexture = null;
+function addBackLogo(wrapper) {
+  const box = new THREE.Box3().setFromObject(wrapper);
+  if (box.isEmpty()) return;
+  const size = box.getSize(new THREE.Vector3());
+  if (!logoTexture) {
+    logoTexture = new THREE.TextureLoader().load(logoUrl);
+    logoTexture.colorSpace = THREE.SRGBColorSpace;
+    logoTexture.anisotropy = 8;
+  }
+  // about 45% of the width: readable but discreet, like on Imperia products
+  const w = Math.min(size.x, size.y * 1.6) * 0.45;
+  const decal = new THREE.Mesh(
+    new THREE.PlaneGeometry(w, (w * 388) / 1800),
+    new THREE.MeshPhysicalMaterial({ map: logoTexture, transparent: true, alphaTest: 0.05, roughness: 0.45, polygonOffset: true, polygonOffsetFactor: -2 }),
+  );
+  decal.rotation.y = Math.PI; // faces the back
+  decal.position.set((box.min.x + box.max.x) / 2, box.min.y + size.y * 0.45, box.min.z - 0.4);
+  decal.userData.keepTexture = true;
+  decal.userData.noShadow = true;
+  wrapper.add(decal);
 }
 
 /* ---- attachments ------------------------------------------------------- */

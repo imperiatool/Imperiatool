@@ -8,7 +8,7 @@ import { buildSeedLibrary } from '../data/seedLibrary.js';
 import { withLabels, snapAssetColors } from '../data/labels.js';
 
 export const LIBRARY_STORAGE_KEY = 'sticker-builder:library';
-export const LIBRARY_VERSION = 4;
+export const LIBRARY_VERSION = 5;
 
 export const useLibraryStore = create(
   persist(
@@ -131,8 +131,15 @@ export const useLibraryStore = create(
       // v2: translations · v3: pasta names · v4: 7 languages, new body and
       // colour names, eye/pupil zones, palette-only (no black) default colours
       migrate: (state, version) => {
-        if (version < 4 && state?.categories) return { ...state, ...withLabels(state, { force: true }) };
-        return state;
+        if (!state?.categories) return state;
+        let s = state;
+        // v5: the brand red is #e1201b everywhere (same as the logo)
+        if (version < 5) {
+          s = { ...s, palette: s.palette.map((c) => (c.id === 'c-rosso' && c.hex.toLowerCase() === '#e3201b' ? { ...c, hex: '#e1201b' } : c)) };
+          s = { ...s, categories: s.categories.map((c) => (c.outlineFill?.toLowerCase() === '#e3201b' ? { ...c, outlineFill: '#e1201b' } : c)) };
+        }
+        if (version < 5) return { ...s, ...withLabels(s, { force: version < 4 }) };
+        return s;
       },
     },
   ),

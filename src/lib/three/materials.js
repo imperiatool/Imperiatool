@@ -16,7 +16,6 @@ export const MATERIAL_SHAPE = {
   overcooked: { bevel: 1.5, depth: 1.18, relief: 1.25, smoothRelief: 1 },
 };
 
-const PASTA = new THREE.Color('#efd9a0');
 let cache = null;
 
 /* ---------- procedural textures ---------------------------------------- */
@@ -83,10 +82,10 @@ function textures() {
   // RAW: semolina specks + slight mottling, multiplied over the colour
   const rawMap = canvasTexture(N, (i) => {
     const r = rand();
-    let v = 196 + mottling[i] * 26;
-    if (r > 0.986) v -= 55 + rand() * 40; // dark bran specks
-    else if (r > 0.955) v += 18; // bright flour grains
-    return [v, v * 0.97, v * 0.91];
+    let v = 238 + mottling[i] * 17;
+    if (r > 0.988) v -= 38 + rand() * 30; // semolina specks
+    else if (r > 0.96) v = Math.min(255, v + 10); // flour grains
+    return [v, v * 0.985, v * 0.96];
   });
   rawMap.colorSpace = THREE.SRGBColorSpace;
   // RAW: grainy, slightly pitted surface
@@ -125,17 +124,17 @@ export function makeMaterial(hex, id, uvRepeat = 1 / 8) {
   };
 
   if (id === 'raw') {
-    // dry pasta absorbs light: no sheen, deep matte, darker than the plastic
-    color.lerp(PASTA, 0.06);
+    // like "al dente" (same colour, soft-touch) with the grain of dry pasta
+    // and a slightly less glossy surface
     return new THREE.MeshPhysicalMaterial({
       color,
       map: withRepeat(tx.rawMap),
       bumpMap: withRepeat(tx.rawBump),
-      bumpScale: 5,
-      roughnessMap: withRepeat(tx.rawRough),
-      roughness: 1,
+      bumpScale: 1.6,
+      roughness: 0.52,
       metalness: 0,
-      envMapIntensity: 0.55,
+      clearcoat: 0.12,
+      clearcoatRoughness: 0.55,
     });
   }
   if (id === 'overcooked') {

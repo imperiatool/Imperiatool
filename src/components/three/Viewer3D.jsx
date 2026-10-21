@@ -24,7 +24,7 @@ export default function Viewer3D({ kind, items, assetsById, material, attachment
     try {
       studioRef.current = new Studio(hostRef.current);
       studioRef.current.setAutoRotate(true);
-      onReady?.({ snapshot: () => studioRef.current?.snapshot() });
+      onReady?.({ snapshot: (q, max) => studioRef.current?.snapshot(q, max) });
     } catch (e) {
       console.error(e);
       setError(true);

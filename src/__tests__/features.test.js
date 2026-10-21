@@ -26,7 +26,7 @@ describe('admin password hashing', () => {
 
 describe('i18n', () => {
   // de / zh / hi translate every public page; the Admin area falls back to English
-  const PUBLIC = /^(lang|common|editor|picker|props|slot|export|order|cover|viewer|guide)\.|^nav\.(language|case|charm|sticker)$/;
+  const PUBLIC = /^(lang|common|editor|picker|props|slot|export|order|cover|viewer|guide|cart|account|home)\.|^nav\.(language|case|charm|sticker|home)$/;
   const publicKeys = Object.keys(en).filter((k) => PUBLIC.test(k)).sort();
   it('every language has exactly the English keys', () => {
     const keys = Object.keys(en).sort();
@@ -174,7 +174,8 @@ describe('palette-only colours', () => {
     expect(snapToPalette('#000000', DEFAULT_PALETTE)).toBe('#6a3933');
     expect(snapToPalette('#1d1d1b', DEFAULT_PALETTE)).toBe('#6a3933');
     expect(snapToPalette('#ffffff', DEFAULT_PALETTE)).toBe('#f8eabe');
-    expect(snapToPalette('#e3201b', DEFAULT_PALETTE)).toBe('#e3201b');
+    expect(snapToPalette('#e3201b', DEFAULT_PALETTE)).toBe('#e1201b');
+    expect(snapToPalette('#e1201b', DEFAULT_PALETTE)).toBe('#e1201b');
   });
   it('updates saved libraries: palette-only defaults, eye and pupil zones, new colour names', () => {
     const palette = DEFAULT_PALETTE.map((c) => ({ ...c, name: 'old', labels: { en: 'old' } }));
@@ -226,10 +227,14 @@ describe('3D packaging', () => {
     expect(svg).toContain('Overcooked');
     expect(svg).toContain('Liquid silicone');
     expect(svg).toContain('Google Pixel 10');
-    expect(svg).toContain('Tagliatelle');
-    expect(svg).toContain('phone case');
-    expect(svg).toContain('cy="532.6"'); // ring around the basil circle
-    // patterns with box artwork use it
-    expect(packagingOverlay({ pattern: 'reginette', finish: 'raw', modelLabel: 'x', colorName: 'Egg' })).toContain('viewBox="971.5 173.4');
+    expect(svg).toContain('cy="533"'); // ring around the basil circle
+    // every pattern has its pasta-name artwork on the top flap (with "phone case")
+    for (const p of ['spaghetti', 'tagliatelle', 'ravioli', 'reginette', 'sfoglia', 'raviolo']) {
+      const s = packagingOverlay({ pattern: p, finish: 'raw', modelLabel: 'x', colorName: 'Egg' });
+      expect(s, p).toContain('<svg x=');
+      expect(s, p).toContain('phone case');
+    }
+    // the material stays on one line
+    expect(svg.match(/Material:/g)).toHaveLength(1);
   });
 });

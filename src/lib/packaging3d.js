@@ -1,9 +1,10 @@
-// 3D retail box for the phone case, printed with the Imperia dieline
-// (src/assets/packaging/dieline.svg, 100 × 190 × 25 mm) and personalised
+// 3D retail box for the phone case, printed with the Imperia artwork
+// (src/assets/packaging/case-packaging.svg, 100 × 190 × 25 mm) and personalised
 // with the chosen pattern, colour, finish and phone. The window under the
-// logo is cut out with its exact curved shape so the case shows through.
+// logo is cut out with its exact curved shape and closed by a glossy film,
+// like a pasta pack: through it you see the pattern of the case.
 import * as THREE from 'three';
-import dielineSvg from '../assets/packaging/dieline.svg?raw';
+import packagingSvg from '../assets/packaging/case-packaging.svg?raw';
 import pastaNames from '../assets/packaging/pastaNames.json';
 import windowShape from '../assets/packaging/window.json';
 import { buildCover, coverSize } from './cover3d.js';
@@ -30,26 +31,26 @@ export const PACK_NAMES = {
   tagliatelle: 'Tagliatelle',
   ravioli: 'Ravioli',
   reginette: 'Reginette',
-  sfoglia: 'Lasagne',
+  sfoglia: 'Pasta Cuts',
   raviolo: 'Raviolo',
 };
-// title artwork from "Pasta Names for Phone Cases.svg"
-const TITLE_ART = { ravioli: 'ravioli', reginette: 'reginette', sfoglia: 'lasagne', spaghetti: 'spaghetto' };
+// title artwork from "Pasta Names for Phone Cases.svg" (already includes "phone case")
+const TITLE_ART = { ravioli: 'ravioli', reginette: 'reginette', sfoglia: 'pastacuts', spaghetti: 'spaghetto', tagliatelle: 'tagliatelle', raviolo: 'raviolo' };
 // colour circles printed on the back (palette id → circle centre)
 const COLOUR_DOTS = {
   'c-ambra': { name: 'Egg', y: 323.5 },
-  'c-crema': { name: 'Flour', y: 393.4 },
+  'c-crema': { name: 'Flour', y: 393.5 },
   'c-rosso': { name: 'Tomato', y: 463 },
-  'c-verde': { name: 'Basil', y: 532.6 },
-  'c-marrone': { name: 'Ragù', y: 602.4 },
+  'c-verde': { name: 'Basil', y: 533 },
+  'c-marrone': { name: 'Ragù', y: 603 },
 };
 export const PACK_FINISH = {
-  raw: { name: 'Raw', material: 'Polycarbonate (PC) · Matte grain finish', protection: 'Non-slip grip' },
+  raw: { name: 'Raw', material: 'Polycarbonate (PC) · Matte finish', protection: 'Non-slip grip' },
   aldente: { name: 'Al Dente', material: 'Polycarbonate (PC) · Satin finish', protection: 'Scratch-resistant' },
   overcooked: { name: 'Overcooked', material: 'Liquid silicone · Soft-touch finish', protection: 'Shock-absorbing' },
 };
 
-const RED = '#cf1913';
+const RED = '#e1201b';
 const YELLOW = '#fdb448';
 const FONT = `font-family="'Helvetica Neue', Helvetica, Arimo, Arial, sans-serif"`;
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
@@ -60,26 +61,22 @@ export function packagingOverlay({ pattern, colorId, colorName, finish, modelLab
   const f = PACK_FINISH[finish] || PACK_FINISH.aldente;
   const parts = [];
 
-  // top flap: pasta name (box artwork when available) + "phone case"
+  // top flap: the pasta name artwork (with "phone case") of the chosen pattern
   parts.push(`<rect x="726.57" y="168.17" width="195.1" height="70.87" fill="${YELLOW}"/>`);
   const art = pastaNames[TITLE_ART[pattern]];
-  let titleBottom = 210;
   if (art) {
     const [, , vw, vh] = art.viewBox.split(/\s+/).map(Number);
-    const s = Math.min(176 / vw, 27 / vh);
+    const s = Math.min(182 / vw, 46 / vh);
     const w = vw * s;
     const h = vh * s;
-    titleBottom = 181 + h;
-    parts.push(`<svg x="${824.1 - w / 2}" y="181" width="${w}" height="${h}" viewBox="${art.viewBox}">${art.markup}</svg>`);
+    parts.push(`<svg x="${824.1 - w / 2}" y="${203.6 - h / 2}" width="${w}" height="${h}" viewBox="${art.viewBox}">${art.markup}</svg>`);
   } else {
-    parts.push(
-      `<text x="824.1" y="${titleBottom}" text-anchor="middle" ${FONT} font-weight="700" font-size="35" letter-spacing="-1.6" fill="#ffffff"${name.length > 9 ? ' textLength="178" lengthAdjust="spacingAndGlyphs"' : ''}>${esc(name)}</text>`,
-    );
+    parts.push(`<text x="824.1" y="210" text-anchor="middle" ${FONT} font-weight="700" font-size="35" letter-spacing="-1.6" fill="#ffffff">${esc(name)}</text>`);
+    parts.push(`<text x="824.1" y="220" text-anchor="middle" ${FONT} font-weight="700" font-size="6" fill="${RED}">phone case</text>`);
   }
-  parts.push(`<text x="824.1" y="${Math.min(titleBottom + 9, 232)}" text-anchor="middle" ${FONT} font-weight="700" font-size="7.5" fill="${RED}">phone case</text>`);
 
-  // back: product details
-  parts.push(`<rect x="419" y="326" width="186" height="80" fill="${RED}"/>`);
+  // back: product details, one line each (long values are condensed to fit)
+  parts.push(`<rect x="418" y="313" width="188" height="66" fill="${RED}"/>`);
   const rows = [
     ['Colour', colorName],
     ['Finish', f.name],
@@ -87,22 +84,11 @@ export function packagingOverlay({ pattern, colorId, colorName, finish, modelLab
     ['Compatibility', modelLabel],
     ['Everyday protection', f.protection],
   ];
-  let y = 339;
-  for (const [k, v] of rows) {
-    const full = `${k}: ${v}`;
-    if (full.length <= 36) {
-      parts.push(`<text x="422.5" y="${y}" ${FONT} font-size="9.2" fill="#fff"><tspan font-weight="700">${esc(k)}:</tspan> ${esc(v)}</text>`);
-      y += 12;
-    } else {
-      // wrap the value on the next line, like the original layout
-      const words = String(v).split(' ');
-      let first = '';
-      while (words.length && `${k}: ${first} ${words[0]}`.length <= 36) first = `${first} ${words.shift()}`.trim();
-      parts.push(`<text x="422.5" y="${y}" ${FONT} font-size="9.2" fill="#fff"><tspan font-weight="700">${esc(k)}:</tspan> ${esc(first)}</text>`);
-      parts.push(`<text x="422.5" y="${y + 12}" ${FONT} font-size="9.2" fill="#fff">${esc(words.join(' '))}</text>`);
-      y += 24;
-    }
-  }
+  rows.forEach(([k, v], i) => {
+    const y = 327 + i * 12;
+    const fit = `${k}: ${v}`.length * 4.75 > 184 ? ' textLength="184" lengthAdjust="spacingAndGlyphs"' : '';
+    parts.push(`<text x="419.5" y="${y}" ${FONT} font-size="9.4" letter-spacing="-0.25" fill="#fff"${fit}><tspan font-weight="700">${esc(k)}:</tspan> ${esc(v)}</text>`);
+  });
   // ring around the chosen colour
   const dot = COLOUR_DOTS[colorId];
   if (dot) parts.push(`<circle cx="362.6" cy="${dot.y}" r="25.5" fill="none" stroke="#fff" stroke-width="2.4"/>`);
@@ -119,8 +105,9 @@ export function packagingOverlay({ pattern, colorId, colorName, finish, modelLab
 }
 
 export async function textureCanvas(opts) {
-  const svg = dielineSvg
-    .replace('<svg ', `<svg width="${Math.round(VB.w * PX)}" height="${Math.round(VB.h * PX)}" `)
+  const svg = packagingSvg
+    .replace(/viewBox="[^"]*"/, `viewBox="${VB.x} ${VB.y} ${VB.w} ${VB.h}" width="${Math.round(VB.w * PX)}" height="${Math.round(VB.h * PX)}"`)
+    .replace('</style>', `text { font-family: 'Helvetica Neue', Helvetica, Arimo, Arial, sans-serif; }</style>`)
     .replace(/<\/svg>\s*$/, `${packagingOverlay(opts)}</svg>`);
   const img = new Image();
   img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
@@ -246,23 +233,60 @@ export async function buildPackaging(opts) {
   );
   group.add(inside);
 
-  // acetate film behind the window
-  const film = new THREE.Mesh(
-    new THREE.PlaneGeometry(56, 104),
-    new THREE.MeshPhysicalMaterial({ color: '#ffffff', transparent: true, opacity: 0.1, roughness: 0.04, metalness: 0, clearcoat: 1, depthWrite: false }),
-  );
-  film.position.set(0, (511.25 - 489.5) / PT, d / 2 - 0.35);
-  film.userData.noShadow = true;
-  group.add(film);
+  // window film: clear, glossy, slightly bulged and crinkled like a pasta pack
+  const winC = { x: (824.7 - (P.front[0] + P.front[2]) / 2) / PT, y: ((P.front[1] + P.front[3]) / 2 - 493.2) / PT };
+  group.add(windowFilm(winC, d / 2));
 
-  // the case itself, back facing out through the window
-  const kase = buildCover(opts);
+  // the case, back facing out. It is turned upside down so the camera opening
+  // sits behind the board, under the window: only the pattern shows through.
+  const kase = buildCover({ ...opts, logo: false });
   const size = coverSize(opts.model);
+  kase.rotation.z = Math.PI;
   const bb = new THREE.Box3().setFromObject(kase);
-  kase.position.set(0, (511.25 - 489.5) / PT, d / 2 - 1.6 - bb.max.z);
-  // centre the case horizontally whatever its size
-  kase.position.x = -(bb.min.x + bb.max.x) / 2;
+  kase.position.set(-(bb.min.x + bb.max.x) / 2, -h / 2 + 0.8 - bb.min.y, d / 2 - 2.4 - bb.max.z);
   kase.userData.caseSize = size;
   group.add(kase);
   return group;
+}
+
+/** Glossy plastic film (≈ 48 × 93 mm) with a gentle bulge and fine crinkles. */
+function windowFilm(c, z) {
+  const W = 48;
+  const H = 93;
+  const g = new THREE.PlaneGeometry(W, H, 48, 92);
+  const pos = g.attributes.position;
+  let s = 99;
+  const rnd = () => ((s = (s * 16807) % 2147483647) / 2147483647);
+  const waves = Array.from({ length: 7 }, () => ({ kx: (rnd() - 0.5) * 0.9, ky: (rnd() - 0.5) * 0.5, p: rnd() * 6.3, a: 0.04 + rnd() * 0.06 }));
+  for (let i = 0; i < pos.count; i++) {
+    const x = pos.getX(i);
+    const y = pos.getY(i);
+    const u = (2 * x) / W;
+    const v = (2 * y) / H;
+    const bulge = 0.9 * Math.max(0, 1 - u * u) * Math.max(0, 1 - v * v);
+    let crinkle = 0;
+    for (const w of waves) crinkle += w.a * Math.sin(w.kx * x + w.ky * y * 2.2 + w.p);
+    pos.setZ(i, bulge + crinkle * Math.max(0, 1 - u * u));
+  }
+  g.computeVertexNormals();
+  const m = new THREE.Mesh(
+    g,
+    new THREE.MeshPhysicalMaterial({
+      color: '#ffffff',
+      transparent: true,
+      opacity: 0.24,
+      roughness: 0.06,
+      metalness: 0,
+      clearcoat: 1,
+      clearcoatRoughness: 0.04,
+      specularIntensity: 1,
+      envMapIntensity: 3,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+    }),
+  );
+  m.position.set(c.x, c.y, z - 0.45);
+  m.userData.noShadow = true;
+  m.renderOrder = 2;
+  return m;
 }

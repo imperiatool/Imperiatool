@@ -41,7 +41,7 @@ export default function PaletteTab() {
             {t('pal.hex')}
             <div className="mt-1 flex items-center gap-2">
               <span className="h-9 w-9 rounded-full border border-brand/20" style={{ background: parse(hex) || '#fff' }} />
-              <input value={hex} onChange={(e) => setHex(e.target.value)} placeholder="#e3201b" className="w-40 rounded-xl border border-line bg-white px-3 py-2 font-mono" />
+              <input value={hex} onChange={(e) => setHex(e.target.value)} placeholder="#e1201b" className="w-40 rounded-xl border border-line bg-white px-3 py-2 font-mono" />
             </div>
           </label>
           <label className="flex-1 text-sm font-medium">

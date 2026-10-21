@@ -1,10 +1,11 @@
 import { Suspense, lazy, useMemo, useRef, useState } from 'react';
 import Modal from '../ui/Modal.jsx';
-import CheckoutForm from '../order/CheckoutForm.jsx';
+import Button from '../ui/Button.jsx';
+import Icon from '../ui/Icon.jsx';
+import { useCartStore } from '../../store/useCartStore.js';
 import MaterialPicker from '../order/MaterialPicker.jsx';
 import { CHARM_OPTIONS } from '../../data/defaults.js';
 import { buildStickerSvg, svgToPngBlob, blobToDataUrl } from '../../lib/exportImage.js';
-import { submitOrder } from '../../services/orderService.js';
 import { useI18n } from '../../i18n/index.js';
 
 // Three.js is only downloaded when a 3D view opens.
@@ -14,6 +15,7 @@ function AttachmentIcon({ id }) {
   const s = { fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round' };
   return (
     <svg viewBox="0 0 40 40" className="h-10 w-10 text-ink/70" aria-hidden="true">
+      {id === 'none' && <circle cx="20" cy="20" r="11" {...s} strokeDasharray="3 3" />}
       {id === 'strap' && (
         <>
           <path d="M20 22c-7-2-9-9-8-14 1-5 15-5 16 0s-1 12-8 14z" {...s} stroke="#6a3933" strokeWidth="2.4" />
@@ -47,7 +49,8 @@ export default function OrderModal({ open, onClose, items, library }) {
   const { assetsById, categoriesById, palette } = library;
   const [material, setMaterial] = useState('aldente');
   const [size, setSize] = useState('4cm');
-  const [attachment, setAttachment] = useState('strap');
+  const [attachment, setAttachment] = useState('none');
+  const addToCart = useCartStore((s) => s.add);
   const viewer = useRef(null);
 
   const visibleItems = useMemo(() => items.filter((it) => !it.hidden && assetsById[it.assetId]), [items, assetsById]);
@@ -74,19 +77,24 @@ export default function OrderModal({ open, onClose, items, library }) {
   const unitPrice = [sizeOpt?.price || 0, matOpt?.surcharge || 0]; // EUR parts
 
   const previewImage = async () => {
-    const shot = viewer.current?.snapshot?.();
+    const shot = viewer.current?.snapshot?.(0.8, 360);
     if (shot && shot.length > 1000) return shot;
     const { svg, width, height } = buildStickerSvg(visibleItems, assetsById, { outline: { enabled: false } });
-    return blobToDataUrl(await svgToPngBlob(svg, width, height, 600));
+    return blobToDataUrl(await svgToPngBlob(svg, width, height, 360));
   };
 
-  const onSubmit = async ({ customer, quantity, notes, total, unitPrice: unitLocal, currency }) =>
-    submitOrder({
-      customer,
-      product: { type: 'charm-3d', size, finish: material, attachment, quantity, unitPrice: unitLocal, total, currency, notes },
-      design,
+  const add = async () => {
+    const body = design[0]?.assetName || '';
+    addToCart({
+      type: 'charm',
+      title: `Imperia® ${t('editor.charmShort')}`,
+      summary: [body, sizeOpt?.label, t(`order.materials.${material}.name`), attachment !== 'none' ? t(`order.attachments.${attachment}`) : null].filter(Boolean).join(' · '),
       preview: await previewImage(),
+      price: unitPrice,
+      config: { size, finish: material, attachment, design },
     });
+    onClose();
+  };
 
   return (
     <Modal open={open} onClose={onClose} title={t('order.title')} size="xl">
@@ -109,17 +117,17 @@ export default function OrderModal({ open, onClose, items, library }) {
             </Suspense>
           </div>
           <div>
-            <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-muted">{t('order.finish')}</h3>
+            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">{t('order.finish')}</h3>
             <MaterialPicker options={CHARM_OPTIONS.materials} value={material} onChange={setMaterial} />
           </div>
           <div>
-            <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-muted">{t('order.summary')}</h3>
+            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">{t('order.summary')}</h3>
             <ul className="space-y-1.5 text-sm">
               {design.map((d, i) => (
                 <li key={i} className="flex items-center justify-between gap-3 rounded-xl bg-cream px-3 py-1.5">
                   <span className="min-w-0">
                     <span className="text-[11px] uppercase tracking-wide text-muted">{d.category} · </span>
-                    <span className="font-semibold">{d.assetName}</span>
+                    <span className="font-medium">{d.assetName}</span>
                   </span>
                   <span className="flex shrink-0 gap-1">
                     {d.colors.map((c, j) => (
@@ -132,22 +140,23 @@ export default function OrderModal({ open, onClose, items, library }) {
           </div>
         </aside>
 
-        <CheckoutForm unitPrice={unitPrice} onSubmit={onSubmit} onDone={onClose} disabled={!visibleItems.length}>
+        <div className="flex flex-col gap-5">
           <fieldset>
-            <legend className="mb-2 text-xs font-bold uppercase tracking-wider text-muted">{t('order.size')}</legend>
+            <legend className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">{t('order.size')}</legend>
             <div className="grid grid-cols-3 gap-2">
               {CHARM_OPTIONS.sizes.map((s) => (
                 <label key={s.id} className={`cursor-pointer rounded-2xl border-2 p-3 text-center transition ${size === s.id ? 'border-brand bg-brand/5' : 'border-line bg-white hover:border-brand/50'}`}>
                   <input type="radio" name="size" value={s.id} checked={size === s.id} onChange={() => setSize(s.id)} className="sr-only" />
-                  <span className="block font-display text-lg font-bold">{s.label}</span>
+                  <span className="block text-base font-semibold">{s.label}</span>
                   <span className="text-sm text-muted">{money(s.price)}</span>
                 </label>
               ))}
             </div>
           </fieldset>
           <fieldset>
-            <legend className="mb-2 text-xs font-bold uppercase tracking-wider text-muted">{t('order.attachment')}</legend>
-            <div className="grid grid-cols-3 gap-2" role="radiogroup">
+            <legend className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted">{t('order.attachment')}</legend>
+            <p className="mb-2 text-xs text-muted">{t('order.attachmentHint')}</p>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4" role="radiogroup">
               {CHARM_OPTIONS.attachments.map((a) => (
                 <label
                   key={a.id}
@@ -156,13 +165,19 @@ export default function OrderModal({ open, onClose, items, library }) {
                 >
                   <input type="radio" name="attachment" value={a.id} checked={attachment === a.id} onChange={() => setAttachment(a.id)} className="sr-only" />
                   <AttachmentIcon id={a.id} />
-                  <span className="text-sm font-bold leading-tight">{t(`order.attachments.${a.id}`)}</span>
+                  <span className="text-sm font-semibold leading-tight">{t(`order.attachments.${a.id}`)}</span>
                   <span className="text-[11px] leading-tight text-muted">{t(`order.attachments.${a.id}.desc`)}</span>
                 </label>
               ))}
             </div>
           </fieldset>
-        </CheckoutForm>
+          <div className="mt-auto flex items-center justify-between gap-3 border-t border-line pt-4">
+            <span className="text-2xl font-semibold">{money(unitPrice)}</span>
+            <Button variant="primary" size="lg" onClick={add} disabled={!visibleItems.length} data-testid="charm-add">
+              <Icon name="bag" /> {t('cart.add')}
+            </Button>
+          </div>
+        </div>
       </div>
     </Modal>
   );

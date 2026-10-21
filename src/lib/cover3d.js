@@ -5,6 +5,7 @@ import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { makeMaterial, MATERIAL_SHAPE } from './three/materials.js';
 import { roundedRect, sdRoundRect, roundRectArc, roundRectPerimeter, smoothstep, smoothGeometry } from './three/geometry.js';
+import logoUrl from '../assets/imperia-logo.svg?url';
 
 export const COVER_PATTERNS = ['raviolo', 'ravioli', 'sfoglia', 'tagliatelle', 'spaghetti', 'reginette'];
 
@@ -35,6 +36,9 @@ export const DEFAULT_MODEL = 'iphone-17-pro';
 
 // Current model: the pattern functions read these (set by setModel()).
 let W, H, R, CAMS, INNER, GRID;
+let LOGO = true; // flat area with the Imperia logo at the bottom of the back
+const LOGO_SIZE = { w: 19, h: 19 * (388 / 1800) };
+const logoY = () => -H / 2 + 11;
 const PLATE = 1.8; // back thickness
 const RIM_T = 1.5; // side wall thickness
 const RIM_D = 9.2; // side wall depth (phone thickness + lip)
@@ -196,6 +200,12 @@ const PATTERNS = {
   },
 };
 
+/** 0 on the logo spot (kept flat), 1 elsewhere */
+function logoMask(x, y) {
+  if (!LOGO) return 1;
+  return smoothstep(0.4, 2, sdRoundRect(x, y, 0, logoY(), LOGO_SIZE.w / 2 + 2.2, LOGO_SIZE.h / 2 + 1.6, LOGO_SIZE.h / 2 + 1.6));
+}
+
 function innerMask(x, y) {
   const dOut = sdRoundRect(x, y, 0, 0, INNER.hw, INNER.hh, INNER.r);
   const dCam = camDist(x, y, CAM_RING + 1.6);
@@ -222,6 +232,7 @@ function reliefGeometry(pattern, { reliefScale = 1, smooth = 0 } = {}) {
       keep[idx] = out < -0.9 && inCam > 0.4 ? 1 : 0;
       let h = def.h(x, y);
       if (def.mask) h *= innerMask(x, y);
+      h *= logoMask(x, y);
       heights[idx] = Math.max(0, h) * reliefScale;
     }
   }
@@ -291,8 +302,9 @@ function extrude(shape, depth, bevel, z, thinnest = Infinity) {
  * @param material  'raw' | 'aldente' | 'overcooked'
  * @param model     key of PHONE_MODELS (size, corners, camera, buttons)
  */
-export function buildCover({ pattern = 'raviolo', color = '#ffb548', material = 'aldente', model = DEFAULT_MODEL } = {}) {
+export function buildCover({ pattern = 'raviolo', color = '#ffb548', material = 'aldente', model = DEFAULT_MODEL, logo = true, phone = true } = {}) {
   const spec = setModel(model);
+  LOGO = logo;
   const hints = MATERIAL_SHAPE[material] || MATERIAL_SHAPE.aldente;
   const mat = () => makeMaterial(color, material, UV_REPEAT);
   const group = new THREE.Group();
@@ -345,14 +357,76 @@ export function buildCover({ pattern = 'raviolo', color = '#ffb548', material = 
   // relief
   const relief = reliefGeometry(pattern, { reliefScale: hints.relief, smooth: hints.smoothRelief });
   group.add(new THREE.Mesh(relief, mat()));
+
+  // printed Imperia logo, small and centred near the bottom edge
+  if (logo) group.add(logoDecal(logoY(), PLATE + 0.04));
+  // the phone inside: dark frame, glass and lenses through the camera opening
+  if (phone) group.add(buildPhone());
   return group;
+}
+
+let logoTexture = null;
+function logoDecal(y, z) {
+  if (!logoTexture) {
+    logoTexture = new THREE.TextureLoader().load(logoUrl);
+    logoTexture.colorSpace = THREE.SRGBColorSpace;
+    logoTexture.anisotropy = 8;
+  }
+  const m = new THREE.Mesh(
+    new THREE.PlaneGeometry(LOGO_SIZE.w, LOGO_SIZE.h),
+    new THREE.MeshPhysicalMaterial({ map: logoTexture, transparent: true, alphaTest: 0.05, roughness: 0.45, clearcoat: 0.2, polygonOffset: true, polygonOffsetFactor: -2 }),
+  );
+  m.position.set(0, y, z);
+  m.userData.keepTexture = true;
+  m.userData.noShadow = true;
+  return m;
+}
+
+/** A phone sitting in the case (makes the preview read like a product photo). */
+function buildPhone() {
+  const g = new THREE.Group();
+  const frame = new THREE.MeshPhysicalMaterial({ color: '#3a3c40', metalness: 0.75, roughness: 0.32, clearcoat: 0.4 });
+  const glass = new THREE.MeshPhysicalMaterial({ color: '#07080a', metalness: 0.1, roughness: 0.04, clearcoat: 1, clearcoatRoughness: 0.02 });
+  const pw = W - RIM_T * 2 - 0.3;
+  const ph = H - RIM_T * 2 - 0.3;
+  const depth = RIM_D - PLATE * 0.6 - 1.4;
+  const body = new THREE.Mesh(new RoundedBoxGeometry(pw, ph, depth, 4, Math.min(R - RIM_T, depth / 2)), frame);
+  body.position.z = -depth / 2 - 0.05;
+  g.add(body);
+  const screen = new THREE.Mesh(new THREE.PlaneGeometry(pw - 2.6, ph - 2.6), glass);
+  screen.rotation.y = Math.PI;
+  screen.position.z = -depth - 0.1;
+  g.add(screen);
+  // camera module and lenses, inside each opening
+  for (const c of CAMS) {
+    const plate = new THREE.Mesh(extrude(roundedRect(c.x, c.y, c.w - 0.8, c.h - 0.8, Math.max(0.5, c.r - 0.4)), 1.3, 0.3, 0), frame);
+    g.add(plate);
+    const lenses = [];
+    const big = Math.min(c.w, c.h);
+    if (c.w > c.h * 2) for (let i = -1; i <= 1; i++) lenses.push([c.x + i * c.w * 0.26, c.y, c.h * 0.32]);
+    else if (c.h > c.w * 1.5) for (const s of [-1, 1]) lenses.push([c.x, c.y + s * c.h * 0.24, c.w * 0.34]);
+    else if (big > 24) {
+      lenses.push([c.x - c.w * 0.21, c.y + c.h * 0.21, big * 0.17], [c.x - c.w * 0.21, c.y - c.h * 0.21, big * 0.17], [c.x + c.w * 0.21, c.y, big * 0.17]);
+    } else lenses.push([c.x, c.y, big * 0.36]);
+    for (const [x, y, r] of lenses) {
+      const ring = new THREE.Mesh(new THREE.CylinderGeometry(r * 1.18, r * 1.22, 1.4, 40), frame);
+      ring.rotation.x = Math.PI / 2;
+      ring.position.set(x, y, 1.9);
+      const lens = new THREE.Mesh(new THREE.CylinderGeometry(r, r, 1.5, 40), glass);
+      lens.rotation.x = Math.PI / 2;
+      lens.position.set(x, y, 2);
+      g.add(ring, lens);
+    }
+  }
+  return g;
 }
 
 /** Pure height function, exported for tests. */
 export function coverHeightAt(pattern, x, y, model = DEFAULT_MODEL) {
   setModel(model);
+  LOGO = true;
   const def = PATTERNS[pattern];
-  const h = def.h(x, y);
+  const h = def.h(x, y) * logoMask(x, y);
   return Math.max(0, def.mask ? h * innerMask(x, y) : h);
 }
 /** Size and camera openings of a model (mm), exported for tests and the packaging. */

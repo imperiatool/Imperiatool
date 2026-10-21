@@ -8,11 +8,12 @@ Il **pannello Admin** importa file SVG con più elementi (anche esportati da Ill
 
 ## Funzionalità
 
-L'app ha tre prodotti, nell'ordine delle schede: **Case** (pagina iniziale), **Charm** e **Sticker**. Grafica come imperia.com: bianco e rosso, font Helvetica (Arimo dove Helvetica non è installato), titoli prodotto in rosso con "Imperia®".
+L'app si apre su una **home** con tre schede bianche arrotondate (Case, Charm, Sticker) come le linee prodotto di imperia.com. In alto: menu rosso (pagine e lingua), logo Imperia al centro, **account** e **carrello**. Grafica bianco e rosso **#e1201b** (lo stesso del logo), font **Inter**, titoli di pagina identici in tutte le sezioni.
 
 | Area | Cosa fa |
 | --- | --- |
 | **Case** | Custodia per telefono in 3D, ruotabile a 360° con zoom, su una pagina prodotto stile imperia.com. 6 pattern di pasta in rilievo (Spaghetti, Tagliatelle, Ravioli, Reginette, Lasagne, Raviolo), scelti con cerchi disegnati dalle icone della confezione. Colori Pomodoro, Basilico, Ragù, Uovo, Farina. 3 finiture. **Ogni modello di telefono ha il suo 3D** (misure, angoli, fori fotocamera, tasti: `PHONE_MODELS` in `src/lib/cover3d.js`). |
+| **Carrello e account** | Case e charm si aggiungono al carrello; il checkout chiede i dati e salva l'ordine (Admin → Ordini, o `VITE_ORDER_ENDPOINT`). L'account salva i dati del cliente sul dispositivo e mostra i suoi ordini. |
 | **Confezione 3D** | Pulsante "Confezione": la scatola 100×190×25 mm stampata con la fustella di `Phone_Cases.svg`, personalizzata con nome della pasta in alto (lettering di `Pasta Names`), "phone case", colore, finitura, materiale e compatibilità sul retro, nome sul fianco, cerchio del colore scelto. La finestra sotto il logo ha esattamente la forma curva disegnata e mostra la custodia. Il cartoncino cambia con la finitura (carta naturale, satinato, soft-touch). Codice: `src/lib/packaging3d.js`. |
 | **Charm** | Si parte sempre da tela vuota ("Costruisci il tuo personaggio"). Passi Corpo → Occhi → Bocca senza salti automatici: si va avanti con "Avanti" e la barra mostra cosa manca. Colori a cerchi grandi, dimensione/rotazione/stiramento e spessore del contorno sempre visibili. In 3D il colore del contorno riveste tutti i fianchi dell'estrusione. Attacchi visibili in 3D: laccetto con moschettone, portachiavi, catenina a sfere. |
 | **Sticker** | Un solo pulsante: **Condividi** su telefono (si apre il menu di condivisione: WhatsApp, Instagram, Telegram…) oppure **Copia** su computer (poi Ctrl/⌘+V in qualsiasi chat). Sotto, "Scarica PNG". Contorno bianco calcolato con una trasformata di distanza: continuo, preciso, senza buchi. |
@@ -40,7 +41,7 @@ npm run preview    # anteprima della build
 npm run admin:hash -- "la tua password"   # genera l'hash della password admin
 ```
 
-- Case: `http://localhost:5173/#/case` · Charm: `#/charm` · Sticker: `#/sticker`
+- Home: `http://localhost:5173/` · Case: `#/case` · Charm: `#/charm` · Sticker: `#/sticker`
 - Admin (nessun link nel menu): `http://localhost:5173/#/admin`, online `https://imperiatool.vercel.app/#/admin`
 
 Al primo accesso ad `/admin` ti viene chiesto di creare la password (se non hai impostato `VITE_ADMIN_PASSWORD_HASH`, vedi sotto).

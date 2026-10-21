@@ -16,11 +16,12 @@ export const useCoverStore = create(
     }),
     {
       name: 'imperia:cover',
-      version: 2,
+      version: 3,
       storage: createJSONStorage(() => localStorage),
       migrate: (state) => {
         const s = { ...state };
         s.pattern = RENAMED[s.pattern] || s.pattern;
+        if (String(s.color).toLowerCase() === '#e3201b') s.color = '#e1201b';
         if (!COVER_OPTIONS.patterns.includes(s.pattern)) s.pattern = 'tagliatelle';
         if (!COVER_OPTIONS.models.some((m) => m.id === s.model)) s.model = COVER_OPTIONS.models[0].id;
         return s;

@@ -19,7 +19,7 @@ export default function Button({ variant = 'outline', size = 'md', className = '
   return (
     <button
       type="button"
-      className={`inline-flex items-center rounded-full font-bold transition disabled:pointer-events-none disabled:opacity-40 ${VARIANTS[variant]} ${SIZES[size]} ${className}`}
+      className={`inline-flex items-center rounded-full font-semibold transition disabled:pointer-events-none disabled:opacity-40 ${VARIANTS[variant]} ${SIZES[size]} ${className}`}
       {...props}
     >
       {children}

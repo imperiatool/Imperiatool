@@ -6,7 +6,7 @@ export const CANVAS_SIZE = 1400; // canvas user units (square artboard)
 
 // Brand palette taken from "Colour_Palette.svg".
 export const DEFAULT_PALETTE = [
-  { id: 'c-rosso', name: 'Pomodoro', hex: '#e3201b' },
+  { id: 'c-rosso', name: 'Pomodoro', hex: '#e1201b' },
   { id: 'c-verde', name: 'Basilico', hex: '#1a5632' },
   { id: 'c-marrone', name: 'Ragù', hex: '#6a3933' },
   { id: 'c-ambra', name: 'Uovo', hex: '#ffb548' },
@@ -26,7 +26,7 @@ export const DEFAULT_PALETTE = [
  *  - isBase:        other elements are placed and scaled relative to this one (e.g. the body)
  */
 export const DEFAULT_CATEGORIES = [
-  { id: 'cat-corpi', name: 'Corpi', isBase: true, size: 0.7, zIndex: 10, multiple: false, inRandom: true, required: true, anchor: { x: 0.5, y: 0.5 }, fillOutlines: true, outlineFill: '#e3201b' },
+  { id: 'cat-corpi', name: 'Corpi', isBase: true, size: 0.7, zIndex: 10, multiple: false, inRandom: true, required: true, anchor: { x: 0.5, y: 0.5 }, fillOutlines: true, outlineFill: '#e1201b' },
   { id: 'cat-occhi', name: 'Occhi', size: 0.62, zIndex: 20, multiple: false, inRandom: true, required: true, anchor: { x: 0.5, y: 0.3 }, fillOutlines: true, outlineFill: '#ffb548' },
   { id: 'cat-bocche', name: 'Bocche', size: 0.5, zIndex: 30, multiple: false, inRandom: true, required: true, anchor: { x: 0.5, y: 0.66 }, fillOutlines: true, outlineFill: '#6a3933' },
   { id: 'cat-accessori', name: 'Accessori', size: 0.5, zIndex: 40, multiple: true, inRandom: true, required: false, anchor: { x: 0.5, y: 0.12 }, fillOutlines: true, outlineFill: '#1a5632' },
@@ -40,12 +40,14 @@ export const CHARM_OPTIONS = {
     { id: '5cm', label: '5 cm', price: 15.9 },
   ],
   // look of each material in the 3D preview lives in src/lib/charm3d.js
+  // same price for every finish
   materials: [
     { id: 'raw', surcharge: 0 },
-    { id: 'aldente', surcharge: 2 },
-    { id: 'overcooked', surcharge: 3 },
+    { id: 'aldente', surcharge: 0 },
+    { id: 'overcooked', surcharge: 0 },
   ],
-  attachments: [{ id: 'strap' }, { id: 'keyring' }, { id: 'chain' }],
+  // 'none' = the charm alone (default)
+  attachments: [{ id: 'none' }, { id: 'strap' }, { id: 'keyring' }, { id: 'chain' }],
 };
 
 // Phone cases: price, finish surcharge and phone models (3D geometry per model in src/lib/cover3d.js).
@@ -53,8 +55,8 @@ export const COVER_OPTIONS = {
   basePrice: 29.9,
   materials: [
     { id: 'raw', surcharge: 0 },
-    { id: 'aldente', surcharge: 3 },
-    { id: 'overcooked', surcharge: 5 },
+    { id: 'aldente', surcharge: 0 },
+    { id: 'overcooked', surcharge: 0 },
   ],
   patterns: ['spaghetti', 'tagliatelle', 'ravioli', 'reginette', 'sfoglia', 'raviolo'],
   models: [

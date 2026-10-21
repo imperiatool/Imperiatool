@@ -1,101 +1,113 @@
-import { useEffect, useRef, useState } from 'react';
-import { NavLink } from 'react-router-dom';
+import { useState } from 'react';
+import { NavLink, Link, useLocation } from 'react-router-dom';
 import Icon from '../ui/Icon.jsx';
 import Flag from '../ui/Flag.jsx';
+import Drawer from '../ui/Drawer.jsx';
 import logoUrl from '../../assets/imperia-logo.svg';
 import { useI18n, LANGUAGES } from '../../i18n/index.js';
+import { useCartStore, cartCount } from '../../store/useCartStore.js';
 
-// Product order requested: Case first, then Charm, then Sticker.
-const PRODUCTS = [
-  { to: '/case', key: 'nav.case', icon: 'phone' },
-  { to: '/charm', key: 'nav.charm', icon: 'cube' },
-  { to: '/sticker', key: 'nav.sticker', icon: 'sticker' },
+export const PRODUCTS = [
+  { to: '/case', key: 'nav.case' },
+  { to: '/charm', key: 'nav.charm' },
+  { to: '/sticker', key: 'nav.sticker' },
 ];
 
-function LanguageMenu() {
+function MenuDrawer({ open, onClose }) {
   const { t, lang, setLang } = useI18n();
-  const [open, setOpen] = useState(false);
-  const ref = useRef(null);
-  useEffect(() => {
-    if (!open) return;
-    const close = (e) => !ref.current?.contains(e.target) && setOpen(false);
-    window.addEventListener('pointerdown', close);
-    return () => window.removeEventListener('pointerdown', close);
-  }, [open]);
-  const current = LANGUAGES.find((l) => l.code === lang);
+  const link = ({ isActive }) => `block rounded-xl px-3 py-3 text-lg font-semibold ${isActive ? 'text-brand' : 'text-ink hover:bg-ink/5'}`;
   return (
-    <div className="relative" ref={ref}>
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        className="inline-flex h-10 items-center gap-2 rounded-full border border-line bg-white px-3 text-sm font-semibold hover:border-brand/50"
-        aria-haspopup="listbox"
-        aria-expanded={open}
-        aria-label={t('nav.language')}
-        data-testid="lang-button"
-      >
-        <Flag code={lang} />
-        <span className="hidden sm:inline">{current?.label}</span>
-      </button>
-      {open && (
-        <ul role="listbox" className="absolute right-0 z-40 mt-2 w-44 overflow-hidden rounded-2xl border border-line bg-paper py-1 shadow-xl">
-          {LANGUAGES.map((l) => (
-            <li key={l.code}>
-              <button
-                type="button"
-                role="option"
-                aria-selected={l.code === lang}
-                onClick={() => {
-                  setLang(l.code);
-                  setOpen(false);
-                }}
-                className={`flex w-full items-center gap-3 px-3 py-2 text-left text-sm ${l.code === lang ? 'bg-brand text-white' : 'hover:bg-ink/5'}`}
-                data-testid={`lang-${l.code}`}
-              >
-                <Flag code={l.code} />
-                <span className="font-medium">{l.name}</span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
+    <Drawer open={open} onClose={onClose} side="left" title="Menu" testid="menu-drawer">
+      <nav className="space-y-1" aria-label="Menu">
+        <NavLink to="/" end className={link} onClick={onClose}>
+          {t('nav.home')}
+        </NavLink>
+        {PRODUCTS.map((p) => (
+          <NavLink key={p.to} to={p.to} className={link} onClick={onClose}>
+            {t(p.key)}
+          </NavLink>
+        ))}
+      </nav>
+      <h3 className="mb-2 mt-8 px-3 text-xs font-semibold uppercase tracking-wider text-muted">{t('nav.language')}</h3>
+      <ul className="space-y-0.5" role="listbox" aria-label={t('nav.language')}>
+        {LANGUAGES.map((l) => (
+          <li key={l.code}>
+            <button
+              type="button"
+              role="option"
+              aria-selected={l.code === lang}
+              onClick={() => setLang(l.code)}
+              className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm ${l.code === lang ? 'font-semibold text-brand' : 'hover:bg-ink/5'}`}
+              data-testid={`lang-${l.code}`}
+            >
+              <Flag code={l.code} />
+              {l.name}
+              {l.code === lang && <Icon name="check" className="ml-auto h-4 w-4" />}
+            </button>
+          </li>
+        ))}
+      </ul>
+    </Drawer>
   );
 }
 
+/**
+ * imperia.com style: red round menu button on the left, logo in the centre,
+ * account and cart on the right. Product tabs underneath on product pages.
+ */
 export default function Header() {
-  const { t } = useI18n();
-  // Minimal tabs: red text + red underline on the active one, nothing else.
+  const { t, lang } = useI18n();
+  const [menu, setMenu] = useState(false);
+  const items = useCartStore((s) => s.items);
+  const show = useCartStore((s) => s.show);
+  const count = cartCount(items);
+  const { pathname } = useLocation();
+  const onProduct = PRODUCTS.some((p) => pathname.startsWith(p.to));
+  const iconBtn = 'relative grid h-10 w-10 place-items-center rounded-full text-ink transition hover:bg-ink/5';
+
   const tab = ({ isActive }) =>
-    `relative flex h-11 flex-1 items-center justify-center px-2 text-[15px] tracking-tight transition sm:flex-none sm:px-5 ${
-      isActive
-        ? 'font-bold text-brand after:absolute after:inset-x-3 after:-bottom-px after:h-[3px] after:rounded-full after:bg-brand'
-        : 'font-semibold text-ink/60 hover:text-ink'
+    `relative flex h-11 flex-1 items-center justify-center px-3 text-[15px] transition sm:flex-none sm:px-6 ${
+      isActive ? 'font-semibold text-brand after:absolute after:inset-x-3 after:-bottom-px after:h-[2px] after:rounded-full after:bg-brand' : 'font-medium text-ink/55 hover:text-ink'
     }`;
+
   return (
     <header className="shrink-0 border-b border-line bg-white">
-      <div className="flex items-center gap-3 px-4 pt-3 sm:px-6 sm:py-0">
-        <NavLink to="/case" className="shrink-0 sm:py-3" aria-label="Imperia">
-          <img src={logoUrl} alt="Imperia dal 1932" className="h-7 w-auto sm:h-8" />
-        </NavLink>
-        <nav className="hidden flex-1 justify-center gap-2 sm:flex" aria-label="Products">
+      <div className="grid grid-cols-[1fr_auto_1fr] items-center px-3 py-2.5 sm:px-6 sm:py-3">
+        <div className="flex items-center gap-1">
+          <button type="button" onClick={() => setMenu(true)} className="grid h-10 w-10 place-items-center rounded-full bg-brand text-white transition hover:bg-brand-dark" aria-label="Menu" data-testid="menu-button">
+            <Icon name="menu" className="h-5 w-5" />
+          </button>
+          <button type="button" onClick={() => setMenu(true)} className="ml-1 hidden items-center gap-1.5 rounded-full px-2 py-1.5 text-sm font-medium text-ink/70 hover:bg-ink/5 sm:flex" aria-label={t('nav.language')} data-testid="lang-button">
+            <Flag code={lang} /> {LANGUAGES.find((l) => l.code === lang)?.label}
+          </button>
+        </div>
+        <Link to="/" className="justify-self-center" aria-label="Imperia">
+          <img src={logoUrl} alt="Imperia" className="h-8 w-auto sm:h-9" />
+        </Link>
+        <div className="flex items-center justify-end gap-1">
+          <button type="button" className={iconBtn} onClick={() => show('account')} aria-label={t('account.title')} data-testid="account-button">
+            <Icon name="user" className="h-[22px] w-[22px]" strokeWidth={1.8} />
+          </button>
+          <button type="button" className={iconBtn} onClick={() => show('cart')} aria-label={t('cart.title')} data-testid="cart-button">
+            <Icon name="bag" className="h-[22px] w-[22px]" strokeWidth={1.8} />
+            {count > 0 && (
+              <span className="absolute right-0.5 top-0.5 grid h-[18px] min-w-[18px] place-items-center rounded-full bg-brand px-1 text-[11px] font-semibold text-white" data-testid="cart-count">
+                {count}
+              </span>
+            )}
+          </button>
+        </div>
+      </div>
+      {onProduct && (
+        <nav className="flex justify-center border-t border-line" aria-label="Products">
           {PRODUCTS.map((p) => (
             <NavLink key={p.to} to={p.to} className={tab} data-testid={`tab-${p.to.slice(1)}`}>
               {t(p.key)}
             </NavLink>
           ))}
         </nav>
-        <div className="ml-auto sm:ml-0">
-          <LanguageMenu />
-        </div>
-      </div>
-      <nav className="mt-1 flex sm:hidden" aria-label="Products">
-        {PRODUCTS.map((p) => (
-          <NavLink key={p.to} to={p.to} className={tab} data-testid={`mtab-${p.to.slice(1)}`}>
-            {t(p.key)}
-          </NavLink>
-        ))}
-      </nav>
+      )}
+      <MenuDrawer open={menu} onClose={() => setMenu(false)} />
     </header>
   );
 }

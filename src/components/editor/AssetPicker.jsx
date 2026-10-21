@@ -83,7 +83,7 @@ export default function AssetPicker({ library, step = 0, onStepChange }) {
               <span key={c.id} className={`h-1.5 w-6 rounded-full ${done(c) ? 'bg-brand' : 'bg-line'}`} />
             ))}
           </div>
-          <span className={allDone ? 'font-bold text-brand' : 'text-muted'} data-testid="picker-progress">
+          <span className={allDone ? 'text-brand' : 'text-muted'} data-testid="picker-progress">
             {allDone ? t('editor.allDone') : t('picker.progress', { done: doneCount, total: required.length })}
           </span>
         </div>

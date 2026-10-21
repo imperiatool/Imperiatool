@@ -46,7 +46,7 @@ export class Studio {
     fill.position.set(-2.4, 1, 2);
     this.scene.add(fill);
 
-    const floor = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), new THREE.ShadowMaterial({ opacity: 0.2 }));
+    const floor = (this.floor = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), new THREE.ShadowMaterial({ opacity: 0.2 })));
     floor.rotation.x = -Math.PI / 2;
     floor.receiveShadow = true;
     this.scene.add(floor);
@@ -54,8 +54,14 @@ export class Studio {
     this.camera = new THREE.PerspectiveCamera(28, 1, 0.02, 100);
     this.controls = new OrbitControls(this.camera, el);
     this.controls.enableDamping = true;
-    this.controls.enablePan = false;
-    this.controls.maxPolarAngle = Math.PI * 0.56; // never under the floor
+    // free 360° in every direction: drag = rotate, right-drag / two fingers = move, wheel / pinch = zoom
+    this.controls.enablePan = true;
+    this.controls.screenSpacePanning = true;
+    this.controls.minPolarAngle = 0;
+    this.controls.maxPolarAngle = Math.PI;
+    this.controls.rotateSpeed = 0.9;
+    this.controls.dampingFactor = 0.08;
+    this.controls.touches = { ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_PAN };
     this.controls.autoRotateSpeed = 1.4;
     el.addEventListener('pointerdown', () => (el.style.cursor = 'grabbing'));
     el.addEventListener('pointerup', () => (el.style.cursor = 'grab'));
@@ -70,6 +76,8 @@ export class Studio {
       if (!this.running) return;
       this.applyWobble();
       this.controls.update();
+      // looking from below: hide the floor shadow
+      this.floor.visible = this.camera.position.y > 0.01;
       this.renderer.render(this.scene, this.camera);
       this.raf = requestAnimationFrame(loop);
     };
@@ -126,6 +134,7 @@ export class Studio {
     const fitH = fs.y / 2 / Math.tan(fov / 2);
     const fitW = fs.x / 2 / Math.tan(fov / 2) / Math.max(this.camera.aspect, 0.4);
     this.fitDistance = Math.max(fitH, fitW) * (this.margin || 1.3);
+    this.homeTarget = target.clone();
     this.controls.target.copy(target);
     this.controls.minDistance = this.fitDistance * 0.25;
     this.controls.maxDistance = this.fitDistance * 2.5;
@@ -160,6 +169,7 @@ export class Studio {
   }
 
   resetView() {
+    if (this.homeTarget) this.controls.target.copy(this.homeTarget);
     const t = this.controls.target;
     const d = this.fitDistance || 5;
     this.camera.position.set(t.x + d * 0.22, t.y + d * 0.1, t.z + d * 0.97);
@@ -179,7 +189,8 @@ export class Studio {
     this.object.traverse((o) => {
       if (o.isMesh) {
         o.geometry.dispose();
-        (Array.isArray(o.material) ? o.material : [o.material]).forEach(disposeMaterial);
+        if (!o.userData.keepTexture) (Array.isArray(o.material) ? o.material : [o.material]).forEach(disposeMaterial);
+        else o.material.dispose();
         o.customDepthMaterial?.dispose();
       }
     });
@@ -187,9 +198,17 @@ export class Studio {
     this.object = null;
   }
 
-  snapshot(quality = 0.88) {
+  /** JPEG of the current view; `maxSide` keeps it small (cart thumbnails). */
+  snapshot(quality = 0.88, maxSide = 0) {
     this.renderer.render(this.scene, this.camera);
-    return this.renderer.domElement.toDataURL('image/jpeg', quality);
+    const src = this.renderer.domElement;
+    if (!maxSide || Math.max(src.width, src.height) <= maxSide) return src.toDataURL('image/jpeg', quality);
+    const k = maxSide / Math.max(src.width, src.height);
+    const c = document.createElement('canvas');
+    c.width = Math.round(src.width * k);
+    c.height = Math.round(src.height * k);
+    c.getContext('2d').drawImage(src, 0, 0, c.width, c.height);
+    return c.toDataURL('image/jpeg', quality);
   }
 
   dispose() {

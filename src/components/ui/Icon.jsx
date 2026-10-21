@@ -1,5 +1,9 @@
 // Minimal inline icon set (stroke icons, 24×24) — no icon dependency needed.
 const PATHS = {
+  menu: 'M4 7h16M4 12h16M4 17h10',
+  user: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4.5 20a7.5 7.5 0 0 1 15 0',
+  bag: 'M5 8h14l-1.2 12H6.2L5 8zM9 8V6a3 3 0 0 1 6 0v2',
+  arrowLeft: 'M19 12H5M11 6l-6 6 6 6',
   dice: 'M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Zm3.5 5.5h.01M15.5 8.5h.01M12 12h.01M8.5 15.5h.01M15.5 15.5h.01',
   download: 'M12 3v12m0 0-4-4m4 4 4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2',
   cart: 'M3 4h2l2.4 11.2a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 2-1.5L21 8H6.2M10 20.5h.01M17 20.5h.01',

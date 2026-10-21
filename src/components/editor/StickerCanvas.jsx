@@ -34,24 +34,25 @@ function Handles({ item, asset, unit, onPointerDown }) {
   const dir = { x: top.x - item.x, y: top.y - item.y };
   const len = Math.hypot(dir.x, dir.y) || 1;
   const rot = { x: top.x + (dir.x / len) * 44 * unit, y: top.y + (dir.y / len) * 44 * unit };
-  const r = 8 * unit;
+  // bigger handles on touch screens
+  const r = (typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)').matches ? 13 : 8) * unit;
   const sw = 2 * unit;
 
   const handle = (p, mode, key, cursor, shape = 'circle') =>
     shape === 'circle' ? (
-      <circle key={key} cx={p.x} cy={p.y} r={r} fill="#fff" stroke="#3a1f1b" strokeWidth={sw} style={{ cursor }} onPointerDown={(e) => onPointerDown(e, item, mode)} data-handle={mode} />
+      <circle key={key} cx={p.x} cy={p.y} r={r} fill="#fff" stroke="#1d1d1b" strokeWidth={sw} style={{ cursor }} onPointerDown={(e) => onPointerDown(e, item, mode)} data-handle={mode} />
     ) : (
-      <rect key={key} x={p.x - r * 0.8} y={p.y - r * 0.8} width={r * 1.6} height={r * 1.6} rx={r * 0.3} fill="#ffb548" stroke="#3a1f1b" strokeWidth={sw} style={{ cursor }} onPointerDown={(e) => onPointerDown(e, item, mode)} data-handle={mode} />
+      <rect key={key} x={p.x - r * 0.8} y={p.y - r * 0.8} width={r * 1.6} height={r * 1.6} rx={r * 0.3} fill="#fff" stroke="#1d1d1b" strokeWidth={sw} style={{ cursor }} onPointerDown={(e) => onPointerDown(e, item, mode)} data-handle={mode} />
     );
 
   return (
     <g>
-      <polygon points={corners.map((c) => `${c.x},${c.y}`).join(' ')} fill="none" stroke="#e3201b" strokeWidth={sw} strokeDasharray={`${6 * unit} ${4 * unit}`} pointerEvents="none" />
-      <line x1={top.x} y1={top.y} x2={rot.x} y2={rot.y} stroke="#e3201b" strokeWidth={sw} pointerEvents="none" />
+      <polygon points={corners.map((c) => `${c.x},${c.y}`).join(' ')} fill="none" stroke="#e1201b" strokeWidth={sw} strokeDasharray={`${6 * unit} ${4 * unit}`} pointerEvents="none" />
+      <line x1={top.x} y1={top.y} x2={rot.x} y2={rot.y} stroke="#e1201b" strokeWidth={sw} pointerEvents="none" />
       {sides.stretchX.map((p, i) => handle(p, 'stretchX', `sx${i}`, 'ew-resize', 'rect'))}
       {sides.stretchY.map((p, i) => handle(p, 'stretchY', `sy${i}`, 'ns-resize', 'rect'))}
       {corners.map((p, i) => handle(p, 'scale', `c${i}`, i % 2 ? 'nesw-resize' : 'nwse-resize'))}
-      <circle cx={rot.x} cy={rot.y} r={r * 1.1} fill="#e3201b" stroke="#3a1f1b" strokeWidth={sw} style={{ cursor: 'grab' }} onPointerDown={(e) => onPointerDown(e, item, 'rotate')} data-handle="rotate" />
+      <circle cx={rot.x} cy={rot.y} r={r * 1.1} fill="#e1201b" stroke="#1d1d1b" strokeWidth={sw} style={{ cursor: 'grab' }} onPointerDown={(e) => onPointerDown(e, item, 'rotate')} data-handle="rotate" />
     </g>
   );
 }
@@ -62,7 +63,7 @@ function LockedFrame({ item, asset, unit }) {
   const h = asset.height / 2;
   const pts = [[-w, -h], [w, -h], [w, h], [-w, h]].map(([x, y]) => localToCanvas(item, { x, y }));
   return (
-    <polygon points={pts.map((c) => `${c.x},${c.y}`).join(' ')} fill="none" stroke="#7a5f58" strokeWidth={2 * unit} strokeDasharray={`${3 * unit} ${5 * unit}`} pointerEvents="none" />
+    <polygon points={pts.map((c) => `${c.x},${c.y}`).join(' ')} fill="none" stroke="#6f6f6f" strokeWidth={2 * unit} strokeDasharray={`${3 * unit} ${5 * unit}`} pointerEvents="none" />
   );
 }
 
@@ -84,8 +85,51 @@ export default function StickerCanvas({ assetsById, svgRef: externalRef, label }
     return () => ro.disconnect();
   }, [svgRef]);
 
+  // two fingers on the canvas: pinch to resize, twist to rotate the selected element
+  const pointers = useRef(new Map());
+  const pinch = useRef(null);
+  const trackPointer = (e) => {
+    pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pointers.current.size === 2) {
+      const st = useEditorStore.getState();
+      const id = drag.current?.id || st.selectedId;
+      const it = st.items.find((i) => i.uid === id);
+      if (!it || it.locked) return;
+      const [a, b] = [...pointers.current.values()];
+      st.snapshot();
+      drag.current = null;
+      pinch.current = { id, d0: Math.hypot(b.x - a.x, b.y - a.y) || 1, a0: Math.atan2(b.y - a.y, b.x - a.x), orig: { ...it } };
+      svgRef.current?.setPointerCapture?.(e.pointerId);
+    }
+  };
+  const untrackPointer = (e) => {
+    pointers.current.delete(e.pointerId);
+    if (pointers.current.size < 2) pinch.current = null;
+  };
+
+  // mouse wheel over the canvas: resize the selected element (Shift = rotate)
+  useEffect(() => {
+    const el = svgRef.current;
+    if (!el) return;
+    let timer = null;
+    const onWheel = (e) => {
+      const st = useEditorStore.getState();
+      const it = st.items.find((i) => i.uid === st.selectedId);
+      if (!it || it.locked) return;
+      e.preventDefault();
+      if (!timer) st.snapshot();
+      clearTimeout(timer);
+      timer = setTimeout(() => (timer = null), 400);
+      if (e.shiftKey) st.updateItem(it.uid, { rotation: round(normalizeAngle(it.rotation + Math.sign(e.deltaY || e.deltaX) * 5), 10) });
+      else st.updateItem(it.uid, { scale: round(clamp(it.scale * Math.exp(-e.deltaY * 0.0015), 0.05, 8), 1000) });
+    };
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => el.removeEventListener('wheel', onWheel);
+  }, [svgRef]);
+
   const startDrag = (e, item, mode) => {
     if (e.button !== 0) return;
+    if (pinch.current) return;
     e.stopPropagation();
     const { select } = useEditorStore.getState();
     select(item.uid);
@@ -95,6 +139,18 @@ export default function StickerCanvas({ assetsById, svgRef: externalRef, label }
   };
 
   const onPointerMove = (e) => {
+    if (pointers.current.has(e.pointerId)) pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    const pz = pinch.current;
+    if (pz && pointers.current.size >= 2) {
+      const [a, b] = [...pointers.current.values()];
+      const d1 = Math.hypot(b.x - a.x, b.y - a.y);
+      const a1 = Math.atan2(b.y - a.y, b.x - a.x);
+      useEditorStore.getState().updateItem(pz.id, {
+        scale: round(clamp((pz.orig.scale * d1) / pz.d0, 0.05, 8), 1000),
+        rotation: round(normalizeAngle(pz.orig.rotation + ((a1 - pz.a0) * 180) / Math.PI), 10),
+      });
+      return;
+    }
     const d = drag.current;
     if (!d) return;
     const store = useEditorStore.getState();
@@ -135,7 +191,8 @@ export default function StickerCanvas({ assetsById, svgRef: externalRef, label }
     store.updateItem(d.id, patch);
   };
 
-  const endDrag = () => {
+  const endDrag = (e) => {
+    if (e) untrackPointer(e);
     if (drag.current) svgRef.current?.releasePointerCapture?.(drag.current.pointerId);
     drag.current = null;
     setGuides({ v: false, h: false });
@@ -152,7 +209,8 @@ export default function StickerCanvas({ assetsById, svgRef: externalRef, label }
       onPointerMove={onPointerMove}
       onPointerUp={endDrag}
       onPointerCancel={endDrag}
-      onPointerDown={() => useEditorStore.getState().select(null)}
+      onPointerDownCapture={trackPointer}
+      onPointerDown={() => pointers.current.size < 2 && useEditorStore.getState().select(null)}
       role="application"
       aria-label={label}
     >
@@ -162,8 +220,8 @@ export default function StickerCanvas({ assetsById, svgRef: externalRef, label }
         )}
       </g>
       <g data-layer="ui">
-        {guides.v && <line x1={CANVAS_SIZE / 2} x2={CANVAS_SIZE / 2} y1={0} y2={CANVAS_SIZE} stroke="#1a5632" strokeWidth={unit} strokeDasharray={`${8 * unit}`} />}
-        {guides.h && <line y1={CANVAS_SIZE / 2} y2={CANVAS_SIZE / 2} x1={0} x2={CANVAS_SIZE} stroke="#1a5632" strokeWidth={unit} strokeDasharray={`${8 * unit}`} />}
+        {guides.v && <line x1={CANVAS_SIZE / 2} x2={CANVAS_SIZE / 2} y1={0} y2={CANVAS_SIZE} stroke="#e1201b" strokeWidth={unit} strokeDasharray={`${8 * unit}`} />}
+        {guides.h && <line y1={CANVAS_SIZE / 2} y2={CANVAS_SIZE / 2} x1={0} x2={CANVAS_SIZE} stroke="#e1201b" strokeWidth={unit} strokeDasharray={`${8 * unit}`} />}
         {selected && selectedAsset && !selected.hidden && !selected.locked && (
           <Handles item={selected} asset={selectedAsset} unit={unit} onPointerDown={startDrag} />
         )}
