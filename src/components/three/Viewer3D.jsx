@@ -69,6 +69,10 @@ export default function Viewer3D({ kind, items, assetsById, material, attachment
   }, [kind, items, assetsById, material, coverKey, attachment, sizeMm]);
 
   useEffect(() => studioRef.current?.setAutoRotate(spin), [spin]);
+  const move = (dir) => {
+    setSpin(false);
+    studioRef.current?.pan(dir);
+  };
 
   // "jelly" bounce when the material changes: you can see how soft it is
   const mat = kind === 'charm' ? material : cover?.material;
@@ -98,18 +102,11 @@ export default function Viewer3D({ kind, items, assetsById, material, attachment
             <button type="button" className={btn} onClick={() => studioRef.current?.zoom(1.33)} title={t('viewer.zoomOut')} aria-label={t('viewer.zoomOut')}>
               <Icon name="minus" className="h-5 w-5" />
             </button>
-            <button type="button" className={btn} onClick={() => studioRef.current?.resetView()} title={t('viewer.reset')} aria-label={t('viewer.reset')}>
-              <Icon name="reset" className="h-5 w-5" />
+            <button type="button" className={btn} onClick={() => move(1)} title={t('viewer.up')} aria-label={t('viewer.up')} data-testid="move-up">
+              <Icon name="up" className="h-5 w-5" />
             </button>
-            <button
-              type="button"
-              className={`${btn} ${spin ? '!bg-brand !text-white !ring-brand' : ''}`}
-              onClick={() => setSpin((s) => !s)}
-              title={t('order.autoRotate')}
-              aria-label={t('order.autoRotate')}
-              aria-pressed={spin}
-            >
-              <Icon name="rotate" className="h-5 w-5" />
+            <button type="button" className={btn} onClick={() => move(-1)} title={t('viewer.down')} aria-label={t('viewer.down')} data-testid="move-down">
+              <Icon name="down" className="h-5 w-5" />
             </button>
           </div>
           {busy && <div className="pointer-events-none absolute inset-x-0 top-3 text-center text-xs font-semibold text-muted">{t('order.loading3d')}</div>}

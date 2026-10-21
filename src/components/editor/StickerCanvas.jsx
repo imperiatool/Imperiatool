@@ -67,7 +67,7 @@ function LockedFrame({ item, asset, unit }) {
   );
 }
 
-export default function StickerCanvas({ assetsById, svgRef: externalRef, label }) {
+export default function StickerCanvas({ assetsById, svgRef: externalRef, label, outline = false }) {
   const items = useEditorStore((s) => s.items);
   const selectedId = useEditorStore((s) => s.selectedId);
   const localRef = useRef(null);
@@ -214,7 +214,29 @@ export default function StickerCanvas({ assetsById, svgRef: externalRef, label }
       role="application"
       aria-label={label}
     >
-      <g data-layer="content">
+      {outline && (
+        // white die-cut outline, like the downloaded sticker (blur + threshold = smooth offset)
+        <defs>
+          <filter id="sticker-outline" filterUnits="userSpaceOnUse" x="0" y="0" width={CANVAS_SIZE} height={CANVAS_SIZE} colorInterpolationFilters="sRGB">
+            <feGaussianBlur in="SourceAlpha" stdDeviation="15" result="b" />
+            <feComponentTransfer in="b" result="o">
+              <feFuncA type="table" tableValues={`0 ${'1 '.repeat(26).trim()}`} />
+            </feComponentTransfer>
+            <feGaussianBlur in="o" stdDeviation="9" result="sb" />
+            <feFlood floodColor="#000" floodOpacity="0.16" />
+            <feComposite in2="sb" operator="in" result="shadow" />
+            <feOffset in="shadow" dy="6" result="shadow2" />
+            <feFlood floodColor="#ffffff" />
+            <feComposite in2="o" operator="in" result="white" />
+            <feMerge>
+              <feMergeNode in="shadow2" />
+              <feMergeNode in="white" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
+      )}
+      <g data-layer="content" filter={outline ? 'url(#sticker-outline)' : undefined}>
         {items.map((it) =>
           assetsById[it.assetId] && !it.hidden ? <CanvasItem key={it.uid} item={it} asset={assetsById[it.assetId]} onPointerDown={startDrag} /> : null,
         )}

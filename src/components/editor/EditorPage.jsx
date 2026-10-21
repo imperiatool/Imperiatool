@@ -114,8 +114,8 @@ export default function EditorPage({ mode = 'charm' }) {
         <section className="order-1 flex flex-col gap-2 bg-studio p-3 sm:p-5 lg:order-2 lg:min-h-0">
           <div className="flex justify-center">{tools}</div>
           <div className="relative grid place-items-center lg:min-h-0 lg:flex-1">
-            <div className="relative aspect-square w-full max-w-[min(100%,calc(100vh-21rem))] overflow-hidden rounded-[28px] bg-white [background-image:radial-gradient(#1d1d1b10_1px,transparent_1px)] [background-size:22px_22px]">
-              <StickerCanvas assetsById={library.assetsById} label={t('editor.canvasLabel')} />
+            <div className={`relative aspect-square w-full max-w-[min(100%,calc(100vh-21rem))] overflow-hidden rounded-[28px] ${mode === 'sticker' ? 'bg-[#ececea]' : 'bg-white'} [background-image:radial-gradient(#1d1d1b10_1px,transparent_1px)] [background-size:22px_22px]`}>
+              <StickerCanvas assetsById={library.assetsById} label={t('editor.canvasLabel')} outline={mode === 'sticker'} />
               {!items.length && (
                 <div className="absolute inset-0 grid place-items-center p-6 text-center">
                   <div className="space-y-4">
@@ -138,7 +138,7 @@ export default function EditorPage({ mode = 'charm' }) {
 
         {/* 2. colours & adjustments: every part stays open */}
         <aside className="order-3 border-line bg-white lg:min-h-0 lg:border-l">
-          <PropertiesPanel library={library} mode={mode} />
+          <PropertiesPanel library={library} />
         </aside>
       </div>
 

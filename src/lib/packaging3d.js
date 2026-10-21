@@ -27,7 +27,7 @@ const BOX = { w: 100, h: 190, d: 25, tab: 25 };
 
 // Names printed on the box (the packaging is printed in English).
 export const PACK_NAMES = {
-  spaghetti: 'Spaghetti',
+  spaghetti: 'Spaghetto',
   tagliatelle: 'Tagliatelle',
   ravioli: 'Ravioli',
   reginette: 'Reginette',
@@ -44,6 +44,8 @@ const COLOUR_DOTS = {
   'c-verde': { name: 'Basil', y: 533 },
   'c-marrone': { name: 'Ragù', y: 603 },
 };
+// pattern circles printed on the right side ("Patterns available")
+const PATTERN_DOTS = { spaghetti: 323.5, tagliatelle: 393.5, ravioli: 463, reginette: 533, sfoglia: 603 };
 export const PACK_FINISH = {
   raw: { name: 'Raw', material: 'Polycarbonate (PC) · Matte finish', protection: 'Non-slip grip' },
   aldente: { name: 'Al Dente', material: 'Polycarbonate (PC) · Satin finish', protection: 'Scratch-resistant' },
@@ -76,8 +78,9 @@ export function packagingOverlay({ pattern, colorId, colorName, finish, modelLab
   }
 
   // back: product details, one line each (long values are condensed to fit)
-  parts.push(`<rect x="418" y="313" width="188" height="66" fill="${RED}"/>`);
+  parts.push(`<rect x="418" y="313" width="188" height="78" fill="${RED}"/>`);
   const rows = [
+    ['Pattern', name],
     ['Colour', colorName],
     ['Finish', f.name],
     ['Material', f.material],
@@ -85,13 +88,15 @@ export function packagingOverlay({ pattern, colorId, colorName, finish, modelLab
     ['Everyday protection', f.protection],
   ];
   rows.forEach(([k, v], i) => {
-    const y = 327 + i * 12;
+    const y = 326.8 + i * 12;
     const fit = `${k}: ${v}`.length * 4.75 > 184 ? ' textLength="184" lengthAdjust="spacingAndGlyphs"' : '';
     parts.push(`<text x="419.5" y="${y}" ${FONT} font-size="9.4" letter-spacing="-0.25" fill="#fff"${fit}><tspan font-weight="700">${esc(k)}:</tspan> ${esc(v)}</text>`);
   });
   // ring around the chosen colour
   const dot = COLOUR_DOTS[colorId];
   if (dot) parts.push(`<circle cx="362.6" cy="${dot.y}" r="25.5" fill="none" stroke="#fff" stroke-width="2.4"/>`);
+  // …and around the chosen pattern
+  if (PATTERN_DOTS[pattern]) parts.push(`<circle cx="1004.65" cy="${PATTERN_DOTS[pattern]}" r="25.5" fill="none" stroke="#fff" stroke-width="2.4"/>`);
 
   // spine (next to the "garanzia 2 anni" seal): product name
   parts.push(`<rect x="611" y="436" width="69.5" height="58" fill="${RED}"/>`);
@@ -160,16 +165,9 @@ function paperBump() {
   return t;
 }
 
-/** Board finish follows the case finish: uncoated paper, satin, soft-touch. */
-function boardMaterial(map, finish) {
-  const base = { map, alphaTest: 0.5, metalness: 0 };
-  if (finish === 'raw') {
-    return new THREE.MeshPhysicalMaterial({ ...base, roughness: 0.97, color: new THREE.Color('#ece6da'), bumpMap: paperBump(), bumpScale: 0.35 });
-  }
-  if (finish === 'overcooked') {
-    return new THREE.MeshPhysicalMaterial({ ...base, roughness: 0.82, sheen: 0.55, sheenRoughness: 0.55, sheenColor: new THREE.Color('#ffffff') });
-  }
-  return new THREE.MeshPhysicalMaterial({ ...base, roughness: 0.42, clearcoat: 0.3, clearcoatRoughness: 0.32 });
+/** Natural, uncoated board: the same for every finish. */
+function boardMaterial(map) {
+  return new THREE.MeshPhysicalMaterial({ map, alphaTest: 0.5, metalness: 0, roughness: 0.97, color: new THREE.Color('#ece6da'), bumpMap: paperBump(), bumpScale: 0.35 });
 }
 
 /**
@@ -181,7 +179,7 @@ export async function buildPackaging(opts) {
   const map = new THREE.CanvasTexture(canvas);
   map.colorSpace = THREE.SRGBColorSpace;
   map.anisotropy = 8;
-  const mat = boardMaterial(map, opts.material);
+  const mat = boardMaterial(map);
   const depthMat = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking, map, alphaTest: 0.5 });
 
   const { w, h, d } = BOX;
@@ -253,11 +251,11 @@ export async function buildPackaging(opts) {
 function windowFilm(c, z) {
   const W = 48;
   const H = 93;
-  const g = new THREE.PlaneGeometry(W, H, 48, 92);
+  const g = new THREE.PlaneGeometry(W, H, 64, 124);
   const pos = g.attributes.position;
   let s = 99;
   const rnd = () => ((s = (s * 16807) % 2147483647) / 2147483647);
-  const waves = Array.from({ length: 7 }, () => ({ kx: (rnd() - 0.5) * 0.9, ky: (rnd() - 0.5) * 0.5, p: rnd() * 6.3, a: 0.04 + rnd() * 0.06 }));
+  const waves = Array.from({ length: 9 }, () => ({ kx: (rnd() - 0.5) * 0.7, ky: (rnd() - 0.5) * 0.45, p: rnd() * 6.3, a: 0.1 + rnd() * 0.1 }));
   for (let i = 0; i < pos.count; i++) {
     const x = pos.getX(i);
     const y = pos.getY(i);

@@ -22,7 +22,8 @@ export class Studio {
     container.appendChild(el);
 
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(STUDIO_BG);
+    const white = typeof location !== 'undefined' && /[?&]bg=white/.test(location.hash + location.search);
+    this.scene.background = new THREE.Color(white ? '#ffffff' : STUDIO_BG);
     const pmrem = new THREE.PMREMGenerator(this.renderer);
     this.env = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
     pmrem.dispose();
@@ -62,6 +63,8 @@ export class Studio {
     this.controls.rotateSpeed = 0.9;
     this.controls.dampingFactor = 0.08;
     this.controls.touches = { ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_PAN };
+    // mouse: left = rotate, wheel-button held = move up/down, right = move
+    this.controls.mouseButtons = { LEFT: THREE.MOUSE.ROTATE, MIDDLE: THREE.MOUSE.PAN, RIGHT: THREE.MOUSE.PAN };
     this.controls.autoRotateSpeed = 1.4;
     el.addEventListener('pointerdown', () => (el.style.cursor = 'grabbing'));
     el.addEventListener('pointerup', () => (el.style.cursor = 'grab'));
@@ -174,6 +177,25 @@ export class Studio {
     const d = this.fitDistance || 5;
     this.camera.position.set(t.x + d * 0.22, t.y + d * 0.1, t.z + d * 0.97);
     this.controls.update();
+  }
+
+  /** Moves the product up (dir = 1) or down (dir = -1) on screen, smoothly. */
+  pan(dir) {
+    const step = (this.fitDistance || 5) * 0.09 * dir;
+    const up = new THREE.Vector3(0, 1, 0).applyQuaternion(this.camera.quaternion);
+    const from = this.controls.target.clone();
+    const start = performance.now();
+    const camFrom = this.camera.position.clone();
+    const tick = () => {
+      const k = Math.min(1, (performance.now() - start) / 220);
+      const e = 1 - (1 - k) ** 3;
+      // moving the view down makes the product go up
+      const off = up.clone().multiplyScalar(-step * e);
+      this.controls.target.copy(from).add(off);
+      this.camera.position.copy(camFrom).add(off);
+      if (k < 1) requestAnimationFrame(tick);
+    };
+    tick();
   }
 
   /** factor < 1 zooms in, > 1 zooms out */

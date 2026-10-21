@@ -228,6 +228,8 @@ describe('3D packaging', () => {
     expect(svg).toContain('Liquid silicone');
     expect(svg).toContain('Google Pixel 10');
     expect(svg).toContain('cy="533"'); // ring around the basil circle
+    expect(svg).toContain('Pattern:');
+    expect(svg).toContain('cx="1004.65" cy="393.5"'); // ring around the tagliatelle pattern
     // every pattern has its pasta-name artwork on the top flap (with "phone case")
     for (const p of ['spaghetti', 'tagliatelle', 'ravioli', 'reginette', 'sfoglia', 'raviolo']) {
       const s = packagingOverlay({ pattern: p, finish: 'raw', modelLabel: 'x', colorName: 'Egg' });

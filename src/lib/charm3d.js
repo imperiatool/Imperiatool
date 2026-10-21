@@ -81,9 +81,11 @@ export function buildCharm(items, assetsById, materialId = 'aldente', { attachme
 
     const baseDepth = piece.isFirstItem && piece.level === 0 ? 110 : piece.level === 0 ? 40 : 18;
     const depth = baseDepth * shapeHints.depth;
-    const bt = Math.min(depth * 0.42, piece.level === 0 ? 26 : 10) * shapeHints.bevel;
+    // the rounded edge never takes more than 80% of the thickness, so the
+    // real height of the piece is exactly `depth` (outlines sit on it, not above)
+    const bt = Math.max(0.6, Math.min(Math.min(depth * 0.42, piece.level === 0 ? 26 : 10) * shapeHints.bevel, depth * 0.4));
     // a wide inward bevel self-intersects on tight waves (raviolo edges)
-    const bs = Math.min(bt * 0.9, minDim * 0.12, 11);
+    const bs = Math.max(0.4, Math.min(bt * 0.9, minDim * 0.07, 9));
 
     let z0 = 0;
     for (const p of placed) if (p.box.intersectsBox(box)) z0 = Math.max(z0, p.top - 2);
@@ -91,9 +93,9 @@ export function buildCharm(items, assetsById, materialId = 'aldente', { attachme
     let geometry = new THREE.ExtrudeGeometry(shapes, {
       depth: Math.max(1, depth - bt * 2),
       bevelEnabled: true,
-      bevelThickness: Math.max(0.6, bt),
-      bevelSize: Math.max(0.4, bs),
-      bevelOffset: -Math.max(0.4, bs),
+      bevelThickness: bt,
+      bevelSize: bs,
+      bevelOffset: -bs,
       bevelSegments: materialId === 'overcooked' ? 10 : 7,
       curveSegments: 1, // already sampled by length
     });
@@ -103,9 +105,13 @@ export function buildCharm(items, assetsById, materialId = 'aldente', { attachme
       ? [makeMaterial(piece.color, materialId, UV_REPEAT), makeMaterial(piece.sideColor, materialId, UV_REPEAT)]
       : makeMaterial(piece.color, materialId, UV_REPEAT);
     const mesh = new THREE.Mesh(geometry, material);
-    mesh.position.z = z0 + Math.max(0.6, bt);
+    mesh.position.z = z0 + bt;
     root.add(mesh);
-    const top = z0 + depth;
+    const top = z0 + Math.max(1, depth - bt * 2) + bt * 2;
+    piece.bevel = bt;
+    piece.bevelSize = bs;
+    piece.polys = shapes.map((sh) => ({ outer: sh.getPoints(), holes: sh.holes.map((h) => h.getPoints()) }));
+    piece.contours = piece.polys.flatMap((q) => [q.outer, ...q.holes]);
     piece.top = top;
     placed.push({ box, top });
     itemTop.set(piece.item, Math.max(itemTop.get(piece.item) ?? 0, top));
@@ -125,8 +131,25 @@ export function buildCharm(items, assetsById, materialId = 'aldente', { attachme
       // (overcooked) never swallows them
       const own = closed && s.pieceIndex != null;
       const base = own ? pieces[s.pieceIndex].top : Math.max(itemTop.get(s.item) ?? 0, s.pieceIndex != null ? pieces[s.pieceIndex].top : 0);
-      const z = base - r * (own ? 0.35 : materialId === 'overcooked' ? -0.15 : 0.2);
-      const curve = new THREE.CatmullRomCurve3(pts.map((p) => new THREE.Vector3(p.x, p.y, z)), closed, 'centripetal');
+      // lines follow the real surface: lower on the rounded edge, on top elsewhere
+      // (an outline hugs the shoulder; an inner line such as the lips stays visible)
+      const piece = s.pieceIndex != null ? pieces[s.pieceIndex] : null;
+      const zAt = (p) => {
+        if (!own || !piece?.contours) return base + r * 0.1;
+        // only the outer edge of the whole piece is rounded: a line lying on
+        // another shape of the same piece (lips) stays on top
+        const off = Math.max(1, piece.bevelSize * 0.9);
+        const onEdge = [[off, 0], [-off, 0], [0, off], [0, -off], [off * 0.7, off * 0.7], [-off * 0.7, -off * 0.7], [off * 0.7, -off * 0.7], [-off * 0.7, off * 0.7]].some(
+          ([dx, dy]) => !insidePolys({ x: p.x + dx, y: p.y + dy }, piece.polys),
+        );
+        if (!onEdge) return base - r * 0.3;
+        const d = distToContours(p, piece.contours);
+        const k = Math.min(1, d / Math.max(0.5, piece.bevelSize));
+        const h = base - piece.bevel * (1 - Math.sqrt(Math.max(0, 1 - (1 - k) ** 2)));
+        return h - r * 0.3;
+      };
+      const z = zAt(pts[0]);
+      const curve = new THREE.CatmullRomCurve3(pts.map((p) => new THREE.Vector3(p.x, p.y, zAt(p))), closed, 'centripetal');
       const segments = Math.min(2400, Math.max(16, Math.round(curve.getLength() / (r * 0.7))));
       const tube = new THREE.TubeGeometry(curve, segments, r, 10, closed);
       const mesh = new THREE.Mesh(tube, makeMaterial(s.color, materialId, UV_REPEAT));
@@ -157,6 +180,38 @@ export function buildCharm(items, assetsById, materialId = 'aldente', { attachme
     wrapper.add(buildAttachment(attachment, top, mm));
   }
   return wrapper;
+}
+
+function inPoly(p, poly) {
+  let inside = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const a = poly[i];
+    const b = poly[j];
+    if (a.y > p.y !== b.y > p.y && p.x < ((b.x - a.x) * (p.y - a.y)) / (b.y - a.y) + a.x) inside = !inside;
+  }
+  return inside;
+}
+function insidePolys(p, polys) {
+  return polys.some((q) => inPoly(p, q.outer) && !q.holes.some((h) => inPoly(p, h)));
+}
+
+function distToContours(p, contours) {
+  let best = Infinity;
+  for (const c of contours) {
+    for (let i = 0, n = c.length; i < n; i++) {
+      const a = c[i];
+      const b = c[(i + 1) % n];
+      const dx = b.x - a.x;
+      const dy = b.y - a.y;
+      const l2 = dx * dx + dy * dy || 1;
+      const u = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / l2));
+      const ex = a.x + u * dx - p.x;
+      const ey = a.y + u * dy - p.y;
+      const d2 = ex * ex + ey * ey;
+      if (d2 < best) best = d2;
+    }
+  }
+  return Math.sqrt(best);
 }
 
 /* ---- back logo ---------------------------------------------------------- */

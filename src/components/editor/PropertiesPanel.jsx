@@ -15,7 +15,7 @@ const deg = (v) => `${Math.round(v)}°`;
  * colours are always visible. The part selected on the canvas also shows
  * size, rotation and stretch. Tap a card to select that part.
  */
-export default function PropertiesPanel({ library, mode = 'charm' }) {
+export default function PropertiesPanel({ library }) {
   const { t, label, slotLabel } = useI18n();
   const { palette, assetsById, categoriesById } = library;
   const items = useEditorStore((s) => s.items);
@@ -62,11 +62,6 @@ export default function PropertiesPanel({ library, mode = 'charm' }) {
 
             {active && !item.locked && (
               <div className="mt-4 space-y-3 border-t border-line pt-3">
-                {mode === 'sticker' && asset.slots.some((s) => s.kind === 'stroke') && (
-                  <Slider label={t('props.outlineWidth')} value={item.strokeScale ?? 1} min={0.3} max={2.5} step={0.05} format={pct}
-                    onStart={() => st().snapshot()} onChange={(v) => st().updateItem(item.uid, { strokeScale: v })}
-                    onReset={() => st().commitItem(item.uid, { strokeScale: 1 })} />
-                )}
                 <Slider label={t('props.size')} value={item.scale} min={0.1} max={3} step={0.01} format={pct}
                   onStart={() => st().snapshot()} onChange={(v) => st().updateItem(item.uid, { scale: v })}
                   onReset={() => st().commitItem(item.uid, { scale: 1 })} />
