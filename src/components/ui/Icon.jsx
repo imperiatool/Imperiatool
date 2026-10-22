@@ -1,5 +1,6 @@
 // Minimal inline icon set (stroke icons, 24×24) — no icon dependency needed.
 const PATHS = {
+  home: 'M3 11l9-7 9 7M5 9.5V20h5v-6h4v6h5V9.5',
   menu: 'M4 7h16M4 12h16M4 17h10',
   user: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4.5 20a7.5 7.5 0 0 1 15 0',
   bag: 'M5 8h14l-1.2 12H6.2L5 8zM9 8V6a3 3 0 0 1 6 0v2',

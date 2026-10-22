@@ -62,7 +62,11 @@ export function buildCharm(items, assetsById, materialId = 'aldente', { attachme
       if (style.stroke && style.stroke !== 'none' && (style.strokeWidth ?? 1) > 0 && style.strokeOpacity !== 0) {
         strokes.push({ item: index, path, color: style.stroke, width: (style.strokeWidth ?? 1) * scale, pieceIndex });
         // the outline colour wraps the whole extrusion: sides + rounded edge
-        if (pieceIndex != null && !pieces[pieceIndex].sideColor) pieces[pieceIndex].sideColor = style.stroke;
+        if (pieceIndex != null) {
+          const pc = pieces[pieceIndex];
+          if (!pc.sideColor) pc.sideColor = style.stroke;
+          pc.strokeWidth = Math.max(pc.strokeWidth || 0, (style.strokeWidth ?? 1) * scale);
+        }
       }
     }
   });
@@ -76,16 +80,22 @@ export function buildCharm(items, assetsById, materialId = 'aldente', { attachme
     const size = box.getSize(new THREE.Vector2());
     const minDim = Math.max(1, Math.min(size.x, size.y));
     const step = Math.max(1.2, Math.min(size.x, size.y) / 140);
-    const shapes = piece.shapes.map((s) => resampleShape(s, step)).filter((s) => s.getPoints().length > 2);
-    if (!shapes.length) continue;
+    const resampled = piece.shapes.map((s) => resampleShape(s, step)).filter((s) => s.getPoints().length > 2);
+    if (!resampled.length) continue;
 
     const baseDepth = piece.isFirstItem && piece.level === 0 ? 110 : piece.level === 0 ? 40 : 18;
     const depth = baseDepth * shapeHints.depth;
     // the rounded edge never takes more than 80% of the thickness, so the
     // real height of the piece is exactly `depth` (outlines sit on it, not above)
     const bt = Math.max(0.6, Math.min(Math.min(depth * 0.42, piece.level === 0 ? 26 : 10) * shapeHints.bevel, depth * 0.4));
-    // a wide inward bevel self-intersects on tight waves (raviolo edges)
-    const bs = Math.max(0.4, Math.min(bt * 0.9, minDim * 0.07, 9));
+    // rounded edge width: with an outline it IS the outline (same colour as
+    // the sides), as wide as the drawn stroke; never wide enough to fold over
+    const bs = piece.sideColor
+      ? Math.max(1.2, Math.min(Math.max((piece.strokeWidth || 3) * 1.15, 3), bt * 1.2, minDim * 0.1, 12))
+      : Math.max(0.4, Math.min(bt * 0.9, minDim * 0.07, 9));
+    // sharp tips are softly rounded (radius ≈ the rounded edge) so the edge
+    // never pokes out like spilled rubber
+    const shapes = resampled.map((s) => roundCorners(s, Math.max(bs, 1.5), step));
 
     let z0 = 0;
     for (const p of placed) if (p.box.intersectsBox(box)) z0 = Math.max(z0, p.top - 2);
@@ -105,6 +115,7 @@ export function buildCharm(items, assetsById, materialId = 'aldente', { attachme
       ? [makeMaterial(piece.color, materialId, UV_REPEAT), makeMaterial(piece.sideColor, materialId, UV_REPEAT)]
       : makeMaterial(piece.color, materialId, UV_REPEAT);
     const mesh = new THREE.Mesh(geometry, material);
+    mesh.userData.body = piece.isFirstItem && piece.level === 0;
     mesh.position.z = z0 + bt;
     root.add(mesh);
     const top = z0 + Math.max(1, depth - bt * 2) + bt * 2;
@@ -131,35 +142,38 @@ export function buildCharm(items, assetsById, materialId = 'aldente', { attachme
       // (overcooked) never swallows them
       const own = closed && s.pieceIndex != null;
       const base = own ? pieces[s.pieceIndex].top : Math.max(itemTop.get(s.item) ?? 0, s.pieceIndex != null ? pieces[s.pieceIndex].top : 0);
-      // lines follow the real surface: lower on the rounded edge, on top elsewhere
-      // (an outline hugs the shoulder; an inner line such as the lips stays visible)
       const piece = s.pieceIndex != null ? pieces[s.pieceIndex] : null;
-      const zAt = (p) => {
-        if (!own || !piece?.contours) return base + r * 0.1;
-        // only the outer edge of the whole piece is rounded: a line lying on
-        // another shape of the same piece (lips) stays on top
-        const off = Math.max(1, piece.bevelSize * 0.9);
-        const onEdge = [[off, 0], [-off, 0], [0, off], [0, -off], [off * 0.7, off * 0.7], [-off * 0.7, -off * 0.7], [off * 0.7, -off * 0.7], [-off * 0.7, off * 0.7]].some(
-          ([dx, dy]) => !insidePolys({ x: p.x + dx, y: p.y + dy }, piece.polys),
-        );
-        if (!onEdge) return base - r * 0.3;
-        const d = distToContours(p, piece.contours);
-        const k = Math.min(1, d / Math.max(0.5, piece.bevelSize));
-        const h = base - piece.bevel * (1 - Math.sqrt(Math.max(0, 1 - (1 - k) ** 2)));
-        return h - r * 0.3;
-      };
-      const z = zAt(pts[0]);
-      const curve = new THREE.CatmullRomCurve3(pts.map((p) => new THREE.Vector3(p.x, p.y, zAt(p))), closed, 'centripetal');
-      const segments = Math.min(2400, Math.max(16, Math.round(curve.getLength() / (r * 0.7))));
-      const tube = new THREE.TubeGeometry(curve, segments, r, 10, closed);
-      const mesh = new THREE.Mesh(tube, makeMaterial(s.color, materialId, UV_REPEAT));
-      root.add(mesh);
-      // rounded ends for open lines
-      if (!closed) {
-        for (const p of [pts[0], pts[pts.length - 1]]) {
-          const cap = new THREE.Mesh(new THREE.SphereGeometry(r, 12, 8), makeMaterial(s.color, materialId, UV_REPEAT));
-          cap.position.set(p.x, p.y, z);
-          root.add(cap);
+      // outer edges are drawn by the coloured rounded edge itself; a tube is
+      // only added where the line runs inside the piece (lips, shell…)
+      let runs = [pts];
+      if (own && piece?.polys) {
+        runs = [];
+        let cur = [];
+        const off = Math.max(1.5, piece.bevelSize * 1.2);
+        for (const p of pts) {
+          const edge = [[off, 0], [-off, 0], [0, off], [0, -off], [off * 0.7, off * 0.7], [-off * 0.7, -off * 0.7], [off * 0.7, -off * 0.7], [-off * 0.7, off * 0.7]].some(
+            ([dx, dy]) => !insidePolys({ x: p.x + dx, y: p.y + dy }, piece.polys),
+          );
+          if (edge) {
+            if (cur.length > 2) runs.push(cur);
+            cur = [];
+          } else cur.push(p);
+        }
+        if (cur.length > 2) runs.push(cur);
+      }
+      for (const run of runs) {
+        const isLoop = closed && run === pts;
+        const z = own ? base - r * 0.3 : base + r * 0.1;
+        const curve = new THREE.CatmullRomCurve3(run.map((p) => new THREE.Vector3(p.x, p.y, z)), isLoop, 'centripetal');
+        const segments = Math.min(2400, Math.max(16, Math.round(curve.getLength() / (r * 0.7))));
+        root.add(new THREE.Mesh(new THREE.TubeGeometry(curve, segments, r, 10, isLoop), makeMaterial(s.color, materialId, UV_REPEAT)));
+        // rounded ends for open lines
+        if (!isLoop) {
+          for (const p of [run[0], run[run.length - 1]]) {
+            const cap = new THREE.Mesh(new THREE.SphereGeometry(r, 12, 8), makeMaterial(s.color, materialId, UV_REPEAT));
+            cap.position.set(p.x, p.y, z);
+            root.add(cap);
+          }
         }
       }
     }
@@ -182,6 +196,32 @@ export function buildCharm(items, assetsById, materialId = 'aldente', { attachme
   return wrapper;
 }
 
+/** Moving-average of the contour: rounds tips to about `radius`. */
+function smoothLoop(pts, radius, step) {
+  const n = pts.length;
+  const k = Math.max(1, Math.round(radius / step / 2));
+  if (n < k * 4) return pts;
+  let cur = pts.map((p) => new THREE.Vector2(p.x, p.y));
+  for (let pass = 0; pass < 2; pass++) {
+    cur = cur.map((_, i) => {
+      let x = 0;
+      let y = 0;
+      for (let j = -k; j <= k; j++) {
+        const q = cur[(i + j + n) % n];
+        x += q.x;
+        y += q.y;
+      }
+      return new THREE.Vector2(x / (2 * k + 1), y / (2 * k + 1));
+    });
+  }
+  return cur;
+}
+function roundCorners(shape, radius, step) {
+  const s = new THREE.Shape(smoothLoop(shape.getPoints(), radius, step));
+  s.holes = shape.holes.map((h) => new THREE.Path(smoothLoop(h.getPoints(), radius, step)));
+  return s;
+}
+
 function inPoly(p, poly) {
   let inside = false;
   for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
@@ -195,29 +235,14 @@ function insidePolys(p, polys) {
   return polys.some((q) => inPoly(p, q.outer) && !q.holes.some((h) => inPoly(p, h)));
 }
 
-function distToContours(p, contours) {
-  let best = Infinity;
-  for (const c of contours) {
-    for (let i = 0, n = c.length; i < n; i++) {
-      const a = c[i];
-      const b = c[(i + 1) % n];
-      const dx = b.x - a.x;
-      const dy = b.y - a.y;
-      const l2 = dx * dx + dy * dy || 1;
-      const u = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / l2));
-      const ex = a.x + u * dx - p.x;
-      const ey = a.y + u * dy - p.y;
-      const d2 = ex * ex + ey * ey;
-      if (d2 < best) best = d2;
-    }
-  }
-  return Math.sqrt(best);
-}
-
 /* ---- back logo ---------------------------------------------------------- */
 let logoTexture = null;
 function addBackLogo(wrapper) {
-  const box = new THREE.Box3().setFromObject(wrapper);
+  // measure the body only (eyes and mouth may stick out of it)
+  wrapper.updateMatrixWorld(true);
+  const box = new THREE.Box3();
+  wrapper.traverse((o) => o.isMesh && o.userData.body && box.expandByObject(o));
+  if (box.isEmpty()) box.setFromObject(wrapper);
   if (box.isEmpty()) return;
   const size = box.getSize(new THREE.Vector3());
   if (!logoTexture) {
@@ -225,14 +250,20 @@ function addBackLogo(wrapper) {
     logoTexture.colorSpace = THREE.SRGBColorSpace;
     logoTexture.anisotropy = 8;
   }
-  // about 45% of the width: readable but discreet, like on Imperia products
-  const w = Math.min(size.x, size.y * 1.6) * 0.45;
+  const ratio = 1800 / 388;
+  // follow the shape: along the long side, always well inside the body
+  const vertical = size.y > size.x * 1.6;
+  const long = vertical ? size.y : size.x;
+  const short = vertical ? size.x : size.y;
+  const w = Math.min(long * 0.45, short * 0.55 * ratio);
   const decal = new THREE.Mesh(
-    new THREE.PlaneGeometry(w, (w * 388) / 1800),
+    new THREE.PlaneGeometry(w, w / ratio),
     new THREE.MeshPhysicalMaterial({ map: logoTexture, transparent: true, alphaTest: 0.05, roughness: 0.45, polygonOffset: true, polygonOffsetFactor: -2 }),
   );
-  decal.rotation.y = Math.PI; // faces the back
-  decal.position.set((box.min.x + box.max.x) / 2, box.min.y + size.y * 0.45, box.min.z - 0.4);
+  decal.rotation.set(0, Math.PI, vertical ? Math.PI / 2 : 0); // faces the back
+  const cx = (box.min.x + box.max.x) / 2;
+  const cy = vertical ? (box.min.y + box.max.y) / 2 : box.min.y + size.y * 0.45;
+  decal.position.set(cx, cy, box.min.z - 0.4);
   decal.userData.keepTexture = true;
   decal.userData.noShadow = true;
   wrapper.add(decal);

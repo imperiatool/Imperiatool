@@ -29,7 +29,7 @@ export default function HomePage() {
               <div className="relative mx-auto aspect-[5/4] w-full">
                 <img src={c.img} alt="" className="absolute inset-0 h-full w-full object-contain transition duration-500 group-hover:scale-[1.03]" />
               </div>
-              <h2 className="mt-14 text-[38px] font-bold leading-[1.05] tracking-tight text-brand sm:text-[42px]">
+              <h2 className="mt-12 text-[30px] font-bold leading-[1.08] tracking-tight text-brand sm:text-[34px]">
                 Imperia®
                 <br />
                 {t(`home.${c.key}.title`)}

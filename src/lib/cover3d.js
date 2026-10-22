@@ -215,7 +215,8 @@ function innerMask(x, y) {
 /* ---------------- geometry ---------------------------------------------- */
 function reliefGeometry(pattern, { reliefScale = 1, smooth = 0 } = {}) {
   const def = PATTERNS[pattern] || PATTERNS.raviolo;
-  const step = 0.36;
+  // lighter mesh on phones (faster to build, smoother scrolling)
+  const step = typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)').matches ? 0.5 : 0.36;
   const x0 = -W / 2 + 0.8;
   const y0 = -H / 2 + 0.8;
   const nx = Math.ceil((W - 1.6) / step) + 1;

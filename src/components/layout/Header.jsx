@@ -100,6 +100,12 @@ export default function Header() {
       </div>
       {onProduct && (
         <nav className="flex justify-center border-t border-line" aria-label="Products">
+          <NavLink to="/" end className={tab} data-testid="tab-home" aria-label={t('nav.home')}>
+            <span className="inline-flex items-center gap-1.5">
+              <Icon name="home" className="h-[18px] w-[18px]" />
+              <span>{t('nav.home')}</span>
+            </span>
+          </NavLink>
           {PRODUCTS.map((p) => (
             <NavLink key={p.to} to={p.to} className={tab} data-testid={`tab-${p.to.slice(1)}`}>
               {t(p.key)}

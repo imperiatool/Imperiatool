@@ -95,6 +95,9 @@ export function packagingOverlay({ pattern, colorId, colorName, finish, modelLab
   // ring around the chosen colour
   const dot = COLOUR_DOTS[colorId];
   if (dot) parts.push(`<circle cx="362.6" cy="${dot.y}" r="25.5" fill="none" stroke="#fff" stroke-width="2.4"/>`);
+  // the pattern is called "Spaghetto" (the artwork still says "Spaghetti")
+  parts.push(`<rect x="981" y="350.5" width="47" height="16" fill="${RED}"/>`);
+  parts.push(`<text x="1004.65" y="362.6" text-anchor="middle" ${FONT} font-size="9.6" letter-spacing="-0.25" fill="#fff">Spaghetto</text>`);
   // …and around the chosen pattern
   if (PATTERN_DOTS[pattern]) parts.push(`<circle cx="1004.65" cy="${PATTERN_DOTS[pattern]}" r="25.5" fill="none" stroke="#fff" stroke-width="2.4"/>`);
 

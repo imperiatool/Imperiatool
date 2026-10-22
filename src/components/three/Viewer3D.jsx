@@ -47,23 +47,29 @@ export default function Viewer3D({ kind, items, assetsById, material, attachment
     if (lastKind.current !== kind) studio.reframe = true;
     lastKind.current = kind;
     let cancelled = false;
-    try {
-      if (kind === 'packaging') {
-        setBusy(true);
-        buildPackaging(cover)
-          .then((obj) => {
-            if (cancelled) return;
-            studio.setObject(obj, { height: 2.3 });
-          })
-          .catch((e) => console.error(e))
-          .finally(() => !cancelled && setBusy(false));
-      } else if (kind === 'cover') studio.setObject(buildCover(cover), { height: 2.2 });
-      else studio.setObject(buildCharm(items || [], assetsById || {}, material, { attachment, sizeMm }), { height: 2 });
-    } catch (e) {
-      console.error(e);
-    }
+    // build after the click has been painted: the option highlights at once,
+    // the 3D follows a moment later (no frozen page while it rebuilds)
+    const timer = setTimeout(() => {
+      if (cancelled) return;
+      try {
+        if (kind === 'packaging') {
+          setBusy(true);
+          buildPackaging(cover)
+            .then((obj) => {
+              if (cancelled) return;
+              studio.setObject(obj, { height: 2.3 });
+            })
+            .catch((e) => console.error(e))
+            .finally(() => !cancelled && setBusy(false));
+        } else if (kind === 'cover') studio.setObject(buildCover(cover), { height: 2.2 });
+        else studio.setObject(buildCharm(items || [], assetsById || {}, material, { attachment, sizeMm }), { height: 2 });
+      } catch (e) {
+        console.error(e);
+      }
+    }, 40);
     return () => {
       cancelled = true;
+      clearTimeout(timer);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [kind, items, assetsById, material, coverKey, attachment, sizeMm]);
