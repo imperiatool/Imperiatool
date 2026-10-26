@@ -28,6 +28,16 @@ L'app si apre su una **home** con tre schede bianche arrotondate (Case, Charm, S
 
 Un sito web non può inserire uno sticker direttamente nelle app: WhatsApp, per esempio, trasforma in foto qualsiasi immagine ricevuta. La strada più semplice è condividere o incollare il PNG trasparente (funziona ovunque). Per averlo come vero sticker WhatsApp: pannello sticker → *+ Crea* → scegli l'immagine (consiglio mostrato nell'app).
 
+### Imperia® Events (concept)
+
+Quarta sezione (`#/events`): programma di esperienze **illustrative** in Italia e Inghilterra.
+
+- Dati: `src/data/events.js` (testi in inglese e italiano, le altre lingue usano l'inglese). Prezzi nella valuta del Paese dell'evento (€ Italia, £ Inghilterra), senza conversioni.
+- Filtri combinabili (tipo, luogo, formato, prezzo), salvati nell'indirizzo della pagina: tornando indietro restano attivi.
+- Ogni evento ha un oggetto di pasta 3D (`src/lib/pasta3d.js`) fatto con lo stesso studio e gli stessi materiali Crudo / Al Dente / Stracotto di custodie e charm: nella pagina dell'evento è in 3D dal vivo, nelle schede è un'immagine generata dallo stesso motore (`scripts/render-events.py`, da rilanciare se cambi forme o colori).
+- Prenotazione **demo**: partecipanti, totale, nome ed email con validazione, conferma con riferimento DEMO. Nessun pagamento, nessuna email, nessun dato inviato.
+- Eventi, luoghi, date e posti sono di fantasia e indicati come tali nell'app.
+
 ### Dati da verificare (da completare con le schede tecniche)
 
 - **Modelli di telefono** (`src/lib/cover3d.js`, `PHONE_MODELS`): misure = dimensioni ufficiali del telefono + ~2,7 mm di custodia; posizione e forma delle fotocamere, dei tasti e delle aperture in basso (USB-C, altoparlante, microfono) sono ricavate dalle foto, non da file CAD. Prima della produzione vanno confrontate con i disegni tecnici.
