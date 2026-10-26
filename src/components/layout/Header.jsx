@@ -11,6 +11,7 @@ export const PRODUCTS = [
   { to: '/case', key: 'nav.case' },
   { to: '/charm', key: 'nav.charm' },
   { to: '/sticker', key: 'nav.sticker' },
+  { to: '/events', key: 'nav.events' },
 ];
 
 function MenuDrawer({ open, onClose }) {
@@ -66,7 +67,7 @@ export default function Header() {
   const iconBtn = 'relative grid h-10 w-10 place-items-center rounded-full text-ink transition hover:bg-ink/5';
 
   const tab = ({ isActive }) =>
-    `relative flex h-11 flex-1 items-center justify-center px-3 text-[15px] transition sm:flex-none sm:px-6 ${
+    `relative flex h-11 flex-1 items-center justify-center px-2 text-[15px] transition sm:flex-none sm:px-6 ${
       isActive ? 'font-semibold text-brand after:absolute after:inset-x-3 after:-bottom-px after:h-[2px] after:rounded-full after:bg-brand' : 'font-medium text-ink/55 hover:text-ink'
     }`;
 
@@ -103,7 +104,7 @@ export default function Header() {
           <NavLink to="/" end className={tab} data-testid="tab-home" aria-label={t('nav.home')}>
             <span className="inline-flex items-center gap-1.5">
               <Icon name="home" className="h-[18px] w-[18px]" />
-              <span>{t('nav.home')}</span>
+              <span className="hidden sm:inline">{t('nav.home')}</span>
             </span>
           </NavLink>
           {PRODUCTS.map((p) => (

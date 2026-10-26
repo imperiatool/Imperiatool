@@ -3,6 +3,7 @@ import { Studio } from '../../lib/three/studio.js';
 import { buildCharm } from '../../lib/charm3d.js';
 import { buildCover } from '../../lib/cover3d.js';
 import { buildPackaging } from '../../lib/packaging3d.js';
+import { buildPasta } from '../../lib/pasta3d.js';
 import Icon from '../ui/Icon.jsx';
 import { useI18n } from '../../i18n/index.js';
 
@@ -11,9 +12,10 @@ import { useI18n } from '../../i18n/index.js';
  *   kind="charm"     → items + assetsById + material (+ attachment, sizeMm)
  *   kind="cover"     → cover = { pattern, color, material, model }
  *   kind="packaging" → cover + { colorId, colorName, modelLabel }: the retail box
+ *   kind="pasta"     → pasta = { shape, color, finish }: Events visuals (`transparent` shows the page behind)
  * `onReady(api)` receives { snapshot() }.
  */
-export default function Viewer3D({ kind, items, assetsById, material, attachment, sizeMm, cover, onReady, className = '', hint = true }) {
+export default function Viewer3D({ kind, items, assetsById, material, attachment, sizeMm, cover, pasta, transparent = false, onReady, className = '', hint = true }) {
   const { t } = useI18n();
   const hostRef = useRef(null);
   const studioRef = useRef(null);
@@ -22,7 +24,7 @@ export default function Viewer3D({ kind, items, assetsById, material, attachment
 
   useEffect(() => {
     try {
-      studioRef.current = new Studio(hostRef.current);
+      studioRef.current = new Studio(hostRef.current, { transparent });
       studioRef.current.setAutoRotate(true);
       onReady?.({ snapshot: (q, max) => studioRef.current?.snapshot(q, max) });
     } catch (e) {
@@ -37,7 +39,7 @@ export default function Viewer3D({ kind, items, assetsById, material, attachment
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const coverKey = cover ? JSON.stringify(cover) : '';
+  const coverKey = cover ? JSON.stringify(cover) : pasta ? JSON.stringify(pasta) : '';
   const lastKind = useRef(kind);
   const lastMat = useRef(null);
   const [busy, setBusy] = useState(false);
@@ -63,6 +65,7 @@ export default function Viewer3D({ kind, items, assetsById, material, attachment
             .catch((e) => console.error(e))
             .finally(() => !cancelled && setBusy(false));
         } else if (kind === 'cover') studio.setObject(buildCover(cover), { height: 2.2 });
+        else if (kind === 'pasta') studio.setObject(buildPasta(pasta), { height: 1.3 });
         else studio.setObject(buildCharm(items || [], assetsById || {}, material, { attachment, sizeMm }), { height: 2 });
         // "jelly" bounce when the finish changes, once the new model is shown:
         // you can see how soft it is (same strengths as before)

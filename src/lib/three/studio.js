@@ -8,9 +8,10 @@ import { disposeMaterial } from './materials.js';
 export const STUDIO_BG = '#f2f2f0';
 
 export class Studio {
-  constructor(container) {
+  /** `transparent`: no background colour (the page shows through, shadow kept). */
+  constructor(container, { transparent = false } = {}) {
     this.container = container;
-    this.renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true, precision: 'highp', powerPreference: 'high-performance' });
+    this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: transparent, preserveDrawingBuffer: true, precision: 'highp', powerPreference: 'high-performance' });
     const coarse = window.matchMedia?.('(pointer: coarse)').matches;
     // phones: lighter rendering so scrolling stays smooth (no blank areas)
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, coarse ? 1.5 : 2));
@@ -27,7 +28,7 @@ export class Studio {
 
     this.scene = new THREE.Scene();
     const white = typeof location !== 'undefined' && /[?&]bg=white/.test(location.hash + location.search);
-    this.scene.background = new THREE.Color(white ? '#ffffff' : STUDIO_BG);
+    this.scene.background = transparent ? null : new THREE.Color(white ? '#ffffff' : STUDIO_BG);
     const pmrem = new THREE.PMREMGenerator(this.renderer);
     this.env = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
     pmrem.dispose();
