@@ -6,6 +6,8 @@ import EditorPage from './components/editor/EditorPage.jsx';
 import CoverPage from './components/cover/CoverPage.jsx';
 import AdminPage from './components/admin/AdminPage.jsx';
 import HomePage from './components/home/HomePage.jsx';
+import EventsPage from './components/events/EventsPage.jsx';
+import EventDetailPage from './components/events/EventDetailPage.jsx';
 import CartDrawer from './components/shop/CartDrawer.jsx';
 import AccountDrawer from './components/shop/AccountDrawer.jsx';
 import { useLibraryStore } from './store/useLibraryStore.js';
@@ -58,6 +60,8 @@ export default function App() {
             <Route path="/cover" element={<Navigate to="/case" replace />} />
             <Route path="/charm" element={<EditorPage mode="charm" key="charm" />} />
             <Route path="/sticker" element={<EditorPage mode="sticker" key="sticker" />} />
+            <Route path="/events" element={<EventsPage />} />
+            <Route path="/events/:id" element={<EventDetailPage />} />
             <Route path="/admin/*" element={<AdminPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

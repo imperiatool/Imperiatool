@@ -61,3 +61,15 @@ input[type='range'] {
   background-size: 24px 24px;
   background-position: 0 0, 0 12px, 12px -12px, -12px 0;
 }
+
+/* Events: the pasta objects float gently (off when reduced motion is asked) */
+@keyframes ev-float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-8px) rotate(-1.2deg); }
+}
+.ev-float { animation: ev-float 7s ease-in-out infinite; }
+.ev-float-2 { animation-duration: 8.5s; animation-delay: -2s; }
+.ev-float-3 { animation-duration: 9.5s; animation-delay: -4s; }
+@media (prefers-reduced-motion: reduce) {
+  .ev-float { animation: none; }
+}
