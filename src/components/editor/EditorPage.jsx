@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import AssetPicker from './AssetPicker.jsx';
 import StickerCanvas from './StickerCanvas.jsx';
-import PropertiesPanel from './PropertiesPanel.jsx';
+import CustomiserPanel from './CustomiserPanel.jsx';
 import ExportModal from './ExportModal.jsx';
 import OrderModal from './OrderModal.jsx';
 import Button from '../ui/Button.jsx';
@@ -22,12 +21,19 @@ export default function EditorPage({ mode = 'charm' }) {
   const canUndo = useEditorStore((s) => s.past.length > 0);
   const canRedo = useEditorStore((s) => s.future.length > 0);
   const [modal, setModal] = useState(null); // 'export' | 'order' | null
-  const [pickerStep, setPickerStep] = useState(0);
-  const pickerRef = useRef(null);
+  const panelRef = useRef(null);
+  // Start: puts the first body on the canvas, then shows its section
   const start = () => {
-    setPickerStep(0);
-    // on phones the picker sits under the canvas: bring it into view
-    if (window.matchMedia('(max-width: 1023px)').matches) pickerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const firstBase = library.categories.find((c) => c.isBase && library.assets.some((a) => a.categoryId === c.id));
+    const body = firstBase && library.assets.find((a) => a.categoryId === firstBase.id);
+    if (body) useEditorStore.getState().addAsset(body, library);
+    // desktop: bring the Bodies section into view in the side panel; on phones
+    // the preview stays on screen (the panel is right under it)
+    if (!window.matchMedia('(min-width: 1024px)').matches) return;
+    requestAnimationFrame(() => {
+      const el = panelRef.current?.querySelector(`[data-testid="section-${firstBase?.id}"]`);
+      el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
   };
   const s = useEditorStore.getState;
 
@@ -101,17 +107,9 @@ export default function EditorPage({ mode = 'charm' }) {
       >
         <div className="hidden lg:block">{cta}</div>
       </PageHeader>
-      <div className="grid flex-1 grid-cols-1 lg:min-h-0 lg:grid-cols-[300px_minmax(0,1fr)_320px]">
-        {/* 1. pick the pieces */}
-        <aside
-          ref={pickerRef}
-          className="order-2 h-[26rem] scroll-mt-2 border-y border-line bg-white lg:order-1 lg:h-auto lg:min-h-0 lg:border-y-0 lg:border-r"
-        >
-          <AssetPicker library={library} step={pickerStep} onStepChange={setPickerStep} />
-        </aside>
-
-        {/* canvas */}
-        <section className="order-1 flex flex-col gap-2 bg-studio p-3 sm:p-5 lg:order-2 lg:min-h-0">
+      {/* preview on the left, parts and colours on the right */}
+      <div className="grid flex-1 grid-cols-1 lg:min-h-0 lg:grid-cols-[minmax(0,1fr)_minmax(400px,480px)]">
+        <section className="flex flex-col gap-2 bg-studio p-3 sm:p-5 lg:min-h-0">
           <div className="flex justify-center">{tools}</div>
           <div className="relative grid place-items-center lg:min-h-0 lg:flex-1">
             <div className={`relative aspect-square w-full max-w-[min(100%,calc(100vh-21rem))] overflow-hidden rounded-[28px] ${mode === 'sticker' ? 'bg-[#ececea]' : 'bg-white'} [background-image:radial-gradient(#1d1d1b10_1px,transparent_1px)] [background-size:22px_22px]`}>
@@ -136,9 +134,8 @@ export default function EditorPage({ mode = 'charm' }) {
           {items.length > 0 && <p className="text-center text-xs text-muted">{t('editor.canvasHint')}</p>}
         </section>
 
-        {/* 2. colours & adjustments: every part stays open */}
-        <aside className="order-3 border-line bg-white lg:min-h-0 lg:border-l">
-          <PropertiesPanel library={library} />
+        <aside className="border-t border-line bg-cream lg:min-h-0 lg:border-l lg:border-t-0">
+          <CustomiserPanel ref={panelRef} library={library} />
         </aside>
       </div>
 

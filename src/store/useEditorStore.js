@@ -89,7 +89,8 @@ export const useEditorStore = create((set, get) => {
       const i = items.findIndex((it) => it.uid === id);
       if (i < 0) return;
       snapshot();
-      const copy = { ...items[i], uid: uid('item'), x: items[i].x + 40, y: items[i].y + 40, colors: { ...items[i].colors } };
+      // placed clearly apart so each copy is easy to grab on its own
+      const copy = { ...items[i], uid: uid('item'), x: items[i].x + 110, y: items[i].y + 90, colors: { ...items[i].colors } };
       set({ items: [...items.slice(0, i + 1), copy, ...items.slice(i + 1)], selectedId: copy.uid });
     },
 

@@ -28,7 +28,7 @@ export const ASSET_LABELS = {
   'Tortellino classico': L('Classic tortellino', 'Tortellino classico', 'Tortellino clásico', 'Tortellino classique', 'Klassischer Tortellino', '经典意式饺', 'क्लासिक टॉर्टेलिनो'),
   'Raviolo classico': L('Classic raviolo', 'Raviolo classico', 'Raviolo clásico', 'Raviolo classique', 'Klassischer Raviolo', '经典方饺', 'क्लासिक रैवियोलो'),
   'Raviolo gigante': L('Giant raviolo', 'Raviolo gigante', 'Raviolo gigante', 'Raviolo géant', 'Riesen-Raviolo', '巨型圆饺', 'जायंट रैवियोलो'),
-  Tagliatella: L('Tagliatella', 'Tagliatella', 'Tagliatella', 'Tagliatelle', 'Tagliatella', '宽面', 'टैग्लियाटेला'),
+  Reginetta: L('Reginetta', 'Reginetta', 'Reginetta', 'Reginetta', 'Reginetta', '花边面条', 'रेजिनेटा'),
   // eyes
   Reginette: L('Reginette', 'Reginette', 'Reginette', 'Reginette', 'Reginette', '花边面', 'रेजिनेट'),
   Bucatini: L('Bucatini', 'Bucatini', 'Bucatini', 'Bucatini', 'Bucatini', '吸管面', 'बुकाटिनी'),
@@ -47,6 +47,7 @@ export const ASSET_LABELS = {
 
 // old sample names → current names (libraries saved by earlier versions)
 export const ASSET_RENAMES = {
+  Tagliatella: 'Reginetta',
   Triangolo: 'Tortellino classico',
   Tortellino: 'Raviolo classico',
   Cerchio: 'Raviolo gigante',

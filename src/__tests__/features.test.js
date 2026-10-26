@@ -26,7 +26,7 @@ describe('admin password hashing', () => {
 
 describe('i18n', () => {
   // de / zh / hi translate every public page; the Admin area falls back to English
-  const PUBLIC = /^(lang|common|editor|picker|props|slot|export|order|cover|viewer|guide|cart|account|home)\.|^nav\.(language|case|charm|sticker|home)$/;
+  const PUBLIC = /^(lang|common|editor|picker|props|slot|export|order|cover|viewer|guide|cart|account|home|spec)\.|^nav\.(language|case|charm|sticker|home)$/;
   const publicKeys = Object.keys(en).filter((k) => PUBLIC.test(k)).sort();
   it('every language has exactly the English keys', () => {
     const keys = Object.keys(en).sort();
@@ -52,7 +52,7 @@ describe('i18n', () => {
   });
   it('interpolates and falls back to English', () => {
     expect(translate('it', 'imp.found', { n: 3 })).toBe('3 elementi trovati');
-    expect(translate('xx', 'editor.randomize')).toBe('Randomize');
+    expect(translate('xx', 'editor.randomize')).toBe('Randomise');
   });
   it('localises colour-zone labels created by the importer', () => {
     const t = (k) => translate('en', k);
@@ -113,10 +113,10 @@ describe('phone case patterns', () => {
   });
   it('every pattern has relief and none inside any camera opening, on every phone', () => {
     for (const model of Object.keys(PHONE_MODELS)) {
-      const { cameras } = coverSize(model);
+      const { cameras, W, H } = coverSize(model);
       for (const p of COVER_PATTERNS) {
         let max = 0;
-        for (let x = -30; x <= 30; x += 1.3) for (let y = -70; y <= 0; y += 1.3) max = Math.max(max, coverHeightAt(p, x, y, model));
+        for (let x = -W / 2; x <= W / 2; x += 1.3) for (let y = -H / 2; y <= 0; y += 1.3) max = Math.max(max, coverHeightAt(p, x, y, model));
         expect(max, `${model}/${p}`).toBeGreaterThan(0.5);
         for (const c of cameras) expect(coverHeightAt(p, c.x, c.y, model), `${model}/${p}`).toBe(0);
       }
@@ -240,3 +240,15 @@ describe('3D packaging', () => {
     expect(svg.match(/Material:/g)).toHaveLength(1);
   });
 });
+
+describe('case specifications', () => {
+  it('app (English) and box print the same material and protection for every finish', async () => {
+    const { PACK_FINISH } = await import('../lib/packaging3d.js');
+    const en = (await import('../i18n/en.js')).default;
+    for (const f of ['raw', 'aldente', 'overcooked']) {
+      expect(en[`spec.material.${f}`]).toBe(PACK_FINISH[f].material);
+      expect(en[`spec.protection.${f}`]).toBe(PACK_FINISH[f].protection);
+    }
+  });
+});
+

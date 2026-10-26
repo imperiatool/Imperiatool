@@ -10,8 +10,10 @@ export const STUDIO_BG = '#f2f2f0';
 export class Studio {
   constructor(container) {
     this.container = container;
-    this.renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    this.renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true, precision: 'highp', powerPreference: 'high-performance' });
+    const coarse = window.matchMedia?.('(pointer: coarse)').matches;
+    // phones: lighter rendering so scrolling stays smooth (no blank areas)
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, coarse ? 1.5 : 2));
     this.renderer.toneMapping = THREE.NeutralToneMapping;
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -36,7 +38,7 @@ export class Studio {
     const key = new THREE.DirectionalLight(0xfffaf2, 1.35);
     key.position.set(1.8, 3.4, 2.8);
     key.castShadow = true;
-    key.shadow.mapSize.set(2048, 2048);
+    key.shadow.mapSize.set(coarse ? 1024 : 2048, coarse ? 1024 : 2048);
     key.shadow.radius = 9;
     key.shadow.bias = -0.0003;
     key.shadow.normalBias = 0.01;
@@ -150,9 +152,14 @@ export class Studio {
     const fitH = fs.y / 2 / Math.tan(fov / 2);
     const fitW = fs.x / 2 / Math.tan(fov / 2) / Math.max(this.camera.aspect, 0.4);
     this.fitDistance = Math.max(fitH, fitW) * (this.margin || 1.3);
+    // tight near/far planes: phones often have a 16-bit depth buffer and with a
+    // wide range far surfaces show through near ones (dark or "see-through" parts)
+    this.camera.near = this.fitDistance * 0.03;
+    this.camera.far = this.fitDistance * 12;
+    this.camera.updateProjectionMatrix();
     this.homeTarget = target.clone();
     this.controls.target.copy(target);
-    this.controls.minDistance = this.fitDistance * 0.25;
+    this.controls.minDistance = this.fitDistance * 0.3;
     this.controls.maxDistance = this.fitDistance * 2.5;
     if (!this.framed || this.reframe) this.resetView();
     this.framed = true;

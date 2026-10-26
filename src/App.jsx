@@ -25,6 +25,11 @@ export default function App() {
   // changing page closes the cart / account panels
   const { pathname } = useLocation();
   useEffect(() => useCartStore.getState().show(null), [pathname]);
+  // …and opens it from the top (otherwise it keeps the previous page's scroll)
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    document.querySelectorAll('main, [data-scroll-root]').forEach((el) => (el.scrollTop = 0));
+  }, [pathname]);
 
   // First launch: import the sample SVG into the library.
   useEffect(() => {

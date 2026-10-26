@@ -15,22 +15,35 @@ export const COVER_PATTERNS = ['raviolo', 'ravioli', 'sfoglia', 'tagliatelle', '
  * case centre (y up); a circle is a square with r = w / 2.
  */
 const sq = (s, inset, r) => ({ w: s, h: s, r, x: null, y: null, inset });
+// Sizes are the manufacturers' published phone dimensions + about 2.7 mm of
+// case; camera layouts are approximations from product photos (no CAD data).
+// `ports`: bottom-edge openings (charging port, speaker, microphone).
+const col3 = (s, inset, gap) => [0, 1, 2].map((i) => ({ w: s, h: s, r: s / 2, inset, dy: i * gap }));
 export const PHONE_MODELS = {
-  'iphone-17-pro': { w: 74.6, h: 152.6, r: 13, cams: [sq(37.5, 4.8, 9.5)], buttons: 'iphone-cc' },
-  'iphone-17': { w: 74.2, h: 152.2, r: 12.6, cams: [{ w: 20, h: 39, r: 10, inset: 6.2 }], buttons: 'iphone-cc' },
-  'iphone-16-pro': { w: 74.1, h: 152.2, r: 12.6, cams: [sq(35.5, 5.2, 9)], buttons: 'iphone-cc' },
-  'iphone-16': { w: 74.2, h: 150.2, r: 12.2, cams: [{ w: 19.5, h: 36, r: 9.75, inset: 6.4 }], buttons: 'iphone-cc' },
-  'iphone-15': { w: 74.2, h: 150.2, r: 12.2, cams: [sq(30, 5.8, 8)], buttons: 'iphone' },
-  'galaxy-s25': {
-    w: 73.1, h: 149.5, r: 10.5, buttons: 'galaxy',
-    cams: [0, 1, 2].map((i) => ({ w: 11.4, h: 11.4, r: 5.7, inset: 7.8, dy: i * 13.6 })),
+  'iphone-17-pro-max': { w: 80.7, h: 166.1, r: 14, cams: [sq(39, 4.8, 10)], buttons: 'iphone-cc', ports: 'iphone' },
+  'iphone-17-pro': { w: 74.6, h: 152.6, r: 13, cams: [sq(37.5, 4.8, 9.5)], buttons: 'iphone-cc', ports: 'iphone' },
+  'iphone-17': { w: 74.2, h: 152.2, r: 12.6, cams: [{ w: 20, h: 39, r: 10, inset: 6.2 }], buttons: 'iphone-cc', ports: 'iphone' },
+  'iphone-16-pro-max': { w: 80.3, h: 165.7, r: 13.6, cams: [sq(37.5, 5.2, 9.5)], buttons: 'iphone-cc', ports: 'iphone' },
+  'iphone-16-pro': { w: 74.1, h: 152.2, r: 12.6, cams: [sq(35.5, 5.2, 9)], buttons: 'iphone-cc', ports: 'iphone' },
+  'iphone-16-plus': { w: 80.5, h: 163.6, r: 13.2, cams: [{ w: 20.5, h: 38, r: 10.25, inset: 6.6 }], buttons: 'iphone-cc', ports: 'iphone' },
+  'iphone-16': { w: 74.2, h: 150.2, r: 12.2, cams: [{ w: 19.5, h: 36, r: 9.75, inset: 6.4 }], buttons: 'iphone-cc', ports: 'iphone' },
+  'iphone-15-pro-max': { w: 79.4, h: 162.6, r: 13.2, cams: [sq(36, 5.4, 9.2)], buttons: 'iphone', ports: 'iphone' },
+  'iphone-15-pro': { w: 73.3, h: 149.3, r: 12.4, cams: [sq(33.5, 5.4, 8.6)], buttons: 'iphone', ports: 'iphone' },
+  'iphone-15': { w: 74.2, h: 150.2, r: 12.2, cams: [sq(30, 5.8, 8)], buttons: 'iphone', ports: 'iphone' },
+  'galaxy-s25-ultra': {
+    w: 80.3, h: 165.5, r: 6, buttons: 'galaxy', ports: 'galaxy',
+    cams: [...col3(12.4, 8.2, 14.4), { w: 9.4, h: 9.4, r: 4.7, inset: 8.2, dx: 15, dy: 30.2 }],
   },
-  'galaxy-s24': {
-    w: 73.2, h: 149.6, r: 10.5, buttons: 'galaxy',
-    cams: [0, 1, 2].map((i) => ({ w: 11.8, h: 11.8, r: 5.9, inset: 7.6, dy: i * 14 })),
+  'galaxy-s25-plus': { w: 78.5, h: 161.1, r: 11.5, buttons: 'galaxy', ports: 'galaxy', cams: col3(12, 8, 14.2) },
+  'galaxy-s25': { w: 73.1, h: 149.5, r: 10.5, buttons: 'galaxy', ports: 'galaxy', cams: col3(11.4, 7.8, 13.6) },
+  'galaxy-s24-ultra': {
+    w: 81.7, h: 165, r: 5, buttons: 'galaxy', ports: 'galaxy',
+    cams: [...col3(12.4, 8.4, 14.6), { w: 9.4, h: 9.4, r: 4.7, inset: 8.4, dx: 15, dy: 30.6 }],
   },
-  'pixel-10': { w: 74.6, h: 155.4, r: 12, cams: [{ w: 56, h: 16, r: 8, inset: 15, center: true }], buttons: 'pixel' },
-  'pixel-9': { w: 74.6, h: 155.4, r: 12, cams: [{ w: 54, h: 16, r: 8, inset: 15, center: true }], buttons: 'pixel' },
+  'galaxy-s24': { w: 73.2, h: 149.6, r: 10.5, buttons: 'galaxy', ports: 'galaxy', cams: col3(11.8, 7.6, 14) },
+  'galaxy-a56': { w: 80.2, h: 164.9, r: 11, buttons: 'galaxy', ports: 'galaxy', cams: [{ w: 18, h: 46, r: 9, inset: 6.2 }] },
+  'pixel-10': { w: 74.6, h: 155.4, r: 12, cams: [{ w: 56, h: 16, r: 8, inset: 15, center: true }], buttons: 'pixel', ports: 'galaxy' },
+  'pixel-9': { w: 74.6, h: 155.4, r: 12, cams: [{ w: 54, h: 16, r: 8, inset: 15, center: true }], buttons: 'pixel', ports: 'galaxy' },
 };
 export const DEFAULT_MODEL = 'iphone-17-pro';
 
@@ -54,7 +67,7 @@ function setModel(id) {
     w: c.w,
     h: c.h,
     r: c.r,
-    x: c.center ? 0 : -W / 2 + c.inset + c.w / 2,
+    x: c.center ? 0 : -W / 2 + c.inset + c.w / 2 + (c.dx || 0),
     y: H / 2 - (c.center ? c.inset : c.inset) - c.h / 2 - (c.dy || 0),
     inset: c.center ? Math.min(c.inset, (W - c.w) / 2) : c.inset,
   }));
@@ -310,7 +323,8 @@ export function buildCover({ pattern = 'raviolo', color = '#ffb548', material = 
   const mat = () => makeMaterial(color, material, UV_REPEAT);
   const group = new THREE.Group();
   const bevel = material === 'overcooked' ? 0.85 : material === 'raw' ? 0.35 : 0.6;
-  const thinnest = Math.min(...CAMS.map((c) => c.inset), ...CAMS.flatMap((a) => CAMS.filter((b) => b !== a).map((b) => Math.abs(a.y - b.y) - (a.h + b.h) / 2)));
+  const gap = (a, b) => Math.max(Math.abs(a.x - b.x) - (a.w + b.w) / 2, Math.abs(a.y - b.y) - (a.h + b.h) / 2);
+  const thinnest = Math.min(...CAMS.map((c) => c.inset), ...CAMS.flatMap((a) => CAMS.filter((b) => b !== a).map((b) => gap(a, b))));
 
   // back plate with the camera openings
   const back = roundedRect(0, 0, W, H, R);
@@ -355,6 +369,9 @@ export function buildCover({ pattern = 'raviolo', color = '#ffb548', material = 
     btn(-L, 52, 21); // volume
   }
 
+  // openings on the bottom edge: charging port, speaker and microphone
+  group.add(bottomOpenings(spec.ports));
+
   // relief
   const relief = reliefGeometry(pattern, { reliefScale: hints.relief, smooth: hints.smoothRelief });
   group.add(new THREE.Mesh(relief, mat()));
@@ -364,6 +381,34 @@ export function buildCover({ pattern = 'raviolo', color = '#ffb548', material = 
   // the phone inside: dark frame, glass and lenses through the camera opening
   if (phone) group.add(buildPhone());
   return group;
+}
+
+/*
+ * Bottom-edge openings, drawn as dark recesses on the outside of the bottom
+ * wall (x seen from the back). iPhone: USB-C in the middle with speaker and
+ * microphone slots either side; Samsung / Pixel: USB-C, speaker on one side,
+ * microphone hole on the other.
+ */
+function bottomOpenings(kind = 'iphone') {
+  const g = new THREE.Group();
+  const dark = new THREE.MeshStandardMaterial({ color: '#0d0e10', roughness: 0.9, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -2 });
+  const zc = -RIM_D / 2 + 1; // middle of the phone's edge
+  const add = (x, w, h) => {
+    const m = new THREE.Mesh(new THREE.ShapeGeometry(roundedRect(0, 0, w, h, h / 2), 12), dark);
+    m.rotation.x = Math.PI / 2; // facing down (-y)
+    m.position.set(x, -H / 2 - 0.03, zc);
+    m.userData.noShadow = true;
+    g.add(m);
+  };
+  add(0, 12.5, 5); // USB-C
+  if (kind === 'iphone') {
+    add(-17, 11, 3); // speaker (phone's right, seen from the back)
+    add(17, 11, 3); // microphone
+  } else {
+    add(-17, 12, 3); // speaker
+    add(11, 3, 3); // microphone
+  }
+  return g;
 }
 
 let logoTexture = null;
@@ -391,8 +436,9 @@ function buildPhone() {
   const pw = W - RIM_T * 2 - 0.3;
   const ph = H - RIM_T * 2 - 0.3;
   const depth = RIM_D - PLATE * 0.6 - 1.4;
-  const body = new THREE.Mesh(new RoundedBoxGeometry(pw, ph, depth, 4, Math.min(R - RIM_T, depth / 2)), frame);
-  body.position.z = -depth / 2 - 0.05;
+  // extruded outline so the phone's corners follow the case (a rounded box
+  // has the same small radius on every edge and poked out at the corners)
+  const body = new THREE.Mesh(extrude(roundedRect(0, 0, pw, ph, Math.max(1, R - RIM_T - 0.15)), depth, 1.2, -depth - 0.05), frame);
   g.add(body);
   const screen = new THREE.Mesh(new THREE.PlaneGeometry(pw - 2.6, ph - 2.6), glass);
   screen.rotation.y = Math.PI;
@@ -405,6 +451,7 @@ function buildPhone() {
     const lenses = [];
     const big = Math.min(c.w, c.h);
     if (c.w > c.h * 2) for (let i = -1; i <= 1; i++) lenses.push([c.x + i * c.w * 0.26, c.y, c.h * 0.32]);
+    else if (c.h > c.w * 2.2) for (const k of [-1, 0, 1]) lenses.push([c.x, c.y + k * c.h * 0.3, c.w * 0.32]);
     else if (c.h > c.w * 1.5) for (const s of [-1, 1]) lenses.push([c.x, c.y + s * c.h * 0.24, c.w * 0.34]);
     else if (big > 24) {
       lenses.push([c.x - c.w * 0.21, c.y + c.h * 0.21, big * 0.17], [c.x - c.w * 0.21, c.y - c.h * 0.21, big * 0.17], [c.x + c.w * 0.21, c.y, big * 0.17]);

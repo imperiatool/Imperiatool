@@ -11,7 +11,8 @@ import { buildCover, coverSize } from './cover3d.js';
 
 const PT = 72 / 25.4; // dieline units (pt) per mm
 const VB = { x: 320, y: 125, w: 762, h: 770 }; // dieline viewBox
-const PX = 2.6; // texture pixels per pt (≈ 2000 px square)
+// texture pixels per pt (≈ 2000 px square; lighter on phones)
+const PX = typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)').matches ? 1.9 : 2.6;
 
 // panels of the dieline (pt)
 const P = {
@@ -53,6 +54,20 @@ export const PACK_FINISH = {
 };
 
 const RED = '#e1201b';
+// red panel on the back: from the right-most point of the wavy edge to the fold
+const BACK_RED = { left: 406.8, right: 607.77 };
+const HEADING = 'IMPERIA® PASTA PHONE CASE';
+const HEADING_SIZE = 11.2;
+const TAGLINE = 'Inspired by traditional pasta shapes.';
+let measureCtx;
+/** Text width in dieline pt (canvas when available, estimate in tests). */
+function measure(text, size, bold = false) {
+  const str = String(text ?? '');
+  if (measureCtx === undefined) measureCtx = typeof document !== 'undefined' ? document.createElement('canvas').getContext('2d') : null;
+  if (!measureCtx) return str.length * size * (bold ? 0.56 : 0.5);
+  measureCtx.font = `${bold ? '700 ' : ''}${size}px 'Helvetica Neue', Helvetica, Arimo, Arial, sans-serif`;
+  return measureCtx.measureText(str).width - 0.25 * str.length;
+}
 const YELLOW = '#fdb448';
 const FONT = `font-family="'Helvetica Neue', Helvetica, Arimo, Arial, sans-serif"`;
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
@@ -77,8 +92,10 @@ export function packagingOverlay({ pattern, colorId, colorName, finish, modelLab
     parts.push(`<text x="824.1" y="220" text-anchor="middle" ${FONT} font-weight="700" font-size="6" fill="${RED}">phone case</text>`);
   }
 
-  // back: product details, one line each (long values are condensed to fit)
-  parts.push(`<rect x="418" y="313" width="188" height="78" fill="${RED}"/>`);
+  // back: heading, tagline and product details as one left-aligned block,
+  // centred in the red panel so the left and right margins are equal
+  // (measured on the longest line)
+  const SIZE = 9.4;
   const rows = [
     ['Pattern', name],
     ['Colour', colorName],
@@ -87,10 +104,20 @@ export function packagingOverlay({ pattern, colorId, colorName, finish, modelLab
     ['Compatibility', modelLabel],
     ['Everyday protection', f.protection],
   ];
+  const MAXW = BACK_RED.right - BACK_RED.left - 12;
+  const rowW = rows.map(([k, v]) => Math.min(MAXW, measure(`${k}: `, SIZE, true) + measure(v, SIZE)));
+  const headW = measure(HEADING, HEADING_SIZE, true);
+  const tagW = measure(TAGLINE, SIZE);
+  const blockW = Math.max(headW, tagW, ...rowW);
+  const x = +((BACK_RED.left + BACK_RED.right - blockW) / 2).toFixed(2);
+  // the artwork's own heading/tagline are replaced (cover + redraw at x)
+  parts.push(`<rect x="413" y="262" width="194" height="129" fill="${RED}"/>`);
+  parts.push(`<text x="${x}" y="279.6" ${FONT} font-weight="700" font-size="${HEADING_SIZE}" letter-spacing="-0.25" fill="#fff">${esc(HEADING)}</text>`);
+  parts.push(`<text x="${x}" y="303.8" ${FONT} font-size="${SIZE}" letter-spacing="-0.25" fill="#fff">${esc(TAGLINE)}</text>`);
   rows.forEach(([k, v], i) => {
     const y = 326.8 + i * 12;
-    const fit = `${k}: ${v}`.length * 4.75 > 184 ? ' textLength="184" lengthAdjust="spacingAndGlyphs"' : '';
-    parts.push(`<text x="419.5" y="${y}" ${FONT} font-size="9.4" letter-spacing="-0.25" fill="#fff"${fit}><tspan font-weight="700">${esc(k)}:</tspan> ${esc(v)}</text>`);
+    const fit = rowW[i] >= MAXW ? ` textLength="${MAXW}" lengthAdjust="spacingAndGlyphs"` : '';
+    parts.push(`<text x="${x}" y="${y}" ${FONT} font-size="${SIZE}" letter-spacing="-0.25" fill="#fff"${fit}><tspan font-weight="700">${esc(k)}:</tspan> ${esc(v)}</text>`);
   });
   // ring around the chosen colour
   const dot = COLOUR_DOTS[colorId];

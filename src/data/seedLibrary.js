@@ -11,7 +11,7 @@ const SEED_LAYERS = [
   {
     layer: 'Body',
     categoryId: 'cat-corpi',
-    names: ['Tortellino classico', 'Raviolo classico', 'Raviolo gigante', 'Tagliatella'],
+    names: ['Tortellino classico', 'Raviolo classico', 'Raviolo gigante', 'Reginetta'],
   },
   {
     layer: 'Eyes',

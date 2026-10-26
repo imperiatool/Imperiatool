@@ -85,3 +85,21 @@ describe('helpers', () => {
     expect(normalizeColor('url(#g)')).toBe(null);
   });
 });
+
+describe('randomise: pupils', () => {
+  it('never gives a pupil the same colour as its eye, over many runs', () => {
+    const eyes = asset('e', 'cat-occhi', [
+      { id: 's0', kind: 'fill', original: '#ffb548', synthetic: true, label: 'Base' },
+      { id: 's1', kind: 'fill', original: '#6a3933', label: 'Riempimento' },
+      { id: 's2', kind: 'stroke', original: '#6a3933', label: 'Contorno' },
+    ]);
+    const body = asset('b', 'cat-corpi', [{ id: 's0', kind: 'fill', original: '#e1201b', synthetic: true, label: 'Base' }]);
+    let seed = 7;
+    const rng = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+    for (let i = 0; i < 300; i++) {
+      const items = randomComposition({ categories: DEFAULT_CATEGORIES, assets: [body, eyes], palette: DEFAULT_PALETTE }, rng);
+      const e = items.find((it) => it.assetId === 'e');
+      expect(e.colors.s1).not.toBe(e.colors.s0);
+    }
+  });
+});

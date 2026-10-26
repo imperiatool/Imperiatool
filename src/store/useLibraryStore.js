@@ -8,7 +8,7 @@ import { buildSeedLibrary } from '../data/seedLibrary.js';
 import { withLabels, snapAssetColors } from '../data/labels.js';
 
 export const LIBRARY_STORAGE_KEY = 'sticker-builder:library';
-export const LIBRARY_VERSION = 5;
+export const LIBRARY_VERSION = 6;
 
 export const useLibraryStore = create(
   persist(
@@ -138,7 +138,8 @@ export const useLibraryStore = create(
           s = { ...s, palette: s.palette.map((c) => (c.id === 'c-rosso' && c.hex.toLowerCase() === '#e3201b' ? { ...c, hex: '#e1201b' } : c)) };
           s = { ...s, categories: s.categories.map((c) => (c.outlineFill?.toLowerCase() === '#e3201b' ? { ...c, outlineFill: '#e1201b' } : c)) };
         }
-        if (version < 5) return { ...s, ...withLabels(s, { force: version < 4 }) };
+        // v6: Tagliatella body → Reginetta
+        if (version < 6) return { ...s, ...withLabels(s, { force: version < 4 }) };
         return s;
       },
     },

@@ -28,6 +28,12 @@ L'app si apre su una **home** con tre schede bianche arrotondate (Case, Charm, S
 
 Un sito web non può inserire uno sticker direttamente nelle app: WhatsApp, per esempio, trasforma in foto qualsiasi immagine ricevuta. La strada più semplice è condividere o incollare il PNG trasparente (funziona ovunque). Per averlo come vero sticker WhatsApp: pannello sticker → *+ Crea* → scegli l'immagine (consiglio mostrato nell'app).
 
+### Dati da verificare (da completare con le schede tecniche)
+
+- **Modelli di telefono** (`src/lib/cover3d.js`, `PHONE_MODELS`): misure = dimensioni ufficiali del telefono + ~2,7 mm di custodia; posizione e forma delle fotocamere, dei tasti e delle aperture in basso (USB-C, altoparlante, microfono) sono ricavate dalle foto, non da file CAD. Prima della produzione vanno confrontate con i disegni tecnici.
+- **Materiale e protezione** della custodia: un'unica fonte, `PACK_FINISH` in `src/lib/packaging3d.js` (scatola) + chiavi `spec.material.*` / `spec.protection.*` nelle lingue (app). Un test controlla che app e scatola dicano la stessa cosa. Verificati dall'artwork della scatola solo i valori **Al Dente** ("Polycarbonate (PC) · Satin finish", "Scratch-resistant"); quelli di Raw e Overcooked vanno confermati.
+- **Charm**: il materiale non è indicato perché non c'è un dato verificato; si aggiunge in `OrderModal.jsx` (riga `spec.material`).
+
 ## Avvio rapido
 
 Requisiti: **Node.js 20.19+** (consigliato 22) e npm.

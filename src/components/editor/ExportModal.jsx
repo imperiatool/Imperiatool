@@ -101,6 +101,7 @@ export default function ExportModal({ open, onClose, items, library }) {
             </Button>
           </div>
           {copied && <p className="-mt-2 text-center text-sm text-brand" data-testid="sticker-copied">{t('export.pasteHint')}</p>}
+          <p className="text-xs text-muted">{t('export.socialHint')}</p>
 
           <p className="mt-auto rounded-2xl bg-cream px-3 py-2.5 text-xs leading-relaxed text-muted">
             <span className="font-bold text-ink">{t('export.tipTitle')}</span> {t('export.tip')}

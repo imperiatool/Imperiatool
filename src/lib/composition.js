@@ -147,6 +147,16 @@ export function randomComposition({ categories, assets, palette }, rng = Math.ra
       else if (slot.synthetic || !hasBase) colors[slot.id] = swap ? detailColor : featureColor;
       else colors[slot.id] = detailColor;
     }
+    // a pupil (detail fill) must always stand out from its eye (base fill)
+    const eye = (asset.slots || []).find((s) => s.synthetic);
+    if (eye) {
+      for (const s of asset.slots) {
+        if (s.kind !== 'fill' || s.synthetic) continue;
+        if (colors[s.id] === colors[eye.id] || contrastRatio(colors[s.id], colors[eye.id]) < 1.6) {
+          colors[s.id] = bestContrast(hexes.filter((h) => h !== colors[eye.id]), colors[eye.id]);
+        }
+      }
+    }
     const place = placementFor(asset, cat, items, assetsById, categoriesById);
     const jitter = cat.isBase ? 1 : 0.9 + rng() * 0.2;
     const item = newItem(asset, cat, {

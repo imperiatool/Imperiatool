@@ -4,6 +4,7 @@ import Button from '../ui/Button.jsx';
 import Icon from '../ui/Icon.jsx';
 import { useCartStore } from '../../store/useCartStore.js';
 import MaterialPicker from '../order/MaterialPicker.jsx';
+import SpecList from '../order/SpecList.jsx';
 import { CHARM_OPTIONS } from '../../data/defaults.js';
 import { buildStickerSvg, svgToPngBlob, blobToDataUrl } from '../../lib/exportImage.js';
 import { useI18n } from '../../i18n/index.js';
@@ -171,6 +172,15 @@ export default function OrderModal({ open, onClose, items, library }) {
               ))}
             </div>
           </fieldset>
+          {/* no verified charm material yet: that row is left out (see README) */}
+          <SpecList
+            testid="charm-specs"
+            rows={[
+              ['spec.pattern', design[0]?.assetName],
+              ['spec.colour', design[0]?.colors[0]?.name],
+              ['spec.finish', t(`order.materials.${material}.name`)],
+            ]}
+          />
           <div className="mt-auto flex items-center justify-between gap-3 border-t border-line pt-4">
             <span className="text-2xl font-semibold">{money(unitPrice)}</span>
             <Button variant="primary" size="lg" onClick={add} disabled={!visibleItems.length} data-testid="charm-add">

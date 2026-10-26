@@ -64,7 +64,9 @@ export function buildCharm(items, assetsById, materialId = 'aldente', { attachme
         // the outline colour wraps the whole extrusion: sides + rounded edge
         if (pieceIndex != null) {
           const pc = pieces[pieceIndex];
-          if (!pc.sideColor) pc.sideColor = style.stroke;
+          // details on top (pupils…) keep their own colour all round: only the
+          // element's silhouette gets the outline colour on its edge
+          if (!pc.sideColor && pc.level === 0) pc.sideColor = style.stroke;
           pc.strokeWidth = Math.max(pc.strokeWidth || 0, (style.strokeWidth ?? 1) * scale);
         }
       }
@@ -91,7 +93,7 @@ export function buildCharm(items, assetsById, materialId = 'aldente', { attachme
     // rounded edge width: with an outline it IS the outline (same colour as
     // the sides), as wide as the drawn stroke; never wide enough to fold over
     const bs = piece.sideColor
-      ? Math.max(1.2, Math.min(Math.max((piece.strokeWidth || 3) * 1.15, 3), bt * 1.2, minDim * 0.1, 12))
+      ? Math.max(1.2, Math.min(Math.max((piece.strokeWidth || 3) * 1.15, minDim > 60 ? 3 : 1.2), bt * 1.2, minDim * 0.08, 12))
       : Math.max(0.4, Math.min(bt * 0.9, minDim * 0.07, 9));
     // sharp tips are softly rounded (radius ≈ the rounded edge) so the edge
     // never pokes out like spilled rubber
@@ -123,6 +125,7 @@ export function buildCharm(items, assetsById, materialId = 'aldente', { attachme
     piece.bevelSize = bs;
     piece.polys = shapes.map((sh) => ({ outer: sh.getPoints(), holes: sh.holes.map((h) => h.getPoints()) }));
     piece.contours = piece.polys.flatMap((q) => [q.outer, ...q.holes]);
+    piece.edges = outerEdges(piece.polys, piece.contours);
     piece.top = top;
     placed.push({ box, top });
     itemTop.set(piece.item, Math.max(itemTop.get(piece.item) ?? 0, top));
@@ -143,26 +146,30 @@ export function buildCharm(items, assetsById, materialId = 'aldente', { attachme
       const own = closed && s.pieceIndex != null;
       const base = own ? pieces[s.pieceIndex].top : Math.max(itemTop.get(s.item) ?? 0, s.pieceIndex != null ? pieces[s.pieceIndex].top : 0);
       const piece = s.pieceIndex != null ? pieces[s.pieceIndex] : null;
-      // outer edges are drawn by the coloured rounded edge itself; a tube is
-      // only added where the line runs inside the piece (lips, shell…)
-      let runs = [pts];
-      if (own && piece?.polys) {
-        runs = [];
-        let cur = [];
-        const off = Math.max(1.5, piece.bevelSize * 1.2);
-        for (const p of pts) {
-          const edge = [[off, 0], [-off, 0], [0, off], [0, -off], [off * 0.7, off * 0.7], [-off * 0.7, -off * 0.7], [off * 0.7, -off * 0.7], [-off * 0.7, off * 0.7]].some(
-            ([dx, dy]) => !insidePolys({ x: p.x + dx, y: p.y + dy }, piece.polys),
-          );
-          if (edge) {
-            if (cur.length > 2) runs.push(cur);
-            cur = [];
-          } else cur.push(p);
+      // outer edges are drawn by the coloured rounded edge itself. A tube is
+      // kept only where the line lies well inside a shape of the same element,
+      // so it never sticks out past the edge (lips, shell…)
+      const hosts = own && piece ? [piece] : pieces.filter((pc) => pc.item === s.item && pc.polys);
+      const runs = [];
+      let cur = [];
+      for (const p of pts) {
+        let ok = false;
+        for (const h of hosts) {
+          if (!insidePolys(p, h.polys)) continue;
+          ok = distToSegments(p, h.edges) >= r * 1.1 + h.bevelSize * 0.6;
+          if (ok) break;
         }
-        if (cur.length > 2) runs.push(cur);
+        if (!hosts.length) ok = true; // a loose line with nothing under it
+        if (ok) cur.push(p);
+        else {
+          if (cur.length > 2) runs.push(cur);
+          cur = [];
+        }
       }
+      if (cur.length > 2) runs.push(cur);
+      if (closed && runs.length === 1 && runs[0].length === pts.length) runs[0].loop = true;
       for (const run of runs) {
-        const isLoop = closed && run === pts;
+        const isLoop = !!run.loop;
         const z = own ? base - r * 0.3 : base + r * 0.1;
         const curve = new THREE.CatmullRomCurve3(run.map((p) => new THREE.Vector3(p.x, p.y, z)), isLoop, 'centripetal');
         const segments = Math.min(2400, Math.max(16, Math.round(curve.getLength() / (r * 0.7))));
@@ -184,14 +191,15 @@ export function buildCharm(items, assetsById, materialId = 'aldente', { attachme
   const wrapper = new THREE.Group();
   wrapper.add(root);
   // Imperia logo printed on the back, centred on the body
-  addBackLogo(wrapper);
+  addBackLogo(wrapper, sizeMm);
   if (attachment && attachment !== 'none') {
     const box = new THREE.Box3().setFromObject(wrapper);
     const size = box.getSize(new THREE.Vector3());
     const mm = Math.max(size.x, size.y) / sizeMm; // SVG units per millimetre
     // hang point: top of the body, in the middle of its thickness
     const top = new THREE.Vector3((box.min.x + box.max.x) / 2, box.max.y, (box.min.z + box.max.z) / 2);
-    wrapper.add(buildAttachment(attachment, top, mm));
+    // hardware a little smaller than life-size reads better next to the charm
+    wrapper.add(buildAttachment(attachment, top, mm * 0.72));
   }
   return wrapper;
 }
@@ -222,6 +230,41 @@ function roundCorners(shape, radius, step) {
   return s;
 }
 
+/** Segments on the outside of the union of shapes (where shapes overlap, the
+ *  shared lines – like the middle of the lips – are not edges). */
+function outerEdges(polys, contours) {
+  const segs = [];
+  for (const c of contours) {
+    for (let i = 0, n = c.length; i < n; i++) {
+      const a = c[i];
+      const b = c[(i + 1) % n];
+      const mx = (a.x + b.x) / 2;
+      const my = (a.y + b.y) / 2;
+      const len = Math.hypot(b.x - a.x, b.y - a.y) || 1;
+      const nx = (-(b.y - a.y) / len) * 1.5;
+      const ny = ((b.x - a.x) / len) * 1.5;
+      const inA = insidePolys({ x: mx + nx, y: my + ny }, polys);
+      const inB = insidePolys({ x: mx - nx, y: my - ny }, polys);
+      if (inA !== inB) segs.push([a, b]);
+    }
+  }
+  return segs;
+}
+
+function distToSegments(p, segs) {
+  let best = Infinity;
+  for (const [a, b] of segs) {
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    const l2 = dx * dx + dy * dy || 1;
+    const u = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / l2));
+    const ex = a.x + u * dx - p.x;
+    const ey = a.y + u * dy - p.y;
+    best = Math.min(best, ex * ex + ey * ey);
+  }
+  return Math.sqrt(best);
+}
+
 function inPoly(p, poly) {
   let inside = false;
   for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
@@ -237,7 +280,10 @@ function insidePolys(p, polys) {
 
 /* ---- back logo ---------------------------------------------------------- */
 let logoTexture = null;
-function addBackLogo(wrapper) {
+/** Logo width on the phone cases (mm), used on the charms too. */
+const LOGO_MM = 19;
+
+function addBackLogo(wrapper, sizeMm = 40) {
   // measure the body only (eyes and mouth may stick out of it)
   wrapper.updateMatrixWorld(true);
   const box = new THREE.Box3();
@@ -251,18 +297,22 @@ function addBackLogo(wrapper) {
     logoTexture.anisotropy = 8;
   }
   const ratio = 1800 / 388;
-  // follow the shape: along the long side, always well inside the body
+  const all = new THREE.Box3().setFromObject(wrapper).getSize(new THREE.Vector3());
+  const mm = Math.max(all.x, all.y) / sizeMm; // SVG units per millimetre
+  // tall bodies (Reginetta): vertical along the body, centred, a little smaller;
+  // the others: horizontal, centred, towards the bottom. Same size as on the
+  // cases, but always well inside the body.
   const vertical = size.y > size.x * 1.6;
   const long = vertical ? size.y : size.x;
   const short = vertical ? size.x : size.y;
-  const w = Math.min(long * 0.45, short * 0.55 * ratio);
+  const w = vertical ? Math.min(LOGO_MM * 0.85 * mm, long * 0.42, short * 0.5 * ratio) : Math.min(LOGO_MM * mm, long * 0.5, short * 0.55 * ratio);
   const decal = new THREE.Mesh(
     new THREE.PlaneGeometry(w, w / ratio),
     new THREE.MeshPhysicalMaterial({ map: logoTexture, transparent: true, alphaTest: 0.05, roughness: 0.45, polygonOffset: true, polygonOffsetFactor: -2 }),
   );
   decal.rotation.set(0, Math.PI, vertical ? Math.PI / 2 : 0); // faces the back
   const cx = (box.min.x + box.max.x) / 2;
-  const cy = vertical ? (box.min.y + box.max.y) / 2 : box.min.y + size.y * 0.45;
+  const cy = vertical ? (box.min.y + box.max.y) / 2 : box.min.y + size.y * 0.24;
   decal.position.set(cx, cy, box.min.z - 0.4);
   decal.userData.keepTexture = true;
   decal.userData.noShadow = true;

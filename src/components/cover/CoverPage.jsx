@@ -3,6 +3,7 @@ import Button from '../ui/Button.jsx';
 import Icon from '../ui/Icon.jsx';
 import PatternIcon from './PatternIcon.jsx';
 import MaterialPicker from '../order/MaterialPicker.jsx';
+import SpecList from '../order/SpecList.jsx';
 import { useCoverStore } from '../../store/useCoverStore.js';
 import { useLibrary } from '../../hooks/useLibrary.js';
 import { COVER_OPTIONS } from '../../data/defaults.js';
@@ -161,6 +162,19 @@ export default function CoverPage() {
                   ))}
                 </select>
                 <Icon name="down" className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+              </div>
+              <div className="mt-4">
+                <SpecList
+                  testid="case-specs"
+                  rows={[
+                    ['spec.pattern', patternName],
+                    ['spec.colour', label(colorEntry) || cover.color],
+                    ['spec.finish', t(`order.materials.${cover.material}.name`)],
+                    ['spec.material', t(`spec.material.${cover.material}`)],
+                    ['spec.compatibility', model.label],
+                    ['spec.protection', t(`spec.protection.${cover.material}`)],
+                  ]}
+                />
               </div>
             </Option>
           </div>
