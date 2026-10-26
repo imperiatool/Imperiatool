@@ -31,6 +31,7 @@ from_args = [
   ('reginette', '#ffb548', 'raw', 0.2, 0.85),
   ('sculpture', '#e1201b', 'aldente', 0.25, 0.22),
   ('spaghetti', '#ffb548', 'aldente', 0.3, 0.62),
+  ('tagliatelle', '#ffb548', 'raw', 0.3, 0.6),
   ('gnocchi', '#f8eabe', 'raw', 0.4, 0.5),
   ('fusilli', '#1a5632', 'aldente', 0.3, 0.42),
   ('ravioli', '#ffb548', 'raw', 0.3, 0.42),

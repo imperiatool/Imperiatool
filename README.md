@@ -30,13 +30,13 @@ Un sito web non può inserire uno sticker direttamente nelle app: WhatsApp, per 
 
 ### Imperia® Events (concept)
 
-Quarta sezione (`#/events`): programma di esperienze **illustrative** in Italia e Inghilterra.
+Quarta sezione (`#/events`): sei esperienze **illustrative** (3 in Italia, 3 in Inghilterra), subito visibili.
 
-- Dati: `src/data/events.js` (testi in inglese e italiano, le altre lingue usano l'inglese). Prezzi nella valuta del Paese dell'evento (€ Italia, £ Inghilterra), senza conversioni.
-- Filtri combinabili (tipo, luogo, formato, prezzo), salvati nell'indirizzo della pagina: tornando indietro restano attivi.
-- Ogni evento ha un oggetto di pasta 3D (`src/lib/pasta3d.js`) fatto con lo stesso studio e gli stessi materiali Crudo / Al Dente / Stracotto di custodie e charm: nella pagina dell'evento è in 3D dal vivo, nelle schede è un'immagine generata dallo stesso motore (`scripts/render-events.py`, da rilanciare se cambi forme o colori).
+- Dati: `src/data/events.js`, testi in tutte e 7 le lingue. Prezzi nella valuta del Paese dell'evento (€ Italia, £ Inghilterra), 0 = Gratis.
+- Filtri combinabili (tipo, luogo, formato, esperienza Crudo / Al Dente / Stracotto) e "Ordina per" data o prezzo; tutto salvato nell'indirizzo della pagina.
+- Ogni evento ha un oggetto di pasta 3D (`src/lib/pasta3d.js`) fatto con lo stesso studio e gli stessi materiali di cover e charm: nella pagina dell'evento è in 3D dal vivo, nelle schede è un'immagine dello stesso motore (`scripts/render-events.py`). Le immagini della home si rigenerano con `scripts/render-home.py`.
+- Evento gratuito "Recipe Club": ricettario interattivo (`src/data/recipes.js`) con soli piatti tradizionali riconosciuti; ogni altra combinazione è indicata come variazione creativa.
 - Prenotazione **demo**: partecipanti, totale, nome ed email con validazione, conferma con riferimento DEMO. Nessun pagamento, nessuna email, nessun dato inviato.
-- Eventi, luoghi, date e posti sono di fantasia e indicati come tali nell'app.
 
 ### Dati da verificare (da completare con le schede tecniche)
 
