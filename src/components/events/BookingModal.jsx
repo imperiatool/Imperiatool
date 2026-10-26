@@ -83,7 +83,7 @@ export default function BookingModal({ open, onClose, event: e, back = '/events'
         <img src={e.visual.img} alt="" className="h-full w-full object-contain p-2" />
       </span>
       <div className="min-w-0 text-sm">
-        <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-brand">{f.text(e.kind)}</p>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-brand">{f.kind(e)}</p>
         <p className="font-bold leading-tight" data-testid="book-event">{f.text(e.title)}</p>
         <p className="mt-1 text-muted">{f.place(e)}</p>
         <p className="text-muted">

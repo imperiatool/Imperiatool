@@ -3,6 +3,7 @@ import { Link, Navigate, useLocation, useParams } from 'react-router-dom';
 import Button from '../ui/Button.jsx';
 import Icon from '../ui/Icon.jsx';
 import BookingModal from './BookingModal.jsx';
+import RecipeBuilder from './RecipeBuilder.jsx';
 import { eventById, EVENTS } from '../../data/events.js';
 import { useI18n } from '../../i18n/index.js';
 import { useEventFormat } from './useEventFormat.js';
@@ -42,14 +43,14 @@ export default function EventDetailPage() {
 
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] lg:gap-14">
           {/* the shape, live in 3D (picture while it loads) */}
-          <div className="lg:sticky lg:top-6 lg:self-start">
+          <div className="min-w-0 lg:sticky lg:top-6 lg:self-start">
             <div className="relative aspect-square overflow-hidden rounded-3xl" style={{ background: e.visual.bg, color: e.visual.ink }}>
               <Suspense fallback={<img src={e.visual.img} alt="" className="absolute inset-0 h-full w-full object-contain p-[14%]" />}>
                 <div className="absolute inset-0">
                   <Viewer3D kind="pasta" pasta={{ shape: e.visual.shape, color: e.visual.color, finish: e.visual.finish }} transparent hint={false} className="h-full w-full" />
                 </div>
               </Suspense>
-              <span className="pointer-events-none absolute left-5 top-4 text-sm font-bold tabular-nums">{e.number}</span>
+              <span className="pointer-events-none absolute left-5 top-4 text-[11px] font-semibold uppercase tracking-[0.12em] tabular-nums">{e.number}</span>
               <span className="pointer-events-none absolute bottom-4 left-5 text-[11px] font-semibold uppercase tracking-[0.12em] opacity-75">
                 {t(`events.shape.${e.visual.shape}`)} · {t(`order.materials.${e.visual.finish}.name`)}
               </span>
@@ -57,9 +58,9 @@ export default function EventDetailPage() {
             <p className="mt-2 text-center text-xs text-muted">{t('events.visualNote')}</p>
           </div>
 
-          <div>
+          <div className="min-w-0">
             <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-brand">
-              Imperia® Events · {f.text(e.kind)}
+              Imperia® {t('nav.events')} · {f.kind(e)}
             </p>
             <h1 className="mt-2 text-4xl font-bold leading-[1.02] tracking-[-0.03em] sm:text-5xl" data-testid="event-title">
               {f.text(e.title)}
@@ -76,12 +77,14 @@ export default function EventDetailPage() {
               </Fact>
               <Fact label={t('events.duration')}>{f.duration(e.minutes)}</Fact>
               <Fact label={t('events.price')}>
-                {f.price(e.price, e.country)} <span className="font-normal text-muted">{t('events.perPerson')}</span>
+                {f.price(e.price, e.country)} {e.price > 0 && <span className="font-normal text-muted">{t('events.perPerson')}</span>}
               </Fact>
               <Fact label={t('events.placesLabel')} note={t('events.illustrative')}>
                 {t('events.places', { n: e.places })}
               </Fact>
-              <Fact label={t('events.level')}>{t(`events.level.${e.level}`)}</Fact>
+              <Fact label={t('events.level')}>
+                {f.level(e)} <span className="font-normal text-muted">· {t(`events.levelDesc.${e.level}`)}</span>
+              </Fact>
             </dl>
 
             <div className="mt-6 hidden lg:block">
@@ -99,7 +102,7 @@ export default function EventDetailPage() {
               <section>
                 <h2 className="text-xs font-semibold uppercase tracking-wider text-muted">{t('events.included')}</h2>
                 <ul className="mt-3 space-y-2 text-sm">
-                  {f.text(e.included).map((x) => (
+                  {e.included.map((x) => f.text(x)).map((x) => (
                     <li key={x} className="flex gap-2">
                       <Icon name="check" className="mt-0.5 h-4 w-4 shrink-0 text-brand" strokeWidth={2.5} />
                       {x}
@@ -110,7 +113,7 @@ export default function EventDetailPage() {
               <section>
                 <h2 className="text-xs font-semibold uppercase tracking-wider text-muted">{t('events.make')}</h2>
                 <ol className="mt-3 space-y-2 text-sm">
-                  {f.text(e.make).map((x, i) => (
+                  {e.make.map((x) => f.text(x)).map((x, i) => (
                     <li key={x} className="flex gap-2.5">
                       <span className="w-5 shrink-0 font-bold tabular-nums text-brand">{String(i + 1).padStart(2, '0')}</span>
                       {x}
@@ -119,6 +122,7 @@ export default function EventDetailPage() {
                 </ol>
               </section>
             </div>
+            {e.recipes && <RecipeBuilder />}
             <p className="mt-10 flex items-start gap-2 text-xs leading-relaxed text-muted">
               <span className="mt-[5px] h-1.5 w-1.5 shrink-0 rounded-full bg-brand" aria-hidden="true" />
               {t('events.concept')}
@@ -136,7 +140,7 @@ export default function EventDetailPage() {
                     <img src={o.visual.img} alt="" className="h-full w-full object-contain p-2" />
                   </span>
                   <span className="min-w-0">
-                    <span className="block text-[11px] font-bold uppercase tracking-[0.12em] text-brand">{f.text(o.kind)}</span>
+                    <span className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-brand">{f.kind(o)}</span>
                     <span className="block truncate text-lg font-bold tracking-tight group-hover:text-brand">{f.text(o.title)}</span>
                     <span className="block text-sm text-muted">{f.place(o)} · {f.price(o.price, o.country)}</span>
                   </span>

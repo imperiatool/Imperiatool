@@ -1,4 +1,4 @@
-import { Suspense, lazy, useMemo, useRef, useState } from 'react';
+import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
 import Modal from '../ui/Modal.jsx';
 import Button from '../ui/Button.jsx';
 import Icon from '../ui/Icon.jsx';
@@ -51,6 +51,11 @@ export default function OrderModal({ open, onClose, items, library }) {
   const [material, setMaterial] = useState('aldente');
   const [size, setSize] = useState('4cm');
   const [attachment, setAttachment] = useState('none');
+  // every time the 3D preview opens it shows the charm alone: an attachment
+  // appears only after the customer picks one
+  useEffect(() => {
+    if (open) setAttachment('none');
+  }, [open]);
   const addToCart = useCartStore((s) => s.add);
   const viewer = useRef(null);
 

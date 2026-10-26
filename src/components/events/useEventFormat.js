@@ -16,8 +16,11 @@ export function useEventFormat() {
     };
     // in the event's own currency (no conversion): £ in England, € in Italy
     const price = (amount, country) =>
-      Number(amount).toLocaleString(locale, { style: 'currency', currency: CURRENCY_OF[country], minimumFractionDigits: Number.isInteger(amount) ? 0 : 2, maximumFractionDigits: 2 });
+      !amount ? t('events.free') : Number(amount).toLocaleString(locale, { style: 'currency', currency: CURRENCY_OF[country], minimumFractionDigits: Number.isInteger(amount) ? 0 : 2, maximumFractionDigits: 2 });
     const place = (e) => `${tx(e.city, lang)}, ${t(`events.loc.${e.country}`)}`;
-    return { date, time, duration, price, place, text: (f) => tx(f, lang), lang };
+    const kind = (e) => t(`events.kind.${e.kindKey || e.type}`);
+    // experience levels have the names of the finishes (Raw, Al Dente, Overcooked)
+    const level = (e) => t(`order.materials.${e.level}.name`);
+    return { date, time, duration, price, place, kind, level, text: (f) => tx(f, lang), lang };
   }, [t, lang, locale]);
 }

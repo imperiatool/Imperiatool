@@ -241,10 +241,15 @@ export default function StickerCanvas({ assetsById, svgRef: externalRef, label, 
             <feFlood floodColor="#000" floodOpacity="0.16" />
             <feComposite in2="sb" operator="in" result="shadow" />
             <feOffset in="shadow" dy="6" result="shadow2" />
+            {/* hairline edge just outside the white border: visible on white too */}
+            <feMorphology in="o" operator="dilate" radius="1.6" result="rim" />
+            <feFlood floodColor="#000" floodOpacity="0.2" />
+            <feComposite in2="rim" operator="in" result="edge" />
             <feFlood floodColor="#ffffff" />
             <feComposite in2="o" operator="in" result="white" />
             <feMerge>
               <feMergeNode in="shadow2" />
+              <feMergeNode in="edge" />
               <feMergeNode in="white" />
               <feMergeNode in="SourceGraphic" />
             </feMerge>

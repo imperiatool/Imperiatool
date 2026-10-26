@@ -26,14 +26,8 @@ export default function EditorPage({ mode = 'charm' }) {
   const start = () => {
     const firstBase = library.categories.find((c) => c.isBase && library.assets.some((a) => a.categoryId === c.id));
     const body = firstBase && library.assets.find((a) => a.categoryId === firstBase.id);
+    // the new body is selected, so its section opens in the panel
     if (body) useEditorStore.getState().addAsset(body, library);
-    // desktop: bring the Bodies section into view in the side panel; on phones
-    // the preview stays on screen (the panel is right under it)
-    if (!window.matchMedia('(min-width: 1024px)').matches) return;
-    requestAnimationFrame(() => {
-      const el = panelRef.current?.querySelector(`[data-testid="section-${firstBase?.id}"]`);
-      el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    });
   };
   const s = useEditorStore.getState;
 
@@ -109,10 +103,10 @@ export default function EditorPage({ mode = 'charm' }) {
       </PageHeader>
       {/* preview on the left, parts and colours on the right */}
       <div className="grid flex-1 grid-cols-1 lg:min-h-0 lg:grid-cols-[minmax(0,1fr)_minmax(400px,480px)]">
-        <section className="flex flex-col gap-2 bg-studio p-3 sm:p-5 lg:min-h-0">
+        <section className={`flex flex-col gap-2 p-3 sm:p-5 lg:min-h-0 ${mode === 'sticker' ? 'bg-white' : 'bg-studio'}`}>
           <div className="flex justify-center">{tools}</div>
           <div className="relative grid place-items-center lg:min-h-0 lg:flex-1">
-            <div className={`relative aspect-square w-full max-w-[min(100%,calc(100vh-21rem))] overflow-hidden rounded-[28px] ${mode === 'sticker' ? 'bg-[#ececea]' : 'bg-white'} [background-image:radial-gradient(#1d1d1b10_1px,transparent_1px)] [background-size:22px_22px]`}>
+            <div className={`relative aspect-square w-full max-w-[min(100%,calc(100vh-21rem))] overflow-hidden rounded-[28px] bg-white [background-image:radial-gradient(#1d1d1b10_1px,transparent_1px)] [background-size:22px_22px]`}>
               <StickerCanvas assetsById={library.assetsById} label={t('editor.canvasLabel')} outline={mode === 'sticker'} />
               {!items.length && (
                 <div className="absolute inset-0 grid place-items-center p-6 text-center">
