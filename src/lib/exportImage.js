@@ -264,19 +264,19 @@ export async function renderStickerCanvas(items, assetsById, { border = { width:
 
 export const canvasToBlob = (canvas, type = 'image/png', quality) => new Promise((resolve) => canvas.toBlob(resolve, type, quality));
 
-/** Copies a PNG to the clipboard (desktop: then paste it in any chat). */
+/**
+ * Copies the sticker to the clipboard as a transparent PNG (the only image
+ * type browsers can write). Nothing else goes with it: an extra HTML copy made
+ * some web editors paste the HTML/data-URL version instead of the image.
+ * Whether the transparency survives after pasting depends on the destination:
+ * chats keep it (WhatsApp, Telegram…), while feed posts on Instagram and
+ * LinkedIn are re-encoded as JPEG by those platforms, which fills it with white.
+ */
 export async function copyImage(blob) {
   if (!navigator.clipboard?.write || typeof ClipboardItem === 'undefined') throw new Error('no-clipboard');
-  // PNG for apps that paste images (WhatsApp, Telegram, Slack…) plus an HTML
-  // copy of the same image for rich editors that only read HTML from the
-  // clipboard (e.g. some post composers). Falls back to PNG only.
-  try {
-    const url = await blobToDataUrl(blob);
-    const html = new Blob([`<img src="${url}" alt="sticker">`], { type: 'text/html' });
-    await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob, 'text/html': html })]);
-  } catch {
-    await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
-  }
+  if (blob?.type !== 'image/png') throw new Error('not-png');
+  // a promise keeps the user gesture valid in Safari while the PNG is ready
+  await navigator.clipboard.write([new ClipboardItem({ 'image/png': Promise.resolve(blob) })]);
 }
 export const canCopyImage = () => typeof navigator !== 'undefined' && !!navigator.clipboard?.write && typeof ClipboardItem !== 'undefined';
 

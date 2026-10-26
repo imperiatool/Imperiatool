@@ -440,7 +440,8 @@ function buildPhone() {
   // has the same small radius on every edge and poked out at the corners)
   const body = new THREE.Mesh(extrude(roundedRect(0, 0, pw, ph, Math.max(1, R - RIM_T - 0.15)), depth, 1.2, -depth - 0.05), frame);
   g.add(body);
-  const screen = new THREE.Mesh(new THREE.PlaneGeometry(pw - 2.6, ph - 2.6), glass);
+  // rounded like the phone: a square screen showed at the corners of the case
+  const screen = new THREE.Mesh(new THREE.ShapeGeometry(roundedRect(0, 0, pw - 2.6, ph - 2.6, Math.max(1, R - RIM_T - 1.4)), 24), glass);
   screen.rotation.y = Math.PI;
   screen.position.z = -depth - 0.1;
   g.add(screen);

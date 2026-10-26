@@ -26,7 +26,7 @@ describe('admin password hashing', () => {
 
 describe('i18n', () => {
   // de / zh / hi translate every public page; the Admin area falls back to English
-  const PUBLIC = /^(lang|common|editor|picker|props|slot|export|order|cover|viewer|guide|cart|account|home|spec|events|book)\.|^nav\.(language|case|charm|sticker|home|events)$/;
+  const PUBLIC = /^(lang|common|editor|picker|props|slot|export|order|cover|viewer|guide|cart|account|home|spec|events|book|search|recipe)\.|^nav\.(language|case|charm|sticker|home|events)$/;
   const publicKeys = Object.keys(en).filter((k) => PUBLIC.test(k)).sort();
   it('every language has exactly the English keys', () => {
     const keys = Object.keys(en).sort();

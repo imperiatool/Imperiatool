@@ -150,17 +150,25 @@ export function buildCharm(items, assetsById, materialId = 'aldente', { attachme
       // kept only where the line lies well inside a shape of the same element,
       // so it never sticks out past the edge (lips, shell…)
       const hosts = own && piece ? [piece] : pieces.filter((pc) => pc.item === s.item && pc.polys);
+      // like the sticker, a line ends exactly where it meets the outline: it is
+      // kept while the tube stays inside the outer contour (distance ≥ radius)
+      // and, on the rounded edge, it follows the edge down, so from any angle
+      // it never sticks out of the shape
       const runs = [];
       let cur = [];
       for (const p of pts) {
-        let ok = false;
+        let zs = null;
         for (const h of hosts) {
           if (!insidePolys(p, h.polys)) continue;
-          ok = distToSegments(p, h.edges) >= r * 1.1 + h.bevelSize * 0.6;
-          if (ok) break;
+          const d = distToSegments(p, h.edges);
+          if (d < r) continue;
+          // height of the surface d away from the contour (ExtrudeGeometry bevel profile)
+          const drop = d >= h.bevelSize ? 0 : h.bevel * (1 - Math.cos(Math.asin(Math.max(-1, Math.min(1, 1 - d / h.bevelSize)))));
+          const z = h.top - drop;
+          if (zs == null || z > zs) zs = z;
         }
-        if (!hosts.length) ok = true; // a loose line with nothing under it
-        if (ok) cur.push(p);
+        if (!hosts.length) zs = base; // a loose line with nothing under it
+        if (zs != null) cur.push({ x: p.x, y: p.y, z: own ? zs - r * 0.3 : zs + r * 0.1 });
         else {
           if (cur.length > 2) runs.push(cur);
           cur = [];
@@ -170,15 +178,14 @@ export function buildCharm(items, assetsById, materialId = 'aldente', { attachme
       if (closed && runs.length === 1 && runs[0].length === pts.length) runs[0].loop = true;
       for (const run of runs) {
         const isLoop = !!run.loop;
-        const z = own ? base - r * 0.3 : base + r * 0.1;
-        const curve = new THREE.CatmullRomCurve3(run.map((p) => new THREE.Vector3(p.x, p.y, z)), isLoop, 'centripetal');
+        const curve = new THREE.CatmullRomCurve3(run.map((p) => new THREE.Vector3(p.x, p.y, p.z)), isLoop, 'centripetal');
         const segments = Math.min(2400, Math.max(16, Math.round(curve.getLength() / (r * 0.7))));
         root.add(new THREE.Mesh(new THREE.TubeGeometry(curve, segments, r, 10, isLoop), makeMaterial(s.color, materialId, UV_REPEAT)));
         // rounded ends for open lines
         if (!isLoop) {
           for (const p of [run[0], run[run.length - 1]]) {
             const cap = new THREE.Mesh(new THREE.SphereGeometry(r, 12, 8), makeMaterial(s.color, materialId, UV_REPEAT));
-            cap.position.set(p.x, p.y, z);
+            cap.position.set(p.x, p.y, p.z);
             root.add(cap);
           }
         }
@@ -299,13 +306,14 @@ function addBackLogo(wrapper, sizeMm = 40) {
   const ratio = 1800 / 388;
   const all = new THREE.Box3().setFromObject(wrapper).getSize(new THREE.Vector3());
   const mm = Math.max(all.x, all.y) / sizeMm; // SVG units per millimetre
-  // tall bodies (Reginetta): vertical along the body, centred, a little smaller;
+  // tall bodies (Reginetta): vertical along the body, centred, small enough to
+  // leave a clear margin on both sides (about a third of the width);
   // the others: horizontal, centred, towards the bottom. Same size as on the
   // cases, but always well inside the body.
   const vertical = size.y > size.x * 1.6;
   const long = vertical ? size.y : size.x;
   const short = vertical ? size.x : size.y;
-  const w = vertical ? Math.min(LOGO_MM * 0.85 * mm, long * 0.42, short * 0.5 * ratio) : Math.min(LOGO_MM * mm, long * 0.5, short * 0.55 * ratio);
+  const w = vertical ? Math.min(LOGO_MM * 0.6 * mm, long * 0.3, short * 0.3 * ratio) : Math.min(LOGO_MM * mm, long * 0.5, short * 0.55 * ratio);
   const decal = new THREE.Mesh(
     new THREE.PlaneGeometry(w, w / ratio),
     new THREE.MeshPhysicalMaterial({ map: logoTexture, transparent: true, alphaTest: 0.05, roughness: 0.45, polygonOffset: true, polygonOffsetFactor: -2 }),

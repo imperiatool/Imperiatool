@@ -5,7 +5,7 @@ import * as THREE from 'three';
 import { makeMaterial } from './three/materials.js';
 import { boxUV, smoothstep } from './three/geometry.js';
 
-export const PASTA_SHAPES = ['reginette', 'sculpture', 'spaghetti', 'gnocchi', 'fusilli', 'ravioli'];
+export const PASTA_SHAPES = ['reginette', 'sculpture', 'spaghetti', 'tagliatelle', 'gnocchi', 'fusilli', 'ravioli'];
 const UV = 1 / 9;
 const TAU = Math.PI * 2;
 
@@ -170,6 +170,37 @@ function spaghetti() {
   return out;
 }
 
+// Tagliatelle: a loose nest of flat egg ribbons
+function tagliatelle() {
+  const out = [];
+  const rand = rng(11);
+  for (let k = 0; k < 9; k++) {
+    const phase = rand() * TAU;
+    const r0 = 12 + rand() * 4;
+    const turns = 1.7 + rand() * 0.5;
+    const centre = (u) => {
+      const a = phase + u * turns * TAU;
+      const r = r0 + 2 * Math.sin(a * 1.6 + phase) - 2.5 * u;
+      return new THREE.Vector3(r * Math.cos(a), 3.5 + k * 0.75 + 2 * Math.sin(a * 2.1 + phase) + 4 * u, r * Math.sin(a));
+    };
+    const tilt = 0.35 * Math.sin(phase);
+    out.push(
+      solidSheet(
+        (u, v) => {
+          const c = centre(u);
+          const radial = new THREE.Vector3(c.x, 0, c.z).normalize();
+          const across = new THREE.Vector3(0, 1, 0).multiplyScalar(Math.cos(tilt)).addScaledVector(radial, Math.sin(tilt));
+          return c.addScaledVector(across, (v - 0.5) * 6.5);
+        },
+        () => [0.32, 0.32],
+        260,
+        8,
+      ),
+    );
+  }
+  return out;
+}
+
 // Gnocchi: three ridged dumplings with the thumb dimple
 function gnocchi() {
   const one = (seed) => {
@@ -270,7 +301,7 @@ function ravioli() {
   return [a, b];
 }
 
-const BUILDERS = { reginette, sculpture, spaghetti, gnocchi, fusilli, ravioli };
+const BUILDERS = { reginette, sculpture, spaghetti, tagliatelle, gnocchi, fusilli, ravioli };
 
 /**
  * @param shape  one of PASTA_SHAPES

@@ -73,3 +73,16 @@ input[type='range'] {
 @media (prefers-reduced-motion: reduce) {
   .ev-float { animation: none; }
 }
+
+/* Home: small, slow movements on the product images */
+@keyframes home-sway { 0%, 100% { transform: rotate(-2deg); } 50% { transform: rotate(2deg); } }
+@keyframes home-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
+@keyframes home-tilt { 0%, 100% { transform: rotate(0deg) scale(1); } 50% { transform: rotate(-3deg) scale(1.02); } }
+@keyframes home-breathe { 0%, 100% { transform: scale(1) rotate(0deg); } 50% { transform: scale(1.035) rotate(1.5deg); } }
+.home-sway { animation: home-sway 6s ease-in-out infinite; transform-origin: 50% 85%; }
+.home-float { animation: home-float 5s ease-in-out infinite; }
+.home-tilt { animation: home-tilt 6.5s ease-in-out infinite; }
+.home-breathe { animation: home-breathe 7s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .home-sway, .home-float, .home-tilt, .home-breathe { animation: none; }
+}

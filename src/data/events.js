@@ -1,10 +1,10 @@
 // Imperia® Events — concept programme.
-// Everything here is ILLUSTRATIVE: the events, venues, dates and places are
+// Everything here is ILLUSTRATIVE: events, venues, dates and places are
 // fictional sample listings for a brand-extension prototype. Nothing is on
 // sale and no booking is ever sent anywhere.
 //
-// Texts: `en` is required, `it` is optional (other languages fall back to English).
-// Prices are in the currency of the event's country (no conversion).
+// Every text is given in the seven languages of the app (L(en, it, es, fr, de, zh, hi)).
+// Prices are in the currency of the event's country (no conversion); 0 = free.
 import reginetteImg from '../assets/events/reginette.webp';
 import sculptureImg from '../assets/events/sculpture.webp';
 import spaghettiImg from '../assets/events/spaghetti.webp';
@@ -12,30 +12,35 @@ import gnocchiImg from '../assets/events/gnocchi.webp';
 import fusilliImg from '../assets/events/fusilli.webp';
 import ravioliImg from '../assets/events/ravioli.webp';
 
+const L = (en, it, es, fr, de, zh, hi) => ({ en, it, es, fr, de, zh, hi });
+
 export const EVENT_TYPES = ['workshop', 'shapelab', 'supper', 'collab'];
 export const EVENT_FORMATS = ['hands-on', 'social', 'design-led'];
 export const EVENT_COUNTRIES = ['it', 'uk'];
-export const PRICE_BANDS = ['free', 'under25', '25to50', 'over50'];
+// experience levels use the names of the Imperia finishes
+export const EVENT_LEVELS = ['raw', 'aldente', 'overcooked'];
+export const EVENT_SORTS = ['date', 'priceAsc', 'priceDesc'];
 export const CURRENCY_OF = { it: 'EUR', uk: 'GBP' };
 
-/** Price band of an amount (same thresholds in £ and €). */
-export function priceBand(price) {
-  if (!price) return 'free';
-  if (price < 25) return 'under25';
-  if (price <= 50) return '25to50';
-  return 'over50';
-}
-
-/** filters = { type, country, format, price } — 'all' (or empty) means no filter */
-export function filterEvents(list, { type, country, format, price } = {}) {
+/** filters = { type, country, format, level } — 'all' (or empty) means no filter */
+export function filterEvents(list, { type, country, format, level } = {}) {
   const on = (v) => v && v !== 'all';
   return list.filter(
     (e) =>
       (!on(type) || e.type === type) &&
       (!on(country) || e.country === country) &&
       (!on(format) || e.formats.includes(format)) &&
-      (!on(price) || priceBand(e.price) === price),
+      (!on(level) || e.level === level),
   );
+}
+
+/** Sorted copy: by date (default) or by the numeric price (free = 0). */
+export function sortEvents(list, sort = 'date') {
+  const byDate = (a, b) => a.start.localeCompare(b.start);
+  const out = [...list];
+  if (sort === 'priceAsc') return out.sort((a, b) => a.price - b.price || byDate(a, b));
+  if (sort === 'priceDesc') return out.sort((a, b) => b.price - a.price || byDate(a, b));
+  return out.sort(byDate);
 }
 
 /** Text of a field in the current language (English fallback). */
@@ -48,10 +53,9 @@ export const EVENTS = [
     id: 'shape-of-pasta',
     number: '01',
     type: 'workshop',
-    kind: { en: 'Pasta Workshop', it: 'Workshop di pasta' },
     formats: ['hands-on'],
     country: 'it',
-    city: { en: 'Milan', it: 'Milano' },
+    city: L('Milan', 'Milano', 'Milán', 'Milan', 'Mailand', '米兰', 'मिलान'),
     venue: 'Laboratorio Forma',
     start: '2026-11-21T11:00',
     minutes: 150,
@@ -59,98 +63,132 @@ export const EVENTS = [
     places: 12,
     level: 'raw',
     visual: { shape: 'reginette', color: '#ffb548', finish: 'raw', bg: '#e1201b', ink: '#ffffff', img: reginetteImg },
-    title: { en: 'Shape of Pasta', it: 'Shape of Pasta' },
-    short: {
-      en: 'Fresh dough, a few simple tools and the shapes that made Italian pasta famous.',
-      it: 'Impasto fresco, pochi strumenti e le forme che hanno reso famosa la pasta italiana.',
-    },
-    description: {
-      en: 'A hands-on morning on how one sheet of dough becomes dozens of shapes. We start with flour and eggs, roll the sheet by hand and by machine, then cut, fold, pinch and ruffle it into the classics, from tagliatelle to reginette. You leave knowing why each shape exists, and with a box of the ones you made.',
-      it: 'Una mattinata pratica per scoprire come una sola sfoglia diventa decine di forme. Si parte da farina e uova, si tira la sfoglia a mano e a macchina, poi si taglia, si piega, si pizzica e si arriccia nei grandi classici, dalle tagliatelle alle reginette. Esci sapendo perché esiste ogni forma, con una scatola di quelle che hai fatto.',
-    },
-    included: {
-      en: ['All ingredients and an apron', 'Use of pasta machines and cutters', 'A printed shape guide', 'A box to take your pasta home'],
-      it: ['Tutti gli ingredienti e un grembiule', 'Macchine per la pasta e tagliapasta', 'Una guida stampata alle forme', 'Una scatola per portare a casa la tua pasta'],
-    },
-    make: {
-      en: ['Fresh egg dough from scratch', 'Tagliatelle, pappardelle and reginette', 'Your own signature cut'],
-      it: ['Impasto all’uovo da zero', 'Tagliatelle, pappardelle e reginette', 'Un tuo taglio personale'],
-    },
+    title: L('Shape of Pasta', 'Le forme della pasta', 'Las formas de la pasta', 'Les formes des pâtes', 'Die Formen der Pasta', '意面的形状', 'पास्ता के आकार'),
+    short: L(
+      'Fresh dough, a few simple tools and the shapes that made Italian pasta famous.',
+      'Impasto fresco, pochi strumenti e le forme che hanno reso famosa la pasta italiana.',
+      'Masa fresca, pocas herramientas y las formas que hicieron famosa la pasta italiana.',
+      'Une pâte fraîche, quelques outils simples et les formes qui ont fait la réputation des pâtes italiennes.',
+      'Frischer Teig, ein paar einfache Werkzeuge und die Formen, die italienische Pasta berühmt gemacht haben.',
+      '新鲜面团、几件简单工具，以及让意大利面闻名世界的经典形状。',
+      'ताज़ा आटा, कुछ आसान औज़ार और वे आकार जिन्होंने इतालवी पास्ता को मशहूर बनाया।',
+    ),
+    description: L(
+      'A hands-on morning on how one sheet of dough becomes dozens of shapes. You roll the sheet by hand and by machine, then cut, fold and ruffle it into the classics, from tagliatelle to reginette, and take home what you make.',
+      'Una mattinata pratica per scoprire come una sola sfoglia diventa decine di forme. Tiri la sfoglia a mano e a macchina, poi la tagli, la pieghi e la arricci nei grandi classici, dalle tagliatelle alle reginette, e porti a casa ciò che hai fatto.',
+      'Una mañana práctica para descubrir cómo una sola lámina de masa se convierte en decenas de formas. Estiras la masa a mano y a máquina, la cortas, la doblas y la rizas en los clásicos, de las tagliatelle a las reginette, y te llevas a casa lo que haces.',
+      'Une matinée pratique pour découvrir comment une seule abaisse de pâte devient des dizaines de formes. Vous l’étalez à la main et à la machine, puis vous la coupez, la pliez et la froncez en grands classiques, des tagliatelles aux reginette, et vous repartez avec vos créations.',
+      'Ein praktischer Vormittag darüber, wie aus einer Teigplatte Dutzende Formen werden. Du rollst den Teig von Hand und mit der Maschine aus, schneidest, faltest und kräuselst ihn zu Klassikern von Tagliatelle bis Reginette und nimmst alles mit nach Hause.',
+      '一个上午的动手课程，看一张面皮如何变成几十种形状。你将手工和用压面机擀面，再切、折、压出花边，做出从宽面到花边面的经典款式，并把作品带回家。',
+      'एक हैंड्स-ऑन सुबह, जिसमें आप देखेंगे कि आटे की एक शीट दर्जनों आकार कैसे बनती है। आप शीट को हाथ और मशीन से बेलेंगे, फिर काटेंगे, मोड़ेंगे और झालरदार बनाएँगे, टैग्लियाटेले से रेजिनेट तक, और अपनी बनाई पास्ता घर ले जाएँगे।',
+    ),
+    included: [
+      L('All ingredients and an apron', 'Tutti gli ingredienti e un grembiule', 'Todos los ingredientes y un delantal', 'Tous les ingrédients et un tablier', 'Alle Zutaten und eine Schürze', '全部食材和一条围裙', 'सारी सामग्री और एक एप्रन'),
+      L('Pasta machines and cutters', 'Macchine per la pasta e tagliapasta', 'Máquinas para pasta y cortadores', 'Machines à pâtes et découpoirs', 'Pastamaschinen und Teigrädchen', '压面机和切面工具', 'पास्ता मशीन और कटर'),
+      L('A box to take your pasta home', 'Una scatola per portare a casa la tua pasta', 'Una caja para llevarte tu pasta', 'Une boîte pour emporter vos pâtes', 'Eine Box für deine Pasta zum Mitnehmen', '一个带走意面的盒子', 'अपना पास्ता घर ले जाने के लिए एक डिब्बा'),
+    ],
+    make: [
+      L('Fresh egg dough from scratch', 'Impasto all’uovo da zero', 'Masa de huevo desde cero', 'Une pâte aux œufs maison', 'Frischen Eierteig von Grund auf', '从零开始做鸡蛋面团', 'शुरू से अंडे वाला ताज़ा आटा'),
+      L('Tagliatelle, pappardelle and reginette', 'Tagliatelle, pappardelle e reginette', 'Tagliatelle, pappardelle y reginette', 'Tagliatelles, pappardelles et reginette', 'Tagliatelle, Pappardelle und Reginette', '宽面、阔面和花边面', 'टैग्लियाटेले, पपार्डेले और रेजिनेट'),
+      L('Your own signature cut', 'Un tuo taglio personale', 'Tu propio corte', 'Votre propre découpe', 'Deinen eigenen Schnitt', '属于你的独特切法', 'आपका अपना खास कट'),
+    ],
   },
   {
-    id: 'shape-lab',
+    id: 'pasta-atelier',
     number: '02',
     type: 'shapelab',
-    kind: { en: 'Shape Lab', it: 'Shape Lab' },
     formats: ['design-led', 'hands-on'],
     country: 'uk',
-    city: { en: 'London', it: 'Londra' },
+    city: L('London', 'Londra', 'Londres', 'Londres', 'London', '伦敦', 'लंदन'),
     venue: 'The Fold Studio',
     start: '2026-11-28T14:00',
     minutes: 180,
     price: 28,
     places: 16,
-    level: 'raw',
+    level: 'overcooked',
     visual: { shape: 'sculpture', color: '#e1201b', finish: 'aldente', bg: '#f8eabe', ink: '#1d1d1b', img: sculptureImg },
-    title: { en: 'Shape Lab: Beyond the Classic', it: 'Shape Lab: oltre i classici' },
-    short: {
-      en: 'Pasta as a design material: folds, ridges and forms that don’t exist yet.',
-      it: 'La pasta come materiale di design: pieghe, righe e forme che ancora non esistono.',
-    },
-    description: {
-      en: 'A playful design session that treats dough like clay. Guided by a few rules of pasta geometry (how ridges hold sauce, how folds keep their shape when cooked), you sketch, prototype and photograph your own experimental shapes. No cooking experience needed; curiosity is the only requirement.',
-      it: 'Una sessione di design giocosa che tratta l’impasto come argilla. Partendo da alcune regole della geometria della pasta (come le righe trattengono il sugo, come le pieghe resistono alla cottura), disegni, prototipi e fotografi le tue forme sperimentali. Non serve saper cucinare: basta la curiosità.',
-    },
-    included: {
-      en: ['Coloured doughs and shaping tools', 'Sketchbook and shape cards', 'A photo corner to document your work', 'Tea, coffee and something sweet'],
-      it: ['Impasti colorati e attrezzi per modellare', 'Quaderno e schede delle forme', 'Un angolo foto per documentare il lavoro', 'Tè, caffè e qualcosa di dolce'],
-    },
-    make: {
-      en: ['A set of shape studies', 'One original pasta shape, named by you', 'A printed shape card to keep'],
-      it: ['Una serie di studi di forma', 'Una forma di pasta originale, con il nome che scegli tu', 'Una scheda stampata da conservare'],
-    },
+    title: L('The Pasta Atelier', 'L’atelier della pasta', 'El atelier de la pasta', 'L’atelier des pâtes', 'Das Pasta-Atelier', '意面工作室', 'पास्ता एटेलियर'),
+    short: L(
+      'Advanced shaping: folds, ridges and ruffles, then a shape of your own.',
+      'Forme avanzate: pieghe, righe e arricciature, poi una forma tutta tua.',
+      'Formas avanzadas: pliegues, estrías y volantes, y después una forma propia.',
+      'Façonnage avancé : plis, rainures et fronces, puis une forme bien à vous.',
+      'Fortgeschrittenes Formen: Falten, Rillen und Rüschen, dann eine eigene Form.',
+      '进阶造型：折痕、纹路和花边，然后创作属于你的形状。',
+      'उन्नत आकार: तह, धारियाँ और झालर, फिर आपका अपना आकार।',
+    ),
+    description: L(
+      'A design-led session for people who already shape pasta with confidence. Guided by how ridges hold sauce and folds survive the pot, you study classic techniques, then sketch, prototype and cook a shape of your own.',
+      'Una sessione di design per chi modella già la pasta con sicurezza. Partendo da come le righe trattengono il sugo e le pieghe resistono alla cottura, studi le tecniche classiche, poi disegni, prototipi e cuoci una forma tutta tua.',
+      'Una sesión de diseño para quienes ya dan forma a la pasta con soltura. Partiendo de cómo las estrías retienen la salsa y los pliegues resisten la cocción, estudias las técnicas clásicas y luego dibujas, pruebas y cocinas una forma propia.',
+      'Une séance orientée design pour celles et ceux qui façonnent déjà les pâtes avec aisance. En partant de la façon dont les rainures retiennent la sauce et dont les plis résistent à la cuisson, vous étudiez les techniques classiques, puis dessinez, prototypez et cuisez une forme à vous.',
+      'Eine Design-Session für alle, die Pasta schon sicher formen. Ausgehend davon, wie Rillen Sauce halten und Falten das Kochen überstehen, lernst du klassische Techniken und skizzierst, testest und kochst dann deine eigene Form.',
+      '一场以设计为主导的课程，适合已能熟练捏制意面的人。从纹路如何挂住酱汁、折痕如何经得起煮开始，学习经典技法，再草图、打样并煮出你自己的形状。',
+      'उन लोगों के लिए डिज़ाइन सेशन जो पहले से पास्ता को आत्मविश्वास से आकार देते हैं। धारियाँ सॉस कैसे पकड़ती हैं और तह पकने में कैसे टिकती हैं, यह समझकर आप क्लासिक तकनीकें सीखेंगे, फिर अपना आकार स्केच करेंगे, बनाएँगे और पकाएँगे।',
+    ),
+    included: [
+      L('Coloured doughs and shaping tools', 'Impasti colorati e attrezzi per modellare', 'Masas de colores y herramientas para dar forma', 'Pâtes colorées et outils de façonnage', 'Farbige Teige und Formwerkzeuge', '彩色面团和造型工具', 'रंगीन आटा और आकार देने के औज़ार'),
+      L('Sketchbook and shape cards', 'Quaderno e schede delle forme', 'Cuaderno y fichas de formas', 'Carnet de croquis et fiches de formes', 'Skizzenbuch und Formkarten', '速写本和形状卡片', 'स्केचबुक और आकार कार्ड'),
+      L('Tea, coffee and something sweet', 'Tè, caffè e qualcosa di dolce', 'Té, café y algo dulce', 'Thé, café et une douceur', 'Tee, Kaffee und etwas Süßes', '茶、咖啡和甜点', 'चाय, कॉफ़ी और कुछ मीठा'),
+    ],
+    make: [
+      L('Studies of classic folds and ridges', 'Studi di pieghe e righe classiche', 'Estudios de pliegues y estrías clásicos', 'Des études de plis et de rainures classiques', 'Studien klassischer Falten und Rillen', '经典折痕与纹路练习', 'क्लासिक तह और धारियों के अभ्यास'),
+      L('One original pasta shape, named by you', 'Una forma di pasta originale, con il nome che scegli tu', 'Una forma de pasta original, con el nombre que elijas', 'Une forme de pâte originale, que vous baptisez', 'Eine eigene Pastaform mit selbst gewähltem Namen', '一款由你命名的原创意面形状', 'आपके नाम वाला एक मौलिक पास्ता आकार'),
+      L('A tasting of your shape, cooked', 'Un assaggio della tua forma, cotta', 'Una degustación de tu forma, cocinada', 'Une dégustation de votre forme, cuite', 'Eine Kostprobe deiner gekochten Form', '品尝煮好的自创形状', 'अपने पकाए गए आकार का स्वाद'),
+    ],
   },
   {
     id: 'pasta-after-hours',
     number: '03',
     type: 'supper',
-    kind: { en: 'Supper Club', it: 'Supper club' },
     formats: ['social'],
     country: 'uk',
-    city: { en: 'Manchester', it: 'Manchester' },
+    city: L('Manchester', 'Manchester', 'Mánchester', 'Manchester', 'Manchester', '曼彻斯特', 'मैनचेस्टर'),
     venue: 'Long Table Room',
     start: '2026-12-04T19:30',
     minutes: 180,
     price: 32,
     places: 24,
-    level: 'raw',
+    level: 'aldente',
     visual: { shape: 'spaghetti', color: '#ffb548', finish: 'aldente', bg: '#6a3933', ink: '#ffffff', img: spaghettiImg },
-    title: { en: 'Pasta After Hours', it: 'Pasta After Hours' },
-    short: {
-      en: 'One long table, fresh pasta, a playlist and people you haven’t met yet.',
-      it: 'Una lunga tavolata, pasta fresca, una playlist e persone che non conosci ancora.',
-    },
-    description: {
-      en: 'An evening built around the social side of Italian food. Guests sit together at one long table for three relaxed courses of fresh pasta, served family-style, while a guest selector looks after the music. Halfway through, everyone gets their hands floury for a quick round of shaping.',
-      it: 'Una serata dedicata al lato sociale del cibo italiano. Si siede tutti insieme a un’unica lunga tavolata per tre portate di pasta fresca servite al centro, mentre un selector pensa alla musica. A metà serata, tutti con le mani nella farina per un giro veloce di forme.',
-    },
-    included: {
-      en: ['Three sharing courses of fresh pasta', 'A welcome drink', 'Live DJ selection', 'A mini shaping session at the table'],
-      it: ['Tre portate di pasta fresca da condividere', 'Un drink di benvenuto', 'Selezione musicale dal vivo', 'Una mini sessione di forme al tavolo'],
-    },
-    make: {
-      en: ['New friends around one table', 'A plate of spaghetti twirled your way', 'The evening’s playlist, to take home'],
-      it: ['Nuovi amici attorno a un tavolo', 'Un piatto di spaghetti arrotolati a modo tuo', 'La playlist della serata, da portare a casa'],
-    },
+    title: L('Pasta After Hours', 'Pasta fuori orario', 'Pasta a deshoras', 'Pâtes à la nuit tombée', 'Pasta nach Feierabend', '深夜意面局', 'देर रात पास्ता'),
+    short: L(
+      'One long table, fresh pasta, a playlist and people you haven’t met yet.',
+      'Una lunga tavolata, pasta fresca, una playlist e persone che non conosci ancora.',
+      'Una mesa larga, pasta fresca, una playlist y gente que aún no conoces.',
+      'Une grande tablée, des pâtes fraîches, une playlist et des gens que vous ne connaissez pas encore.',
+      'Eine lange Tafel, frische Pasta, eine Playlist und Leute, die du noch nicht kennst.',
+      '一张长桌、新鲜意面、一份歌单，还有你还没认识的人。',
+      'एक लंबी मेज़, ताज़ा पास्ता, एक प्लेलिस्ट और वे लोग जिनसे आप अभी तक नहीं मिले।',
+    ),
+    description: L(
+      'An evening built around the social side of Italian food: three relaxed courses of fresh pasta served family-style at one long table, with a guest selector on the music. Halfway through, everyone shapes a quick round of pasta for the next course.',
+      'Una serata dedicata al lato sociale del cibo italiano: tre portate di pasta fresca servite al centro di un’unica lunga tavolata, con un selector alla musica. A metà serata tutti preparano un giro veloce di pasta per la portata successiva.',
+      'Una velada dedicada al lado social de la comida italiana: tres platos de pasta fresca para compartir en una única mesa larga, con un selector a cargo de la música. A mitad de la noche, todos preparan una ronda rápida de pasta para el siguiente plato.',
+      'Une soirée consacrée au côté convivial de la cuisine italienne : trois plats de pâtes fraîches à partager sur une seule grande tablée, avec un sélecteur à la musique. À mi-soirée, chacun façonne une petite série de pâtes pour le plat suivant.',
+      'Ein Abend rund um die gesellige Seite der italienischen Küche: drei entspannte Gänge frischer Pasta zum Teilen an einer langen Tafel, mit einem Gast-DJ an der Musik. Zwischendurch formen alle eine schnelle Runde Pasta für den nächsten Gang.',
+      '一个围绕意大利饮食社交面的夜晚：在一张长桌上共享三道新鲜意面，由客座 DJ 负责音乐。用餐中途，大家一起动手做下一道菜的意面。',
+      'इतालवी खाने के सामाजिक पहलू पर बनी एक शाम: एक लंबी मेज़ पर साझा करने के लिए ताज़ा पास्ता के तीन कोर्स, और संगीत पर एक गेस्ट सेलेक्टर। बीच में सब मिलकर अगले कोर्स के लिए जल्दी से पास्ता बनाते हैं।',
+    ),
+    included: [
+      L('Three sharing courses of fresh pasta', 'Tre portate di pasta fresca da condividere', 'Tres platos de pasta fresca para compartir', 'Trois plats de pâtes fraîches à partager', 'Drei Gänge frischer Pasta zum Teilen', '三道可分享的新鲜意面', 'साझा करने के लिए ताज़ा पास्ता के तीन कोर्स'),
+      L('A welcome drink', 'Un drink di benvenuto', 'Una bebida de bienvenida', 'Une boisson d’accueil', 'Ein Begrüßungsdrink', '一杯迎宾饮品', 'एक वेलकम ड्रिंक'),
+      L('Live DJ selection', 'Selezione musicale dal vivo', 'Selección musical en directo', 'Sélection musicale en direct', 'Live-DJ-Auswahl', '现场 DJ 音乐', 'लाइव डीजे संगीत'),
+    ],
+    make: [
+      L('A round of hand-shaped pasta at the table', 'Un giro di pasta fatta a mano al tavolo', 'Una ronda de pasta hecha a mano en la mesa', 'Une série de pâtes façonnées à table', 'Eine Runde handgeformter Pasta am Tisch', '在餐桌上亲手做一轮意面', 'मेज़ पर हाथ से बना पास्ता'),
+      L('New friends around one table', 'Nuovi amici attorno a un tavolo', 'Nuevos amigos alrededor de una mesa', 'De nouveaux amis autour d’une table', 'Neue Freunde an einem Tisch', '一张桌边的新朋友', 'एक मेज़ के चारों ओर नए दोस्त'),
+      L('The evening’s playlist, to take home', 'La playlist della serata, da portare a casa', 'La playlist de la noche, para llevar', 'La playlist de la soirée, à emporter', 'Die Playlist des Abends für zu Hause', '可带回家的当晚歌单', 'शाम की प्लेलिस्ट, घर ले जाने के लिए'),
+    ],
   },
   {
-    id: 'aperitivo-al-dente',
+    id: 'aperitivo',
     number: '04',
     type: 'supper',
-    kind: { en: 'Social Aperitivo', it: 'Aperitivo' },
+    kindKey: 'aperitivo',
     formats: ['social'],
     country: 'it',
-    city: { en: 'Bologna', it: 'Bologna' },
+    city: L('Bologna', 'Bologna', 'Bolonia', 'Bologne', 'Bologna', '博洛尼亚', 'बोलोन्या'),
     venue: 'Bancone 42',
     start: '2026-12-11T18:30',
     minutes: 120,
@@ -158,89 +196,132 @@ export const EVENTS = [
     places: 30,
     level: 'raw',
     visual: { shape: 'gnocchi', color: '#f8eabe', finish: 'raw', bg: '#1a5632', ink: '#ffffff', img: gnocchiImg },
-    title: { en: 'Aperitivo & Al Dente', it: 'Aperitivo & Al Dente' },
-    short: {
-      en: 'A contemporary aperitivo of handmade pasta bites and unexpected pairings.',
-      it: 'Un aperitivo contemporaneo di bocconi di pasta fatta a mano e abbinamenti inattesi.',
-    },
-    description: {
-      en: 'The Bolognese ritual of aperitivo, reworked. Small handmade bites, from crisp gnocchi to filled pasta in a glass, are paired with bitter, sparkling and alcohol-free drinks around a standing counter. Easy to drop into, easy to stay late.',
-      it: 'Il rito bolognese dell’aperitivo, rivisitato. Piccoli bocconi fatti a mano, dagli gnocchi croccanti alla pasta ripiena nel bicchiere, abbinati a drink amari, frizzanti e analcolici attorno a un bancone. Facile arrivare, difficile andare via presto.',
-    },
-    included: {
-      en: ['Five handmade pasta bites', 'Two drinks (alcohol-free options)', 'A live gnocchi-rolling demo', 'Recipe cards for every bite'],
-      it: ['Cinque bocconi di pasta fatta a mano', 'Due drink (anche analcolici)', 'Una dimostrazione dal vivo di gnocchi rigati', 'Le ricette di ogni boccone'],
-    },
-    make: {
-      en: ['Ridged gnocchi on the board, your first time or your hundredth', 'Your favourite pairing of the night', 'An easy aperitivo to host at home'],
-      it: ['Gnocchi rigati sul tagliere, che sia la prima o la centesima volta', 'Il tuo abbinamento preferito della serata', 'Un aperitivo facile da rifare a casa'],
-    },
+    title: L('Aperitivo', 'Aperitivo', 'Aperitivo', 'Apéritif à l’italienne', 'Aperitivo', '意式开胃酒会', 'अपेरिटिवो'),
+    short: L(
+      'A contemporary aperitivo of handmade pasta bites and easy pairings.',
+      'Un aperitivo contemporaneo di bocconi di pasta fatta a mano e abbinamenti semplici.',
+      'Un aperitivo contemporáneo de bocados de pasta hecha a mano y maridajes sencillos.',
+      'Un apéritif contemporain de bouchées de pâtes faites main et d’accords simples.',
+      'Ein zeitgemäßer Aperitivo mit handgemachten Pasta-Häppchen und einfachen Kombinationen.',
+      '当代风格的开胃酒会：手工意面小食与轻松搭配。',
+      'हाथ से बने पास्ता के छोटे बाइट्स और आसान जोड़ियों वाला एक आधुनिक अपेरिटिवो।',
+    ),
+    description: L(
+      'The Bolognese ritual of aperitivo, reworked around a standing counter. Small handmade bites, from crisp gnocchi to filled pasta, come with bitter, sparkling and alcohol-free drinks. Easy to drop into, easy to stay late.',
+      'Il rito bolognese dell’aperitivo, rivisitato attorno a un bancone. Piccoli bocconi fatti a mano, dagli gnocchi croccanti alla pasta ripiena, accompagnati da drink amari, frizzanti e analcolici. Facile arrivare, difficile andare via presto.',
+      'El ritual boloñés del aperitivo, reinventado alrededor de una barra. Pequeños bocados hechos a mano, de ñoquis crujientes a pasta rellena, con bebidas amargas, espumosas y sin alcohol. Fácil llegar, difícil irse pronto.',
+      'Le rituel bolonais de l’apéritif, revisité autour d’un comptoir. De petites bouchées faites main, des gnocchis croustillants aux pâtes farcies, avec des boissons amères, pétillantes et sans alcool. Facile d’arriver, difficile de partir tôt.',
+      'Das Bologneser Aperitivo-Ritual, neu gedacht an einer Stehtheke. Kleine handgemachte Häppchen von knusprigen Gnocchi bis gefüllter Pasta, dazu bittere, prickelnde und alkoholfreie Drinks. Leicht vorbeizukommen, schwer früh zu gehen.',
+      '围绕吧台重新演绎博洛尼亚的开胃酒传统。从香脆团子到夹馅意面的手工小食，搭配苦味、气泡和无酒精饮品。随时可来，不舍早走。',
+      'बोलोन्या की अपेरिटिवो परंपरा, एक काउंटर के चारों ओर नए अंदाज़ में। कुरकुरे न्योकी से भरे पास्ता तक हाथ से बने छोटे बाइट्स, कड़वे, स्पार्कलिंग और बिना अल्कोहल वाले ड्रिंक्स के साथ। आना आसान, जल्दी जाना मुश्किल।',
+    ),
+    included: [
+      L('Five handmade pasta bites', 'Cinque bocconi di pasta fatta a mano', 'Cinco bocados de pasta hecha a mano', 'Cinq bouchées de pâtes faites main', 'Fünf handgemachte Pasta-Häppchen', '五款手工意面小食', 'हाथ से बने पास्ता के पाँच बाइट्स'),
+      L('Two drinks (alcohol-free options)', 'Due drink (anche analcolici)', 'Dos bebidas (también sin alcohol)', 'Deux boissons (options sans alcool)', 'Zwei Drinks (auch alkoholfrei)', '两杯饮品（可选无酒精）', 'दो ड्रिंक्स (बिना अल्कोहल विकल्प भी)'),
+      L('A live gnocchi-rolling demo', 'Una dimostrazione dal vivo di gnocchi rigati', 'Una demostración en directo de ñoquis', 'Une démonstration de gnocchis en direct', 'Eine Live-Vorführung zum Gnocchi-Rollen', '现场团子制作演示', 'न्योकी बनाने का लाइव डेमो'),
+    ],
+    make: [
+      L('Ridged gnocchi on the board', 'Gnocchi rigati sul tagliere', 'Ñoquis rayados en la tabla', 'Des gnocchis striés sur la planche', 'Gerillte Gnocchi auf dem Brett', '在案板上做出带纹团子', 'बोर्ड पर धारीदार न्योकी'),
+      L('Your favourite pairing of the night', 'Il tuo abbinamento preferito della serata', 'Tu maridaje favorito de la noche', 'Votre accord préféré de la soirée', 'Deine Lieblingskombination des Abends', '你今晚最爱的搭配', 'शाम की आपकी पसंदीदा जोड़ी'),
+      L('An easy aperitivo to host at home', 'Un aperitivo facile da rifare a casa', 'Un aperitivo fácil de repetir en casa', 'Un apéritif facile à refaire chez soi', 'Einen einfachen Aperitivo für zu Hause', '一个在家也能轻松办的开胃酒会', 'घर पर आसानी से करने लायक अपेरिटिवो'),
+    ],
   },
   {
     id: 'make-shoot-share',
     number: '05',
     type: 'collab',
-    kind: { en: 'Creative Collaboration', it: 'Collaborazione creativa' },
     formats: ['design-led', 'social'],
     country: 'uk',
-    city: { en: 'Liverpool', it: 'Liverpool' },
+    city: L('Liverpool', 'Liverpool', 'Liverpool', 'Liverpool', 'Liverpool', '利物浦', 'लिवरपूल'),
     venue: 'Frame Kitchen',
-    start: '2027-01-16T13:00',
+    start: '2027-01-17T13:00',
     minutes: 150,
     price: 20,
     places: 14,
     level: 'aldente',
     visual: { shape: 'fusilli', color: '#1a5632', finish: 'aldente', bg: '#ffb548', ink: '#1d1d1b', img: fusilliImg },
-    title: { en: 'Make, Shoot, Share', it: 'Make, Shoot, Share' },
-    short: {
-      en: 'Food styling, photography and short-form video, with pasta as the subject.',
-      it: 'Food styling, fotografia e video brevi, con la pasta come protagonista.',
-    },
-    description: {
-      en: 'A creative afternoon with a food stylist and a content creator. In small teams you build a set around a pasta shape (its spirals, ridges and textures), then light it, shoot it and edit a short vertical story on your phone. The best frames go up on the studio wall at the end.',
-      it: 'Un pomeriggio creativo con una food stylist e un content creator. In piccoli gruppi costruisci un set attorno a una forma di pasta (spirali, righe, texture), poi la illumini, la fotografi e monti una breve storia verticale con il telefono. Alla fine le inquadrature migliori finiscono sulla parete dello studio.',
-    },
-    included: {
-      en: ['Styled sets, props and coloured pasta', 'Lighting kit and phone rigs', 'Editing tips from the creators', 'Your best shot printed'],
-      it: ['Set, oggetti di scena e pasta colorata', 'Luci e supporti per il telefono', 'Consigli di montaggio dai creator', 'Lo scatto migliore stampato'],
-    },
-    make: {
-      en: ['A styled still-life shoot', 'A 15-second vertical story', 'A print of your favourite frame'],
-      it: ['Uno still life in stile editoriale', 'Una storia verticale di 15 secondi', 'La stampa della tua inquadratura preferita'],
-    },
+    title: L(
+      'Make, Shoot & Share — Sunday Edition',
+      'Crea, scatta e condividi — Edizione della domenica',
+      'Crea, fotografía y comparte — Edición de domingo',
+      'Créer, photographier, partager — Édition du dimanche',
+      'Machen, fotografieren, teilen – Sonntagsausgabe',
+      '制作·拍摄·分享——周日特别场',
+      'बनाओ, खींचो और शेयर करो — संडे एडिशन',
+    ),
+    short: L(
+      'A Sunday of food styling, photography and short videos, with pasta as the subject.',
+      'Una domenica di food styling, fotografia e video brevi, con la pasta come protagonista.',
+      'Un domingo de food styling, fotografía y vídeos cortos, con la pasta como protagonista.',
+      'Un dimanche de stylisme culinaire, de photo et de vidéos courtes, avec les pâtes pour sujet.',
+      'Ein Sonntag mit Foodstyling, Fotografie und Kurzvideos – mit Pasta als Motiv.',
+      '一个以意面为主角的周日：美食造型、摄影和短视频。',
+      'फ़ूड स्टाइलिंग, फ़ोटोग्राफ़ी और छोटे वीडियो का एक रविवार, पास्ता के साथ।',
+    ),
+    description: L(
+      'A creative Sunday afternoon with a food stylist and a content creator. In small teams you make a batch of pasta, build a set around its spirals and textures, then light it, shoot it and edit a short vertical story on your phone.',
+      'Un pomeriggio creativo della domenica con una food stylist e un content creator. In piccoli gruppi prepari la pasta, costruisci un set attorno alle sue spirali e texture, poi la illumini, la fotografi e monti una breve storia verticale con il telefono.',
+      'Una tarde creativa de domingo con una estilista gastronómica y un creador de contenido. En grupos pequeños preparas pasta, montas un set alrededor de sus espirales y texturas, la iluminas, la fotografías y editas una historia vertical corta con el móvil.',
+      'Un après-midi créatif du dimanche avec une styliste culinaire et un créateur de contenu. En petits groupes, vous préparez des pâtes, construisez un décor autour de leurs spirales et textures, puis vous les éclairez, les photographiez et montez une courte story verticale sur votre téléphone.',
+      'Ein kreativer Sonntagnachmittag mit einer Foodstylistin und einem Content Creator. In kleinen Teams machst du Pasta, baust ein Set um ihre Spiralen und Texturen, leuchtest es aus, fotografierst es und schneidest eine kurze Hochformat-Story am Handy.',
+      '与美食造型师和内容创作者共度的创意周日下午。小组合作做意面，围绕螺旋与纹理搭建布景，然后打光、拍摄，并用手机剪辑一段竖屏短片。',
+      'एक फ़ूड स्टाइलिस्ट और कंटेंट क्रिएटर के साथ रविवार की रचनात्मक दोपहर। छोटी टीमों में आप पास्ता बनाते हैं, उसके घुमाव और बनावट के आसपास सेट बनाते हैं, फिर रोशनी करते हैं, फ़ोटो लेते हैं और फ़ोन पर एक छोटी वर्टिकल स्टोरी एडिट करते हैं।',
+    ),
+    included: [
+      L('Styled sets, props and coloured pasta', 'Set, oggetti di scena e pasta colorata', 'Sets, atrezo y pasta de colores', 'Décors, accessoires et pâtes colorées', 'Sets, Requisiten und farbige Pasta', '布景、道具和彩色意面', 'सेट, प्रॉप्स और रंगीन पास्ता'),
+      L('Lighting kit and phone rigs', 'Luci e supporti per il telefono', 'Iluminación y soportes para el móvil', 'Éclairage et supports pour téléphone', 'Licht und Handyhalterungen', '灯光设备和手机支架', 'लाइटिंग किट और फ़ोन स्टैंड'),
+      L('Your best shot printed', 'Lo scatto migliore stampato', 'Tu mejor foto impresa', 'Votre meilleure photo imprimée', 'Dein bestes Foto als Druck', '打印出你最好的作品', 'आपकी सबसे अच्छी फ़ोटो का प्रिंट'),
+    ],
+    make: [
+      L('A batch of fresh fusilli', 'Una porzione di fusilli freschi', 'Una tanda de fusilli frescos', 'Une fournée de fusilli frais', 'Eine Portion frische Fusilli', '一批新鲜螺旋面', 'ताज़ा फ़्यूज़िली का एक बैच'),
+      L('A styled still-life shoot', 'Uno still life in stile editoriale', 'Un bodegón de estilo editorial', 'Une nature morte stylisée', 'Ein gestyltes Stillleben', '一组风格化静物摄影', 'एक स्टाइल किया हुआ स्टिल-लाइफ़ शूट'),
+      L('A 15-second vertical story', 'Una storia verticale di 15 secondi', 'Una historia vertical de 15 segundos', 'Une story verticale de 15 secondes', 'Eine 15-Sekunden-Story im Hochformat', '一段 15 秒竖屏短片', '15 सेकंड की वर्टिकल स्टोरी'),
+    ],
   },
   {
-    id: 'pasta-club-sunday',
+    id: 'recipe-club',
     number: '06',
     type: 'workshop',
-    kind: { en: 'Pasta Workshop · Social', it: 'Workshop di pasta · Social' },
     formats: ['hands-on', 'social'],
     country: 'it',
-    city: { en: 'Florence', it: 'Firenze' },
+    city: L('Florence', 'Firenze', 'Florencia', 'Florence', 'Florenz', '佛罗伦萨', 'फ्लोरेंस'),
     venue: 'Casa Sfoglia',
     start: '2027-01-24T11:30',
-    minutes: 210,
-    price: 30,
-    places: 10,
-    level: 'aldente',
+    minutes: 90,
+    price: 0,
+    places: 20,
+    level: 'raw',
+    recipes: true,
     visual: { shape: 'ravioli', color: '#ffb548', finish: 'raw', bg: '#ececea', ink: '#1d1d1b', img: ravioliImg },
-    title: { en: 'Pasta Club: Sunday Edition', it: 'Pasta Club: Sunday Edition' },
-    short: {
-      en: 'A slow Sunday in a small group: make ravioli, cook them, share the table.',
-      it: 'Una domenica lenta in piccolo gruppo: fare i ravioli, cuocerli, condividere la tavola.',
-    },
-    description: {
-      en: 'Ten people, one kitchen and the whole of Sunday lunch. You make filled pasta the traditional way, then try a couple of contemporary fillings and folds, cook everything together and sit down to eat what you made. Small on purpose, so there’s time to talk.',
-      it: 'Dieci persone, una cucina e tutto il pranzo della domenica. Prepari la pasta ripiena come da tradizione, poi provi un paio di ripieni e chiusure contemporanei, si cuoce tutto insieme e ci si siede a mangiare quello che si è fatto. Piccolo di proposito, per avere tempo di parlare.',
-    },
-    included: {
-      en: ['All ingredients and an apron', 'Hands-on teaching in a group of ten', 'Sunday lunch with what you made', 'Coffee and a seasonal dessert'],
-      it: ['Tutti gli ingredienti e un grembiule', 'Lezione pratica in un gruppo di dieci', 'Il pranzo della domenica con ciò che hai preparato', 'Caffè e un dolce di stagione'],
-    },
-    make: {
-      en: ['Classic ricotta ravioli', 'Two contemporary fillings and folds', 'A shared Sunday lunch'],
-      it: ['Ravioli classici di ricotta', 'Due ripieni e chiusure contemporanei', 'Un pranzo domenicale condiviso'],
-    },
+    title: L('Recipe Club', 'Il club delle ricette', 'El club de las recetas', 'Le club des recettes', 'Der Rezept-Club', '食谱俱乐部', 'रेसिपी क्लब'),
+    short: L(
+      'A free drop-in to pair pasta shapes with the sauces they were made for.',
+      'Un incontro gratuito per abbinare le forme di pasta ai condimenti per cui sono nate.',
+      'Un encuentro gratuito para combinar formas de pasta con las salsas para las que nacieron.',
+      'Une rencontre gratuite pour associer les formes de pâtes aux sauces pour lesquelles elles sont nées.',
+      'Ein kostenloses Treffen, um Pastaformen mit den Saucen zu kombinieren, für die sie gemacht sind.',
+      '免费参加：为每种意面形状配上它天生搭配的酱汁。',
+      'मुफ़्त सेशन: पास्ता आकारों को उन सॉस के साथ जोड़ें जिनके लिए वे बने हैं।',
+    ),
+    description: L(
+      'A short, free Sunday session on why each shape has its sauce: spaghetti and carbonara, tagliatelle and ragù, gnocchi with butter and sage. You taste small portions, roll a few gnocchi and leave with the recipes. Try the recipe builder below before you come.',
+      'Un breve incontro gratuito della domenica sul perché ogni forma ha il suo condimento: spaghetti e carbonara, tagliatelle e ragù, gnocchi burro e salvia. Assaggi piccole porzioni, prepari qualche gnocco e porti a casa le ricette. Prova il ricettario qui sotto prima di venire.',
+      'Una breve sesión gratuita de domingo sobre por qué cada forma tiene su salsa: espaguetis y carbonara, tagliatelle y ragú, ñoquis con mantequilla y salvia. Pruebas pequeñas porciones, haces algunos ñoquis y te llevas las recetas. Prueba el recetario de abajo antes de venir.',
+      'Une courte séance gratuite du dimanche sur la raison pour laquelle chaque forme a sa sauce : spaghetti et carbonara, tagliatelles et ragù, gnocchis beurre et sauge. Vous goûtez de petites portions, roulez quelques gnocchis et repartez avec les recettes. Essayez le créateur de recettes ci-dessous avant de venir.',
+      'Ein kurzes, kostenloses Sonntagstreffen darüber, warum jede Form ihre Sauce hat: Spaghetti und Carbonara, Tagliatelle und Ragù, Gnocchi mit Butter und Salbei. Du probierst kleine Portionen, rollst ein paar Gnocchi und nimmst die Rezepte mit. Probier vorher den Rezept-Baukasten unten aus.',
+      '一场简短的免费周日活动，讲讲每种形状为何有它的酱汁：意大利面配卡邦尼、宽面配肉酱、团子配黄油鼠尾草。品尝小份、搓几个团子，并带走食谱。来之前先试试下面的食谱搭配器。',
+      'रविवार का एक छोटा, मुफ़्त सेशन कि हर आकार की अपनी सॉस क्यों होती है: स्पेगेटी और कार्बोनारा, टैग्लियाटेले और रागू, न्योकी मक्खन और सेज के साथ। आप छोटे हिस्से चखेंगे, कुछ न्योकी बनाएँगे और रेसिपी साथ ले जाएँगे। आने से पहले नीचे रेसिपी बिल्डर आज़माएँ।',
+    ),
+    included: [
+      L('Tasting portions of three classics', 'Assaggi di tre grandi classici', 'Degustación de tres clásicos', 'Dégustation de trois classiques', 'Kostproben von drei Klassikern', '三款经典的试吃份', 'तीन क्लासिक व्यंजनों का स्वाद'),
+      L('A gnocchi board to practise with', 'Un tagliere per gli gnocchi su cui esercitarti', 'Una tabla de ñoquis para practicar', 'Une planche à gnocchis pour s’exercer', 'Ein Gnocchibrett zum Üben', '一块练习用的团子板', 'अभ्यास के लिए न्योकी बोर्ड'),
+      L('Printed recipe cards', 'Schede delle ricette stampate', 'Fichas de recetas impresas', 'Fiches recettes imprimées', 'Gedruckte Rezeptkarten', '打印的食谱卡片', 'छपे हुए रेसिपी कार्ड'),
+    ],
+    make: [
+      L('A handful of ridged gnocchi', 'Una manciata di gnocchi rigati', 'Un puñado de ñoquis rayados', 'Une poignée de gnocchis striés', 'Eine Handvoll gerillter Gnocchi', '一把带纹团子', 'मुट्ठी भर धारीदार न्योकी'),
+      L('Your own shape-and-sauce pairing', 'Il tuo abbinamento di forma e condimento', 'Tu propia combinación de forma y salsa', 'Votre propre accord forme et sauce', 'Deine eigene Kombination aus Form und Sauce', '你自己的形状与酱汁搭配', 'आकार और सॉस की आपकी अपनी जोड़ी'),
+      L('Three recipes to cook at home', 'Tre ricette da rifare a casa', 'Tres recetas para cocinar en casa', 'Trois recettes à refaire chez soi', 'Drei Rezepte zum Nachkochen', '三道可在家做的食谱', 'घर पर बनाने के लिए तीन रेसिपी'),
+    ],
   },
 ];
 

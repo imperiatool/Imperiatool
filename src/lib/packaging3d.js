@@ -46,11 +46,12 @@ const COLOUR_DOTS = {
   'c-marrone': { name: 'Ragù', y: 603 },
 };
 // pattern circles printed on the right side ("Patterns available")
-const PATTERN_DOTS = { spaghetti: 323.5, tagliatelle: 393.5, ravioli: 463, reginette: 533, sfoglia: 603 };
+const PATTERN_DOTS = { spaghetti: 323.5, tagliatelle: 393.5, ravioli: 463, reginette: 533, sfoglia: 603, raviolo: 672.5 };
 export const PACK_FINISH = {
-  raw: { name: 'Raw', material: 'Polycarbonate (PC) · Matte finish', protection: 'Non-slip grip' },
-  aldente: { name: 'Al Dente', material: 'Polycarbonate (PC) · Satin finish', protection: 'Scratch-resistant' },
-  overcooked: { name: 'Overcooked', material: 'Liquid silicone · Soft-touch finish', protection: 'Shock-absorbing' },
+  // protection: the same for every finish
+  raw: { name: 'Raw', material: 'Polycarbonate (PC) · Matte finish', protection: 'Shock absorbing' },
+  aldente: { name: 'Al Dente', material: 'Polycarbonate (PC) · Satin finish', protection: 'Shock absorbing' },
+  overcooked: { name: 'Overcooked', material: 'Liquid silicone · Soft-touch finish', protection: 'Shock absorbing' },
 };
 
 const RED = '#e1201b';
@@ -102,7 +103,7 @@ export function packagingOverlay({ pattern, colorId, colorName, finish, modelLab
     ['Finish', f.name],
     ['Material', f.material],
     ['Compatibility', modelLabel],
-    ['Everyday protection', f.protection],
+    ['Protection', f.protection],
   ];
   const MAXW = BACK_RED.right - BACK_RED.left - 12;
   const rowW = rows.map(([k, v]) => Math.min(MAXW, measure(`${k}: `, SIZE, true) + measure(v, SIZE)));
@@ -125,6 +126,21 @@ export function packagingOverlay({ pattern, colorId, colorName, finish, modelLab
   // the pattern is called "Spaghetto" (the artwork still says "Spaghetti")
   parts.push(`<rect x="981" y="350.5" width="47" height="16" fill="${RED}"/>`);
   parts.push(`<text x="1004.65" y="362.6" text-anchor="middle" ${FONT} font-size="9.6" letter-spacing="-0.25" fill="#fff">Spaghetto</text>`);
+  // Raviolo, the sixth pattern, under Pasta Cuts in the same style as the
+  // printed ones: egg-yellow disc, white rim, crimped raviolo border
+  {
+    const cx = 1004.65;
+    const cy = PATTERN_DOTS.raviolo;
+    const wave = Array.from({ length: 73 }, (_, i) => {
+      const a = (i / 72) * Math.PI * 2;
+      const r = 14.2 + 1.1 * Math.cos(a * 18);
+      return `${i ? 'L' : 'M'}${(cx + r * Math.cos(a)).toFixed(2)} ${(cy + r * Math.sin(a)).toFixed(2)}`;
+    }).join('');
+    parts.push(`<circle cx="${cx}" cy="${cy}" r="19.86" fill="${YELLOW}" stroke="#fff" stroke-width="1.3"/>`);
+    parts.push(`<path d="${wave}Z" fill="none" stroke="#fff" stroke-width="0.9" stroke-linejoin="round"/>`);
+    parts.push(`<circle cx="${cx}" cy="${cy}" r="10.6" fill="none" stroke="#fff" stroke-width="0.8" stroke-dasharray="0.1 1.9" stroke-linecap="round"/>`);
+    parts.push(`<text x="${cx}" y="${(cy + 39.1).toFixed(1)}" text-anchor="middle" ${FONT} font-size="9.6" letter-spacing="-0.25" fill="#fff">Raviolo</text>`);
+  }
   // …and around the chosen pattern
   if (PATTERN_DOTS[pattern]) parts.push(`<circle cx="1004.65" cy="${PATTERN_DOTS[pattern]}" r="25.5" fill="none" stroke="#fff" stroke-width="2.4"/>`);
 
