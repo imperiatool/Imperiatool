@@ -1,33 +1,70 @@
 import { useState } from 'react';
 import Icon from '../ui/Icon.jsx';
+import Button from '../ui/Button.jsx';
 import { useI18n } from '../../i18n/index.js';
-import { INGREDIENTS, RECIPE_PASTAS, matchRecipe } from '../../data/recipes.js';
+import { INGREDIENTS, RECIPE_PASTAS, matchRecipe, suggestRecipe, recipesFor } from '../../data/recipes.js';
 import { tx } from '../../data/events.js';
 
-// fixed spots on the plate for the ingredient "drops" (no randomness: stable layout)
+// 3D ingredients (rendered with the app's studio, scripts/render-ingredients.py)
+const ING_IMG = Object.fromEntries(
+  Object.entries(import.meta.glob('../../assets/ingredients/*.webp', { eager: true, import: 'default' })).map(([k, v]) => [k.split('/').pop().replace('.webp', ''), v]),
+);
+// places around the pasta on the plate (%, centre of each ingredient)
 const SPOTS = [
-  [22, 30], [72, 26], [80, 62], [28, 74], [52, 16], [60, 82], [14, 52], [86, 42], [40, 86], [66, 44], [36, 40],
+  [31, 31], [69, 31], [71, 69], [29, 69], [50, 24], [50, 77], [24, 50], [76, 50], [40, 42], [60, 58], [50, 50],
 ];
 
 /**
- * Free-event extra: choose a pasta and some ingredients (shown as colours, like
- * the configurators) and see which traditional dish they make, with its recipe.
- * Anything that is not a recognised dish is clearly called a creative variation.
+ * Free-event extra: choose a pasta and a couple of ingredients (picked like the
+ * colours of the configurators and placed in 3D on the plate) and learn a real
+ * Italian recipe: the traditional dish they make, or the closest one with what
+ * is missing, its ingredients and method. Combinations that are not a
+ * recognised dish are called creative variations, never tradition.
  */
 export default function RecipeBuilder() {
   const { t, lang } = useI18n();
   const [pasta, setPasta] = useState(null);
   const [chosen, setChosen] = useState([]);
   const toggle = (id) => setChosen((c) => (c.includes(id) ? c.filter((x) => x !== id) : [...c, id]));
+  const use = (r) => {
+    setPasta(r.pasta);
+    setChosen([...r.need]);
+  };
   const result = matchRecipe(pasta, chosen);
+  const exact = result?.kind === 'traditional' ? result.recipe : null;
+  const suggestion = !exact && pasta ? suggestRecipe(pasta, chosen) : null;
   const pastaInfo = RECIPE_PASTAS.find((p) => p.id === pasta);
-  const ingName = (id) => tx(INGREDIENTS.find((i) => i.id === id)?.name, lang);
+  const name = (id) => tx(INGREDIENTS.find((i) => i.id === id)?.name, lang);
+  // inside a sentence: lower case, except names of protected cheeses
+  const inText = (id) => (['pecorino', 'parmigiano'].includes(id) || lang === 'de' ? name(id) : name(id).toLocaleLowerCase(lang));
+  const list = (ids) => ids.map(inText).join(', ');
+  const pastaName = (id) => tx(RECIPE_PASTAS.find((p) => p.id === id)?.name, lang);
+  const shown = exact || (chosen.length ? suggestion?.recipe : null);
+  const extras = shown ? chosen.filter((i) => !shown.need.includes(i) && !shown.may.includes(i)) : [];
+
+  const method = (r) => (
+    <>
+      <p className="mt-3 text-sm">
+        <span className="font-bold">{t('recipe.ingredients')}:</span>{' '}
+        {[pastaName(r.pasta), ...r.need.map((i) => (chosen.includes(i) || r.pasta !== pasta ? name(i) : `${name(i)} (${t('recipe.toAdd')})`)), ...r.may.filter((i) => chosen.includes(i)).map(name)].join(', ')}
+      </p>
+      <h4 className="mt-3 text-xs font-semibold uppercase tracking-wider text-muted">{t('recipe.method')}</h4>
+      <ol className="mt-1.5 space-y-1.5 text-sm">
+        {r.steps.map((s, n) => (
+          <li key={n} className="flex gap-2.5">
+            <span className="w-5 shrink-0 font-bold tabular-nums text-brand">{String(n + 1).padStart(2, '0')}</span>
+            {tx(s, lang)}
+          </li>
+        ))}
+      </ol>
+    </>
+  );
 
   return (
     <section className="mt-10 rounded-2xl border border-line p-4 sm:p-5" data-testid="recipe-builder">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h2 className="text-xl font-bold tracking-tight">{t('recipe.title')}</h2>
+          <h2 className="text-lg font-bold tracking-tight">{t('recipe.title')}</h2>
           <p className="mt-1 text-sm text-muted">{t('recipe.intro')}</p>
         </div>
         {(pasta || chosen.length > 0) && (
@@ -39,7 +76,7 @@ export default function RecipeBuilder() {
 
       {/* 1 · pasta */}
       <h3 className="mb-2 mt-5 text-xs font-semibold uppercase tracking-wider text-muted">{t('recipe.step.pasta')}</h3>
-      <div className="scroll-thin -mx-1 flex gap-2 overflow-x-auto px-1 pb-1" role="radiogroup" aria-label={t('recipe.step.pasta')}>
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(80px,1fr))] gap-2" role="radiogroup" aria-label={t('recipe.step.pasta')}>
         {RECIPE_PASTAS.map((p) => (
           <button
             key={p.id}
@@ -47,7 +84,7 @@ export default function RecipeBuilder() {
             role="radio"
             aria-checked={pasta === p.id}
             onClick={() => setPasta(p.id)}
-            className={`flex w-[84px] shrink-0 flex-col items-center gap-1 rounded-xl border-2 p-1.5 transition ${pasta === p.id ? 'border-brand bg-brand/5' : 'border-line hover:border-brand/50'}`}
+            className={`flex min-w-0 flex-col items-center gap-1 rounded-xl border-2 p-1.5 transition ${pasta === p.id ? 'border-brand bg-brand/5' : 'border-line hover:border-brand/50'}`}
             data-testid={`recipe-pasta-${p.id}`}
           >
             <img src={p.img} alt="" className="h-12 w-full object-contain" />
@@ -77,56 +114,70 @@ export default function RecipeBuilder() {
         })}
       </div>
 
-      {/* 3 · the dish */}
-      <div className="mt-6 grid gap-5 sm:grid-cols-[150px_minmax(0,1fr)]" aria-live="polite">
-        <div className="relative mx-auto aspect-square w-[150px] rounded-full bg-white shadow-[0_6px_24px_rgba(0,0,0,0.12),inset_0_0_0_10px_#f6f6f6]" aria-hidden="true">
-          {pastaInfo && <img src={pastaInfo.img} alt="" className="absolute inset-[22%] h-[56%] w-[56%] object-contain" />}
+      {/* 3 · the plate (3D ingredients appear as they are picked) and the recipe */}
+      <div className="mt-6 grid gap-5 sm:grid-cols-[190px_minmax(0,1fr)]" aria-live="polite">
+        <div className="relative mx-auto aspect-square w-[190px] rounded-full bg-white shadow-[0_8px_28px_rgba(0,0,0,0.13),inset_0_0_0_12px_#f6f6f6]" data-testid="recipe-plate">
+          {pastaInfo && <img src={pastaInfo.img} alt={tx(pastaInfo.name, lang)} className="absolute inset-[24%] h-[52%] w-[52%] object-contain" />}
           {chosen.map((id, n) => {
             const [x, y] = SPOTS[n % SPOTS.length];
             return (
-              <span
+              <img
                 key={id}
-                className="absolute h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border border-ink/10 shadow-sm"
-                style={{ left: `${x}%`, top: `${y}%`, background: INGREDIENTS.find((i) => i.id === id)?.hex }}
+                src={ING_IMG[id]}
+                alt={name(id)}
+                title={name(id)}
+                className="recipe-pop absolute h-[27%] w-[27%] -translate-x-1/2 -translate-y-1/2 object-contain drop-shadow-sm"
+                style={{ left: `${x}%`, top: `${y}%` }}
+                data-testid={`plate-${id}`}
               />
             );
           })}
         </div>
-        <div data-testid="recipe-result">
-          {!result ? (
+
+        <div className="min-w-0" data-testid="recipe-result">
+          {!pasta ? (
             <p className="text-sm text-muted">{t('recipe.pick')}</p>
-          ) : (
+          ) : !chosen.length ? (
+            // just a pasta: the recipes to learn with it
+            <>
+              <p className="text-sm text-muted">{recipesFor(pasta)[0].pasta === pasta ? t('recipe.withPasta', { pasta: pastaName(pasta) }) : t('recipe.otherPasta', { pasta: pastaName(pasta) })}</p>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {recipesFor(pasta).map((r) => (
+                  <button key={r.id} type="button" onClick={() => use(r)} className="rounded-full border border-line px-3 py-1.5 text-[13px] font-semibold hover:border-brand hover:text-brand" data-testid={`recipe-try-${r.id}`}>
+                    {r.name}
+                  </button>
+                ))}
+              </div>
+            </>
+          ) : shown ? (
             <>
               <span
-                className={`inline-block rounded-full px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider ${result.kind === 'traditional' ? 'bg-brand text-white' : 'bg-cream text-ink/70'}`}
+                className={`inline-block rounded-full px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider ${exact && !extras.length ? 'bg-brand text-white' : 'bg-cream text-ink/70'}`}
                 data-testid="recipe-kind"
               >
-                {t(result.kind === 'traditional' ? 'recipe.traditional' : 'recipe.variation')}
+                {exact ? t('recipe.traditional') : !suggestion.missing.length && extras.length ? t('recipe.variation') : t('recipe.suggested')}
               </span>
               <h3 className="mt-2 text-lg font-bold leading-tight" data-testid="recipe-name">
-                {result.kind === 'traditional'
-                  ? result.recipe.name
-                  : result.recipe
-                    ? t('recipe.variationOf', { name: result.recipe.name })
-                    : `${tx(pastaInfo.name, lang)} · ${chosen.map(ingName).join(', ')}`}
+                {shown.name}
               </h3>
-              {result.kind === 'variation' && <p className="mt-1 text-sm text-muted">{t('recipe.variationText')}</p>}
-              {result.recipe && (
-                <>
-                  <p className="mt-3 text-sm">
-                    <span className="font-bold">{t('recipe.ingredients')}:</span> {tx(pastaInfo.name, lang)}, {[...result.recipe.need, ...result.recipe.may.filter((i) => chosen.includes(i))].map(ingName).join(', ')}
-                  </p>
-                  <h4 className="mt-3 text-xs font-semibold uppercase tracking-wider text-muted">{t('recipe.method')}</h4>
-                  <ol className="mt-1.5 space-y-1.5 text-sm">
-                    {result.recipe.steps.map((s, n) => (
-                      <li key={n} className="flex gap-2.5">
-                        <span className="w-5 shrink-0 font-bold tabular-nums text-brand">{String(n + 1).padStart(2, '0')}</span>
-                        {tx(s, lang)}
-                      </li>
-                    ))}
-                  </ol>
-                </>
+              {!exact && (
+                <div className="mt-1 text-sm text-muted">
+                  {suggestion.missing.length > 0 && <p>{t('recipe.missing', { list: list(suggestion.missing) })}</p>}
+                  {!suggestion.samePasta && <p>{t('recipe.usesPasta', { pasta: pastaName(shown.pasta) })}</p>}
+                  {extras.length > 0 && <p>{t('recipe.extras', { list: list(extras) })}</p>}
+                  <Button size="sm" variant="secondary" className="mt-2" onClick={() => use(shown)} data-testid="recipe-complete">
+                    <Icon name="check" /> {t('recipe.complete')}
+                  </Button>
+                </div>
               )}
+              {method(shown)}
+            </>
+          ) : (
+            <>
+              <span className="inline-block rounded-full bg-cream px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-ink/70" data-testid="recipe-kind">
+                {t('recipe.variation')}
+              </span>
+              <p className="mt-2 text-sm text-muted">{t('recipe.variationText')}</p>
             </>
           )}
         </div>

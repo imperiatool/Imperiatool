@@ -87,11 +87,18 @@ export default function EventsPage() {
             {groups.map((g) => (
               <FilterMenu key={g.key} id={g.key} label={g.label} value={filters[g.key]} options={g.options} onChange={(v) => set(g.key, v)} />
             ))}
-            {active > 0 && (
-              <button type="button" onClick={clear} className="ml-1 text-sm font-medium underline underline-offset-4 hover:text-brand" data-testid="filters-clear">
-                {t('events.clear')}
-              </button>
-            )}
+            {/* always there; active as soon as a filter is set */}
+            <button
+              type="button"
+              onClick={clear}
+              disabled={!active}
+              className="inline-flex h-10 items-center gap-1.5 rounded-full border border-brand px-4 text-sm font-semibold text-brand transition hover:bg-brand/5 disabled:border-line disabled:text-ink/35 disabled:hover:bg-transparent"
+              data-testid="filters-clear"
+            >
+              <Icon name="close" className="h-4 w-4" />
+              {t('events.clear')}
+              {active > 0 && <span className="grid h-5 min-w-5 place-items-center rounded-full bg-brand px-1 text-[11px] text-white">{active}</span>}
+            </button>
           </div>
           <label className="relative flex items-center gap-2 text-sm">
             <span className="text-muted">{t('events.sort')}</span>

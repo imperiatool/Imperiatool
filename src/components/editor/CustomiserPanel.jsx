@@ -49,21 +49,37 @@ const CustomiserPanel = forwardRef(function CustomiserPanel({ library }, ref) {
 
   return (
     <div ref={ref} className="scroll-thin space-y-3 p-4 lg:h-full lg:overflow-y-auto" data-testid="customiser">
-      {/* progress: one labelled step per part, all needed */}
+      {/* tabs: one per part, all needed; the open one stands out */}
       <div>
-        <ol className="grid gap-1.5" style={{ gridTemplateColumns: `repeat(${required.length}, minmax(0, 1fr))` }} aria-label={t('picker.progress', { done: doneCount, total: required.length })}>
-          {required.map((c) => (
-            <li key={c.id}>
-              <button type="button" onClick={() => setOpenId(c.id)} className="group block w-full text-left" data-testid={`step-${c.id}`}>
-                <span className={`block h-1.5 rounded-full transition ${done(c) ? 'bg-brand' : openId === c.id ? 'bg-ink/40' : 'bg-line'}`} />
-                <span className={`mt-1.5 flex items-center gap-1 truncate text-[11px] font-semibold uppercase tracking-wide ${done(c) ? 'text-brand' : 'text-muted group-hover:text-ink'}`}>
-                  {done(c) && <Icon name="check" className="h-3 w-3 shrink-0" strokeWidth={3} />}
-                  {label(c)}
+        <div
+          role="tablist"
+          aria-label={t('picker.progress', { done: doneCount, total: required.length })}
+          className="grid gap-1 rounded-full bg-ink/[0.06] p-1"
+          style={{ gridTemplateColumns: `repeat(${required.length}, minmax(0, 1fr))` }}
+        >
+          {required.map((c) => {
+            const on = openId === c.id;
+            return (
+              <button
+                key={c.id}
+                type="button"
+                role="tab"
+                aria-selected={on}
+                aria-controls={`panel-${c.id}`}
+                onClick={() => setOpenId(c.id)}
+                className={`flex h-10 min-w-0 items-center justify-center gap-1.5 rounded-full px-2 text-sm font-semibold transition ${
+                  on ? 'bg-white text-brand shadow-[0_1px_6px_rgba(0,0,0,0.12)]' : 'text-ink/50 hover:text-ink'
+                }`}
+                data-testid={`step-${c.id}`}
+              >
+                <span className={`grid h-5 w-5 shrink-0 place-items-center rounded-full text-[11px] ${done(c) ? 'bg-brand text-white' : on ? 'border border-brand' : 'border border-current'}`}>
+                  {done(c) ? <Icon name="check" className="h-3 w-3" strokeWidth={3} /> : sections.indexOf(c) + 1}
                 </span>
+                <span className="truncate">{label(c)}</span>
               </button>
-            </li>
-          ))}
-        </ol>
+            );
+          })}
+        </div>
         <p className={`mt-2 text-xs ${allDone ? 'text-brand' : 'text-muted'}`} data-testid="picker-progress">
           {allDone ? t('editor.allDone') : t('picker.progress', { done: doneCount, total: required.length })}
         </p>
@@ -101,7 +117,7 @@ const CustomiserPanel = forwardRef(function CustomiserPanel({ library }, ref) {
             {open && (
               <div id={`panel-${cat.id}`} className="border-t border-line px-3 pb-3 pt-3">
                 {/* shapes of this part */}
-                <div className="scroll-thin -mx-1 flex gap-2 overflow-x-auto px-1 pb-1" role="listbox" aria-label={label(cat)}>
+                <div className="grid grid-cols-[repeat(auto-fill,minmax(76px,1fr))] gap-2" role="listbox" aria-label={label(cat)}>
                   {list.map((a) => {
                     const used = parts.some((p) => p.assetId === a.id);
                     return (
@@ -112,7 +128,7 @@ const CustomiserPanel = forwardRef(function CustomiserPanel({ library }, ref) {
                         aria-selected={used}
                         onClick={() => st().addAsset(a, library)}
                         title={t(cat.multiple ? 'picker.add' : 'picker.use', { name: label(a) })}
-                        className={`flex w-[76px] shrink-0 flex-col items-center gap-1 rounded-xl border-2 p-1.5 transition ${used ? 'border-brand bg-brand/5' : 'border-line hover:border-brand/50'}`}
+                        className={`flex min-w-0 flex-col items-center gap-1 rounded-xl border-2 p-1.5 transition ${used ? 'border-brand bg-brand/5' : 'border-line hover:border-brand/50'}`}
                         data-testid={`option-${a.id}`}
                       >
                         <AssetThumb asset={a} className="h-12 w-full" />

@@ -59,13 +59,13 @@ export default function EventDetailPage() {
           </div>
 
           <div className="min-w-0">
-            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-brand">
+            <p className="text-lg font-bold leading-tight tracking-tight text-brand sm:text-xl">
               Imperia® {t('nav.events')} · {f.kind(e)}
             </p>
-            <h1 className="mt-2 text-4xl font-bold leading-[1.02] tracking-[-0.03em] sm:text-5xl" data-testid="event-title">
+            <h1 className="mt-1.5 text-2xl font-bold leading-tight tracking-tight sm:text-[28px]" data-testid="event-title">
               {f.text(e.title)}
             </h1>
-            <p className="mt-4 text-lg leading-relaxed text-ink/75">{f.text(e.short)}</p>
+            <p className="mt-2 text-sm leading-relaxed text-muted">{f.text(e.short)}</p>
 
             <dl className="mt-6 border-b border-line">
               <Fact label={t('events.location')}>
@@ -96,7 +96,7 @@ export default function EventDetailPage() {
 
             <section className="mt-10">
               <h2 className="text-xs font-semibold uppercase tracking-wider text-muted">{t('events.about')}</h2>
-              <p className="mt-3 text-base leading-relaxed">{f.text(e.description)}</p>
+              <p className="mt-3 text-sm leading-relaxed">{f.text(e.description)}</p>
             </section>
             <div className="mt-8 grid gap-8 sm:grid-cols-2">
               <section>
@@ -135,7 +135,7 @@ export default function EventDetailPage() {
           <div className="mt-16 border-t border-line py-10 lg:mb-10">
             <div className="grid gap-4 sm:grid-cols-2">
               {others.map((o) => (
-                <Link key={o.id} to={`/events/${o.id}`} state={state} className="group flex items-center gap-4 rounded-2xl border border-line p-3 transition hover:border-ink/30">
+                <Link key={o.id} to={`/events/${o.id}`} state={state} className="group flex min-w-0 items-center gap-4 rounded-2xl border border-line p-3 transition hover:border-ink/30">
                   <span className="grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-xl" style={{ background: o.visual.bg }}>
                     <img src={o.visual.img} alt="" className="h-full w-full object-contain p-2" />
                   </span>
