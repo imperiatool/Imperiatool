@@ -35,7 +35,7 @@ Quarta sezione (`#/events`): sei esperienze **illustrative** (3 in Italia, 3 in 
 - Dati: `src/data/events.js`, testi in tutte e 7 le lingue. Prezzi nella valuta del Paese dell'evento (€ Italia, £ Inghilterra), 0 = Gratis.
 - Filtri combinabili (tipo, luogo, formato, esperienza Crudo / Al Dente / Stracotto) e "Ordina per" data o prezzo; tutto salvato nell'indirizzo della pagina.
 - Ogni evento ha un oggetto di pasta 3D (`src/lib/pasta3d.js`) fatto con lo stesso studio e gli stessi materiali di cover e charm: nella pagina dell'evento è in 3D dal vivo, nelle schede è un'immagine dello stesso motore (`scripts/render-events.py`). Le immagini della home si rigenerano con `scripts/render-home.py`.
-- Evento gratuito "Recipe Club": ricettario interattivo (`src/data/recipes.js`) con soli piatti tradizionali riconosciuti; ogni altra combinazione è indicata come variazione creativa.
+- Evento gratuito "Recipe Club": ricettario interattivo (`src/data/recipes.js`) con soli piatti tradizionali riconosciuti. Con un paio di scelte propone la ricetta tradizionale più vicina (ingredienti mancanti, procedimento, pulsante per completarla); gli ingredienti scelti compaiono in 3D sul piatto (`src/lib/ingredients3d.js`, immagini rigenerabili con `scripts/render-ingredients.py`).
 - Prenotazione **demo**: partecipanti, totale, nome ed email con validazione, conferma con riferimento DEMO. Nessun pagamento, nessuna email, nessun dato inviato.
 
 ### Dati da verificare (da completare con le schede tecniche)

@@ -44,6 +44,29 @@ def fit(im, size=900, box=0.74, solid_bbox=None):
     out.alpha_composite(im, (round(size / 2 - cx * k), round(size / 2 - cy * k)))
     return out
 
+def die_cut(im, border=26, rim=2):
+    """White sticker border with a thin grey edge and a soft shadow, like the
+    sticker preview and the downloaded PNG, so it reads as a sticker on white."""
+    from PIL import ImageFilter, ImageChops
+    im = im.convert('RGBA')
+    pad = border + 30
+    big = Image.new('RGBA', (im.width + pad * 2, im.height + pad * 2), (0, 0, 0, 0))
+    big.alpha_composite(im, (pad, pad))
+    a = big.getchannel('A').point(lambda v: 255 if v > 40 else 0)
+    # round offset: blur + threshold gives a smooth, even border
+    white_a = a.filter(ImageFilter.GaussianBlur(border * 0.55)).point(lambda v: 255 if v > 18 else 0).filter(ImageFilter.GaussianBlur(0.8))
+    edge_a = white_a.filter(ImageFilter.MaxFilter(rim * 2 + 1)).filter(ImageFilter.GaussianBlur(0.6))
+    shadow_a = white_a.filter(ImageFilter.GaussianBlur(10)).point(lambda v: int(v * 0.22))
+    out = Image.new('RGBA', big.size, (0, 0, 0, 0))
+    sh = Image.new('RGBA', big.size, (0, 0, 0, 255)); sh.putalpha(shadow_a)
+    out.alpha_composite(sh, (0, 8))
+    ed = Image.new('RGBA', big.size, (0, 0, 0, 255)); ed.putalpha(edge_a.point(lambda v: int(v * 0.16)))
+    out.alpha_composite(ed)
+    wh = Image.new('RGBA', big.size, (255, 255, 255, 255)); wh.putalpha(white_a)
+    out.alpha_composite(wh)
+    out.alpha_composite(big)
+    return out
+
 with sync_playwright() as p:
     b = p.chromium.launch(args=ARGS)
     pg = b.new_page(viewport={'width': 900, 'height': 900}, device_scale_factor=1.4)
@@ -53,7 +76,8 @@ with sync_playwright() as p:
     b.close()
 case = Image.open(io.BytesIO(base64.b64decode(data.split(',')[1])))
 fit(case).save(os.path.join(ROOT, 'previews', 'case.png'))
-for name in ['charm', 'sticker']:
-    fit(Image.open(os.path.join(ROOT, 'previews', name + '.png')), box=0.8).save(os.path.join(ROOT, 'previews', name + '.png'))
+SRC = os.path.join(os.path.dirname(__file__), 'home-sources')
+fit(Image.open(os.path.join(SRC, 'charm-art.png')), box=0.8).save(os.path.join(ROOT, 'previews', 'charm.png'))
+fit(die_cut(Image.open(os.path.join(SRC, 'sticker-art.png'))), box=0.8).save(os.path.join(ROOT, 'previews', 'sticker.png'))
 fit(Image.open(os.path.join(ROOT, 'events', 'spaghetti.webp')), box=0.8).save(os.path.join(ROOT, 'previews', 'events.png'))
 print('ok')
