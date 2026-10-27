@@ -167,3 +167,29 @@ export function matchRecipe(pasta, ingredients) {
   const base = own.filter((r) => r.need.every((i) => chosen.has(i))).sort((a, b) => b.need.length - a.need.length)[0];
   return { kind: 'variation', recipe: base || null };
 }
+
+/**
+ * The traditional recipe closest to a selection, to learn from a couple of
+ * choices: same pasta first, then the most ingredients in common, then the
+ * simplest. With no ingredients yet it lists the recipes of that pasta.
+ * Returns { recipe, missing: [...ingredient ids], samePasta } or null.
+ */
+export function suggestRecipe(pasta, ingredients = []) {
+  const chosen = new Set(ingredients);
+  const scored = RECIPES.map((r) => {
+    const all = [...r.need, ...r.may];
+    const common = all.filter((i) => chosen.has(i)).length;
+    return { r, common, same: r.pasta === pasta };
+  })
+    .filter((x) => (chosen.size ? x.common > 0 : x.same))
+    .sort((a, b) => Number(b.same) - Number(a.same) || b.common - a.common || a.r.need.length - b.r.need.length);
+  const best = scored[0];
+  if (!best) return null;
+  return { recipe: best.r, missing: best.r.need.filter((i) => !chosen.has(i)), samePasta: best.same };
+}
+
+/** Recipes made with a given pasta (all of them when that pasta has none). */
+export const recipesFor = (pasta) => {
+  const own = RECIPES.filter((r) => r.pasta === pasta);
+  return own.length ? own : RECIPES;
+};

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { EVENTS, filterEvents, sortEvents, EVENT_TYPES, EVENT_COUNTRIES, EVENT_FORMATS, EVENT_LEVELS, CURRENCY_OF } from '../data/events.js';
-import { matchRecipe, RECIPES, INGREDIENTS, RECIPE_PASTAS } from '../data/recipes.js';
+import { matchRecipe, suggestRecipe, recipesFor, RECIPES, INGREDIENTS, RECIPE_PASTAS } from '../data/recipes.js';
 
 const LANGS = ['en', 'it', 'es', 'fr', 'de', 'zh', 'hi'];
 
@@ -75,5 +75,16 @@ describe('recipe builder', () => {
       for (const i of [...r.need, ...r.may]) expect(ings.has(i), `${r.id}:${i}`).toBe(true);
       for (const s of r.steps) for (const lang of LANGS) expect(s[lang]).toBeTruthy();
     }
+  });
+  it('teaches a real recipe from a couple of choices', () => {
+    // gnocchi + basil → gnocchi alla sorrentina, missing tomato and mozzarella
+    const g = suggestRecipe('gnocchi', ['basil', 'egg']);
+    expect(g.recipe.id).toBe('sorrentina');
+    expect(g.missing.sort()).toEqual(['mozzarella', 'tomato']);
+    expect(suggestRecipe('spaghetti', ['guanciale']).recipe.pasta).toBe('spaghetti');
+    // fusilli have no traditional recipe: suggestions come from other pastas
+    expect(suggestRecipe('fusilli', ['ragu']).recipe.id).toBe('ragu');
+    expect(recipesFor('fusilli').length).toBe(RECIPES.length);
+    expect(recipesFor('gnocchi').every((r) => r.pasta === 'gnocchi')).toBe(true);
   });
 });

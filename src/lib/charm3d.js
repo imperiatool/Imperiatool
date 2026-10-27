@@ -150,29 +150,55 @@ export function buildCharm(items, assetsById, materialId = 'aldente', { attachme
       // kept only where the line lies well inside a shape of the same element,
       // so it never sticks out past the edge (lips, shell…)
       const hosts = own && piece ? [piece] : pieces.filter((pc) => pc.item === s.item && pc.polys);
-      // like the sticker, a line ends exactly where it meets the outline: it is
-      // kept while the tube stays inside the outer contour (distance ≥ radius)
-      // and, on the rounded edge, it follows the edge down, so from any angle
-      // it never sticks out of the shape
-      const runs = [];
-      let cur = [];
-      for (const p of pts) {
+      // like the sticker, a line ends exactly where it meets the outline. In 3D
+      // the outline is the coloured rounded edge, so the tube runs on the flat
+      // top only and stops right where that edge begins (found precisely by
+      // bisection): it never climbs onto or past the edge, from any angle
+      const surface = (p) => {
+        if (!hosts.length) return base; // a loose line with nothing under it
         let zs = null;
         for (const h of hosts) {
           if (!insidePolys(p, h.polys)) continue;
-          const d = distToSegments(p, h.edges);
-          if (d < r) continue;
-          // height of the surface d away from the contour (ExtrudeGeometry bevel profile)
-          const drop = d >= h.bevelSize ? 0 : h.bevel * (1 - Math.cos(Math.asin(Math.max(-1, Math.min(1, 1 - d / h.bevelSize)))));
-          const z = h.top - drop;
-          if (zs == null || z > zs) zs = z;
+          if (distToSegments(p, h.edges) < h.bevelSize + r * 0.15) continue;
+          if (zs == null || h.top > zs) zs = h.top;
         }
-        if (!hosts.length) zs = base; // a loose line with nothing under it
-        if (zs != null) cur.push({ x: p.x, y: p.y, z: own ? zs - r * 0.3 : zs + r * 0.1 });
-        else {
+        return zs;
+      };
+      const point = (p, zs) => ({ x: p.x, y: p.y, z: own ? zs - r * 0.3 : zs + r * 0.1 });
+      const edgeBetween = (inP, outP) => {
+        let a = { x: inP.x, y: inP.y };
+        let b = { x: outP.x, y: outP.y };
+        for (let k = 0; k < 10; k++) {
+          const m = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+          if (surface(m) != null) a = m;
+          else b = m;
+        }
+        return a;
+      };
+      const runs = [];
+      let cur = [];
+      let prev = null;
+      let prevZ = null;
+      for (const p of pts) {
+        const zs = surface(p);
+        if (zs != null) {
+          // entering the flat top: start exactly at the edge
+          if (!cur.length && prev && prevZ == null) {
+            const e = edgeBetween(p, prev);
+            cur.push(point(e, surface(e) ?? zs));
+          }
+          cur.push(point(p, zs));
+        } else {
+          // leaving it: end exactly at the edge
+          if (cur.length && prev) {
+            const e = edgeBetween(prev, p);
+            cur.push(point(e, surface(e) ?? prevZ));
+          }
           if (cur.length > 2) runs.push(cur);
           cur = [];
         }
+        prev = p;
+        prevZ = zs;
       }
       if (cur.length > 2) runs.push(cur);
       if (closed && runs.length === 1 && runs[0].length === pts.length) runs[0].loop = true;
