@@ -1,19 +1,17 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import Icon from '../ui/Icon.jsx';
 import Button from '../ui/Button.jsx';
 import { useI18n } from '../../i18n/index.js';
-import { INGREDIENTS, RECIPE_PASTAS, matchRecipe, suggestRecipe, recipesFor } from '../../data/recipes.js';
+import { INGREDIENTS, INGREDIENT_GROUPS, RECIPE_PASTAS, matchRecipe, suggestRecipe, recipesFor, regionOf, hashtagsFor } from '../../data/recipes.js';
 import { tx } from '../../data/events.js';
 import DishPhoto from './DishPhoto.jsx';
+import RecipeCard from './RecipeCard.jsx';
+import { SPOTS } from '../../lib/recipeCard.js';
 
 // 3D ingredients (rendered with the app's studio, scripts/render-ingredients.py)
 const ING_IMG = Object.fromEntries(
   Object.entries(import.meta.glob('../../assets/ingredients/*.webp', { eager: true, import: 'default' })).map(([k, v]) => [k.split('/').pop().replace('.webp', ''), v]),
 );
-// places around the pasta on the plate (%, centre of each ingredient)
-const SPOTS = [
-  [33, 33], [67, 33], [67, 67], [33, 67], [50, 27], [50, 74], [27, 50], [73, 50], [41, 41], [59, 59], [50, 50],
-];
 
 /**
  * Free-event extra: choose a pasta and a couple of ingredients (picked like the
@@ -26,6 +24,8 @@ export default function RecipeBuilder() {
   const { t, lang } = useI18n();
   const [pasta, setPasta] = useState(null);
   const [chosen, setChosen] = useState([]);
+  const [cardOpen, setCardOpen] = useState(false);
+  const [platePhoto, setPlatePhoto] = useState('');
   const toggle = (id) => setChosen((c) => (c.includes(id) ? c.filter((x) => x !== id) : [...c, id]));
   const use = (r) => {
     setPasta(r.pasta);
@@ -38,7 +38,7 @@ export default function RecipeBuilder() {
   const name = (id) => tx(INGREDIENTS.find((i) => i.id === id)?.name, lang);
   // inside a sentence: lower case, except names of protected cheeses
   const inText = (id) => (['pecorino', 'parmigiano'].includes(id) || lang === 'de' ? name(id) : name(id).toLocaleLowerCase(lang));
-  const list = (ids) => ids.map(inText).join(', ');
+  const list = (ids) => ids.map(inText).join(lang === 'zh' ? '、' : ', ');
   // culturally specific ingredients get a short explanation (Italian readers know them)
   const withNote = (id) => {
     const n = INGREDIENTS.find((i) => i.id === id)?.note;
@@ -50,12 +50,56 @@ export default function RecipeBuilder() {
   const shown = exact || (chosen.length ? suggestion?.recipe : null);
   const extras = shown ? chosen.filter((i) => !shown.need.includes(i) && !shown.may.includes(i)) : [];
 
+  // the share card: the dish as composed now (traditional, suggested or the
+  // person's own creation), in the app language
+  const cardRecipe = exact || (suggestion && !suggestion.missing.length && suggestion.samePasta ? suggestion.recipe : null);
+  const cardKind = exact && !extras.length ? t('recipe.traditional') : t('recipe.variation');
+  // the dish's own name only when it is exactly the traditional recipe
+  const cardName = exact ? exact.name : pasta ? t('recipe.card.ownName', { pasta: pastaName(pasta) }) : '';
+  const card = useMemo(
+    () =>
+      pasta && chosen.length
+        ? {
+            kind: cardKind,
+            subtitle: exact && lang !== 'it' ? dish(exact) : '',
+            pastaLabel: t('recipe.card.pasta'),
+            pastaName: pastaName(pasta),
+            ingredientsLabel: t('recipe.ingredients'),
+            ingredients: chosen.map(name),
+            joiner: lang === 'zh' ? '、' : ', ',
+            originsLabel: t('recipe.origins'),
+            region: cardRecipe && regionOf(cardRecipe) ? tx(regionOf(cardRecipe), lang) : '',
+            origin: cardRecipe?.history ? tx(cardRecipe.history, lang) : '',
+            hashtags: hashtagsFor(cardRecipe, pasta),
+            pastaImg: pastaInfo?.img,
+            ingredientImgs: chosen.map((id) => ING_IMG[id]),
+          }
+        : null,
+    [pasta, chosen, lang, cardRecipe, cardKind, exact], // eslint-disable-line react-hooks/exhaustive-deps
+  );
+  const caption = (title) =>
+    `${t(exact && !extras.length ? 'recipe.card.captionDish' : 'recipe.card.captionOwn', { dish: title, pasta: lang === 'de' ? pastaName(pasta) : pastaName(pasta).toLocaleLowerCase(lang), list: list(chosen) })}\n\n${(card?.hashtags || []).join(' ')}`;
+  const cardButton = card && (
+    <Button variant="primary" size="sm" className="mt-4" onClick={() => setCardOpen(true)} data-testid="recipe-card-open">
+      <Icon name="share" /> {t('recipe.card.open')}
+    </Button>
+  );
+
   const method = (r) => (
     <>
       {r.history && (
-        <p className="mt-3 text-sm leading-relaxed" data-testid="recipe-history">
-          <span className="font-bold">{t('recipe.history')}:</span> {tx(r.history, lang)}
-        </p>
+        // origins and curiosities: a card of its own, right under the dish
+        <section className="mt-4 rounded-xl border border-line border-l-4 border-l-brand bg-white p-3.5 sm:p-4" aria-label={t('recipe.origins')} data-testid="recipe-history">
+          <h4 className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[15px] font-bold uppercase leading-tight text-brand">
+            {t('recipe.origins')}
+            {regionOf(r) && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-brand/10 px-2 py-0.5 text-[11px] font-semibold normal-case tracking-normal text-brand" data-testid="recipe-region">
+                <Icon name="globe" className="h-3 w-3" /> {tx(regionOf(r), lang)}
+              </span>
+            )}
+          </h4>
+          <p className="mt-1.5 text-[15px] leading-relaxed text-ink">{tx(r.history, lang)}</p>
+        </section>
       )}
       <p className="mt-3 text-sm">
         <span className="font-bold">{t('recipe.ingredients')}:</span>{' '}
@@ -108,23 +152,30 @@ export default function RecipeBuilder() {
 
       {/* 2 · ingredients as colours */}
       <h3 className="mb-2 mt-5 text-xs font-semibold uppercase tracking-wider text-muted">{t('recipe.step.ingredients')}</h3>
-      <div className="flex flex-wrap gap-1.5" role="group" aria-label={t('recipe.step.ingredients')}>
-        {INGREDIENTS.map((i) => {
-          const on = chosen.includes(i.id);
-          return (
-            <button
-              key={i.id}
-              type="button"
-              aria-pressed={on}
-              onClick={() => toggle(i.id)}
-              className={`inline-flex h-9 items-center gap-2 rounded-full border py-1 pl-1 pr-3 text-[13px] transition ${on ? 'border-brand bg-brand/5 font-semibold' : 'border-line hover:border-ink/40'}`}
-              data-testid={`recipe-ing-${i.id}`}
-            >
-              <span className={`h-7 w-7 rounded-full border border-ink/10 ${on ? 'ring-2 ring-brand ring-offset-1' : ''}`} style={{ background: i.hex }} />
-              {tx(i.name, lang)}
-            </button>
-          );
-        })}
+      <div className="space-y-3" role="group" aria-label={t('recipe.step.ingredients')}>
+        {INGREDIENT_GROUPS.map((g) => (
+          <div key={g.id}>
+            <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-ink/60">{tx(g.name, lang)}</p>
+            <div className="flex flex-wrap gap-1.5">
+              {g.ids.map((id) => INGREDIENTS.find((i) => i.id === id)).filter(Boolean).map((i) => {
+                const on = chosen.includes(i.id);
+                return (
+                  <button
+                    key={i.id}
+                    type="button"
+                    aria-pressed={on}
+                    onClick={() => toggle(i.id)}
+                    className={`inline-flex h-9 items-center gap-2 rounded-full border py-1 pl-1 pr-3 text-[13px] transition ${on ? 'border-brand bg-brand/5 font-semibold' : 'border-line hover:border-ink/40'}`}
+                    data-testid={`recipe-ing-${i.id}`}
+                  >
+                    <span className={`h-7 w-7 rounded-full border border-ink/10 ${on ? 'ring-2 ring-brand ring-offset-1' : ''}`} style={{ background: i.hex }} />
+                    {tx(i.name, lang)}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* 3 · the plate (3D ingredients appear as they are picked) and the recipe */}
@@ -185,7 +236,8 @@ export default function RecipeBuilder() {
                 </div>
               )}
               {method(shown)}
-              <DishPhoto dish={dish(shown)} />
+              {cardButton}
+              <DishPhoto dish={dish(shown)} onPhoto={setPlatePhoto} />
             </>
           ) : (
             <>
@@ -193,10 +245,14 @@ export default function RecipeBuilder() {
                 {t('recipe.variation')}
               </span>
               <p className="mt-2 text-sm text-muted">{t('recipe.variationText')}</p>
+              {cardButton}
             </>
           )}
         </div>
       </div>
+      {card && (
+        <RecipeCard open={cardOpen} onClose={() => setCardOpen(false)} card={card} defaultName={cardName} caption={caption} initialPhoto={platePhoto} />
+      )}
       <p className="mt-4 flex items-center gap-1.5 text-xs text-muted">
         <Icon name="help" className="h-3.5 w-3.5" /> {t('recipe.note')}
       </p>

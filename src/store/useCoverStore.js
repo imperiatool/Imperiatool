@@ -3,8 +3,8 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { COVER_OPTIONS } from '../data/defaults.js';
 
-// old pattern ids → current ones (Ravioli was replaced by Reginette)
-const RENAMED = { spighe: 'reginette', ravioli: 'reginette' };
+// old pattern ids → current ones (Macaroni and Penne belong to the Recipe Club)
+const RENAMED = { spighe: 'reginette', maccheroni: 'tagliatelle', penne: 'tagliatelle' };
 
 export const useCoverStore = create(
   persist(
@@ -17,7 +17,7 @@ export const useCoverStore = create(
     }),
     {
       name: 'imperia:cover',
-      version: 4,
+      version: 5,
       storage: createJSONStorage(() => localStorage),
       migrate: (state) => {
         const s = { ...state };

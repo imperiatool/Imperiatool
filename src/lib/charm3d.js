@@ -112,11 +112,41 @@ export function buildCharm(items, assetsById, materialId = 'aldente', { attachme
     // a little more, so their small crimps can't fold under the rounded edge
     const shapes = resampled.map((s) => roundCorners(s, Math.max(piece.level > 0 ? bs * 2.4 : bs, 1.5), step));
 
+    // what lies underneath: only pieces this one really overlaps (a bounding
+    // box is not enough: the mouth used to stack on the eyes, whose box spans
+    // the face, and floated in front of the body). Parts that hang past the
+    // pieces underneath (eyes sticking out of the head) go down to the back,
+    // so nothing floats in the air from the side
+    const polys = shapes.map((sh) => ({ outer: sh.getPoints(), holes: sh.holes.map((h) => h.getPoints()) }));
+    const samples = [];
+    const N = 36;
+    for (let i = 0; i < N; i++) {
+      for (let j = 0; j < N; j++) {
+        const q = new THREE.Vector2(box.min.x + ((i + 0.5) / N) * size.x, box.min.y + ((j + 0.5) / N) * size.y);
+        if (insidePolys(q, polys)) samples.push(q);
+      }
+    }
+    // a piece lying across parts of different heights (a mouth over the body
+    // and the bottom of the eyes) reaches down to the lowest one, so it rests
+    // on all of them instead of hovering over the lower part
     let z0 = 0;
-    for (const p of placed) if (p.box.intersectsBox(box)) z0 = Math.max(z0, p.top - 2);
+    let lowest = Infinity;
+    let uncovered = 0;
+    if (placed.length) {
+      for (const q of samples) {
+        let under = null;
+        for (const p of placed) if (p.box.containsPoint(q) && insidePolys(q, p.polys)) under = Math.max(under ?? 0, p.top - 2);
+        if (under == null) uncovered++;
+        else {
+          z0 = Math.max(z0, under);
+          lowest = Math.min(lowest, under);
+        }
+      }
+    }
+    const z1 = !placed.length ? 0 : uncovered > samples.length * 0.02 || lowest === Infinity ? 0 : lowest; // back of the piece
 
     let geometry = new THREE.ExtrudeGeometry(shapes, {
-      depth: Math.max(1, depth - bt * 2),
+      depth: Math.max(1, z0 - z1 + depth - bt * 2),
       bevelEnabled: true,
       bevelThickness: bt,
       bevelSize: bs,
@@ -131,16 +161,16 @@ export function buildCharm(items, assetsById, materialId = 'aldente', { attachme
       : makeMaterial(piece.color, materialId, UV_REPEAT);
     const mesh = new THREE.Mesh(geometry, material);
     mesh.userData.body = piece.isFirstItem && piece.level === 0;
-    mesh.position.z = z0 + bt;
+    mesh.position.z = z1 + bt;
     root.add(mesh);
     const top = z0 + Math.max(1, depth - bt * 2) + bt * 2;
     piece.bevel = bt;
     piece.bevelSize = bs;
-    piece.polys = shapes.map((sh) => ({ outer: sh.getPoints(), holes: sh.holes.map((h) => h.getPoints()) }));
+    piece.polys = polys;
     piece.contours = piece.polys.flatMap((q) => [q.outer, ...q.holes]);
     piece.edges = outerEdges(piece.polys, piece.contours);
     piece.top = top;
-    placed.push({ box, top });
+    placed.push({ box, top, polys });
     itemTop.set(piece.item, Math.max(itemTop.get(piece.item) ?? 0, top));
   }
 
@@ -177,53 +207,113 @@ export function buildCharm(items, assetsById, materialId = 'aldente', { attachme
         }
         return zs;
       };
-      const point = (p, zs) => ({ x: p.x, y: p.y, z: own ? zs - r * 0.3 : zs + r * 0.1 });
-      const edgeBetween = (inP, outP) => {
+      const point = (p, zs, f = 1) => ({ x: p.x, y: p.y, z: own ? zs - r * 0.3 : zs + r * 0.1 * f, f });
+      const edgeBetween = (inP, outP, test = (m) => surface(m) != null) => {
         let a = { x: inP.x, y: inP.y };
         let b = { x: outP.x, y: outP.y };
-        for (let k = 0; k < 10; k++) {
+        for (let k = 0; k < 14; k++) {
           const m = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
-          if (surface(m) != null) a = m;
+          if (test(m)) a = m;
           else b = m;
         }
         return a;
       };
-      const runs = [];
-      let cur = [];
-      let prev = null;
-      let prevZ = null;
-      for (const p of pts) {
-        const zs = surface(p);
-        if (zs != null) {
-          // entering the flat top: start exactly at the edge
-          if (!cur.length && prev && prevZ == null) {
-            const e = edgeBetween(p, prev);
-            cur.push(point(e, surface(e) ?? zs));
-          }
-          cur.push(point(p, zs));
-        } else {
-          // leaving it: end exactly at the edge
-          if (cur.length && prev) {
-            const e = edgeBetween(prev, p);
-            cur.push(point(e, surface(e) ?? prevZ));
-          }
-          if (cur.length > 2) runs.push(cur);
-          cur = [];
+      // the shape under a point, rounded edge included
+      const hostAt = (p) => {
+        let best = null;
+        for (const h of hosts) if (insidePolys(p, h.polys) && (!best || h.top > best.top)) best = h;
+        return best;
+      };
+      // height of the rounded edge at a point (same profile as the extrusion:
+      // a quarter ellipse from the flat top down to the outline)
+      const edgeZ = (p) => {
+        const h = hostAt(p);
+        if (!h) return null;
+        const k = Math.max(0, Math.min(1, 1 - distToSegments(p, h.edges) / h.bevelSize));
+        return h.top - h.bevel * (1 - Math.sqrt(1 - k * k));
+      };
+      const zs = pts.map(surface);
+      // like the sticker, where a line ends on the outline (the corners of the
+      // lips) it runs on over the rounded edge, following its curve and
+      // tapering, and ends exactly on the outline: it neither stops short nor
+      // sticks out. Where it only crosses the edge of another part it stops
+      // at the start of the rounded edge, as before
+      const reach = (from, dir, e) => {
+        if (own || !hosts.length) return [];
+        const ext = [];
+        let k = from;
+        while (k >= 0 && k < pts.length && zs[k] == null && hostAt(pts[k])) {
+          ext.push(pts[k]);
+          k += dir;
         }
-        prev = p;
-        prevZ = zs;
+        if (k >= 0 && k < pts.length && zs[k] != null) return []; // back on a flat top: a gap, not an end
+        const last = ext.length ? ext[ext.length - 1] : e;
+        // the outline crossing (or the end of the line, if it ends on the edge)
+        const path = k >= 0 && k < pts.length ? [e, ...ext, edgeBetween(last, pts[k], (m) => !!hostAt(m))] : [e, ...ext];
+        let total = 0;
+        const acc = [0];
+        for (let i = 1; i < path.length; i++) acc.push((total += Math.hypot(path[i].x - path[i - 1].x, path[i].y - path[i - 1].y)));
+        if (total < 0.5) return [];
+        return path.slice(1).map((q, i) => {
+          const f = 1 - 0.72 * (acc[i + 1] / total);
+          return point(q, edgeZ(q) ?? edgeZ(e) ?? base, f);
+        });
+      };
+      const runs = [];
+      for (let i = 0; i < pts.length; i++) {
+        if (zs[i] == null) continue;
+        let j = i;
+        while (j + 1 < pts.length && zs[j + 1] != null) j++;
+        const run = [];
+        if (i > 0) {
+          const e = edgeBetween(pts[i], pts[i - 1]);
+          run.push(...reach(i - 1, -1, e).reverse(), point(e, surface(e) ?? zs[i]));
+        }
+        for (let k = i; k <= j; k++) run.push(point(pts[k], zs[k]));
+        if (j < pts.length - 1) {
+          const e = edgeBetween(pts[j], pts[j + 1]);
+          run.push(point(e, surface(e) ?? zs[j]), ...reach(j + 1, 1, e));
+        }
+        if (run.length > 2) runs.push(run);
+        i = j;
       }
-      if (cur.length > 2) runs.push(cur);
       if (closed && runs.length === 1 && runs[0].length === pts.length) runs[0].loop = true;
       for (const run of runs) {
         const isLoop = !!run.loop;
         const curve = new THREE.CatmullRomCurve3(run.map((p) => new THREE.Vector3(p.x, p.y, p.z)), isLoop, 'centripetal');
         const segments = Math.min(2400, Math.max(16, Math.round(curve.getLength() / (r * 0.7))));
-        root.add(new THREE.Mesh(new THREE.TubeGeometry(curve, segments, r, 10, isLoop), makeMaterial(s.color, materialId, UV_REPEAT)));
+        const tube = new THREE.TubeGeometry(curve, segments, r, 10, isLoop);
+        // tapered ends (radius factor f of each point, by length along the line)
+        if (run.some((p) => p.f < 1)) {
+          const lens = [0];
+          for (let i = 1; i < run.length; i++) lens.push(lens[i - 1] + Math.hypot(run[i].x - run[i - 1].x, run[i].y - run[i - 1].y, run[i].z - run[i - 1].z));
+          const L = lens[lens.length - 1] || 1;
+          const fAt = (u) => {
+            const d = u * L;
+            let i = 1;
+            while (i < lens.length - 1 && lens[i] < d) i++;
+            const t = Math.max(0, Math.min(1, (d - lens[i - 1]) / ((lens[i] - lens[i - 1]) || 1)));
+            return (run[i - 1].f ?? 1) * (1 - t) + (run[i].f ?? 1) * t;
+          };
+          const pos = tube.attributes.position;
+          const c = new THREE.Vector3();
+          const v = new THREE.Vector3();
+          for (let i = 0; i <= segments; i++) {
+            curve.getPointAt(i / segments, c);
+            const f = fAt(i / segments);
+            for (let j = 0; j <= 10; j++) {
+              const idx = i * 11 + j;
+              v.fromBufferAttribute(pos, idx).sub(c).multiplyScalar(f).add(c);
+              pos.setXYZ(idx, v.x, v.y, v.z);
+            }
+          }
+          tube.computeVertexNormals();
+        }
+        root.add(new THREE.Mesh(tube, makeMaterial(s.color, materialId, UV_REPEAT)));
         // rounded ends for open lines
         if (!isLoop) {
           for (const p of [run[0], run[run.length - 1]]) {
-            const cap = new THREE.Mesh(new THREE.SphereGeometry(r, 12, 8), makeMaterial(s.color, materialId, UV_REPEAT));
+            const cap = new THREE.Mesh(new THREE.SphereGeometry(r * (p.f ?? 1), 12, 8), makeMaterial(s.color, materialId, UV_REPEAT));
             cap.position.set(p.x, p.y, p.z);
             root.add(cap);
           }

@@ -4,13 +4,16 @@ import charmImg from '../../assets/previews/charm.png';
 import stickerImg from '../../assets/previews/sticker.png';
 import eventsImg from '../../assets/previews/events.png';
 import { useI18n } from '../../i18n/index.js';
+import SpaghettiTwirl from './SpaghettiTwirl.jsx';
+import StickerPeel from './StickerPeel.jsx';
 
 // Experiences first, then the three product lines; each image has its own small, slow movement
+// (the spaghetti twirl and the sticker's lifting corner are components of their own)
 const CARDS = [
-  { to: '/events', img: eventsImg, key: 'events', anim: 'home-breathe' },
+  { to: '/events', img: eventsImg, key: 'events', anim: 'twirl' },
   { to: '/case', img: caseImg, key: 'case', anim: 'home-sway' },
   { to: '/charm', img: charmImg, key: 'charm', anim: 'home-float' },
-  { to: '/sticker', img: stickerImg, key: 'sticker', anim: 'sticker-breeze' },
+  { to: '/sticker', img: stickerImg, key: 'sticker', anim: 'peel' },
 ];
 
 /**
@@ -28,7 +31,13 @@ export default function HomePage() {
           {CARDS.map((c) => (
             <Link key={c.key} to={c.to} className="home-card group flex flex-col rounded-[20px] px-7 pb-8 pt-8" data-testid={`home-${c.key}`}>
               <div className="relative mx-auto aspect-square w-full max-w-[18rem]">
-                <img src={c.img} alt="" className={`absolute inset-0 h-full w-full object-contain ${c.anim}`} />
+                {c.anim === 'twirl' ? (
+                  <SpaghettiTwirl src={c.img} />
+                ) : c.anim === 'peel' ? (
+                  <StickerPeel src={c.img} />
+                ) : (
+                  <img src={c.img} alt="" className={`absolute inset-0 h-full w-full object-contain ${c.anim}`} />
+                )}
               </div>
               <h2 className="mt-6 text-[28px] font-bold leading-[1.08] tracking-tight text-brand sm:text-[30px]">
                 Imperia®

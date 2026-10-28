@@ -3,6 +3,8 @@ import StickerCanvas from './StickerCanvas.jsx';
 import CustomiserPanel from './CustomiserPanel.jsx';
 import ExportModal from './ExportModal.jsx';
 import OrderModal from './OrderModal.jsx';
+import StickerCollection from './StickerCollection.jsx';
+import StickerOrderModal from './StickerOrderModal.jsx';
 import Button from '../ui/Button.jsx';
 import Icon from '../ui/Icon.jsx';
 import { useLibrary } from '../../hooks/useLibrary.js';
@@ -21,7 +23,7 @@ export default function EditorPage({ mode = 'charm' }) {
   const items = useEditorStore((s) => s.items);
   const canUndo = useEditorStore((s) => s.past.length > 0);
   const canRedo = useEditorStore((s) => s.future.length > 0);
-  const [modal, setModal] = useState(null); // 'export' | 'order' | null
+  const [modal, setModal] = useState(null); // 'export' | 'order' | 'collection' | null
   const panelRef = useRef(null);
   // Start: puts the first body on the canvas, then shows its section
   const start = () => {
@@ -107,7 +109,7 @@ export default function EditorPage({ mode = 'charm' }) {
         <section className={`flex flex-col gap-2 p-3 sm:p-5 lg:min-h-0 ${mode === 'sticker' ? 'bg-white' : 'bg-studio'}`}>
           <div className="flex justify-center">{tools}</div>
           <div className="relative grid place-items-center lg:min-h-0 lg:flex-1">
-            <div className={`relative aspect-square w-full max-w-[min(100%,calc(100vh-21rem))] overflow-hidden rounded-[28px] bg-white [background-image:radial-gradient(#1d1d1b10_1px,transparent_1px)] [background-size:22px_22px]`}>
+            <div className={`relative aspect-square w-full ${mode === 'sticker' ? 'max-w-[min(100%,calc(100vh-27rem))]' : 'max-w-[min(100%,calc(100vh-21rem))]'} overflow-hidden rounded-[28px] bg-white [background-image:radial-gradient(#1d1d1b10_1px,transparent_1px)] [background-size:22px_22px]`}>
               <StickerCanvas assetsById={library.assetsById} label={t('editor.canvasLabel')} outline={mode === 'sticker'} />
               {!items.length && (
                 <div className="absolute inset-0 grid place-items-center p-6 text-center">
@@ -127,6 +129,8 @@ export default function EditorPage({ mode = 'charm' }) {
             </div>
           </div>
           {items.length > 0 && <PreviewHint className="pt-0">{t('editor.canvasHint')}</PreviewHint>}
+          {/* stickers: a collection of designs to review and order */}
+          {mode === 'sticker' && <StickerCollection library={library} onReview={() => setModal('collection')} />}
         </section>
 
         <aside className="border-t border-line bg-cream lg:min-h-0 lg:border-l lg:border-t-0">
@@ -140,6 +144,7 @@ export default function EditorPage({ mode = 'charm' }) {
       </div>
 
       {mode === 'sticker' && <ExportModal open={modal === 'export'} onClose={() => setModal(null)} items={items} library={library} />}
+      {mode === 'sticker' && <StickerOrderModal open={modal === 'collection'} onClose={() => setModal(null)} library={library} />}
       {mode === 'charm' && <OrderModal open={modal === 'order'} onClose={() => setModal(null)} items={items} library={library} />}
     </div>
   );
