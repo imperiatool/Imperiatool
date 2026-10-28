@@ -28,14 +28,14 @@ L'app si apre su una **home** con tre schede bianche arrotondate (Case, Charm, S
 
 Un sito web non può inserire uno sticker direttamente nelle app: WhatsApp, per esempio, trasforma in foto qualsiasi immagine ricevuta. La strada più semplice è condividere o incollare il PNG trasparente (funziona ovunque). Per averlo come vero sticker WhatsApp: pannello sticker → *+ Crea* → scegli l'immagine (consiglio mostrato nell'app).
 
-### Imperia® Events (concept)
+### Imperia® Experiences (concept)
 
-Quarta sezione (`#/events`): sei esperienze **illustrative** (3 in Italia, 3 in Inghilterra), subito visibili.
+Prima sezione della home (`#/events`): sei esperienze **illustrative**: il Recipe Club online e gratuito (sempre per primo), 2 in Italia e 3 in Inghilterra.
 
 - Dati: `src/data/events.js`, testi in tutte e 7 le lingue. Prezzi nella valuta del Paese dell'evento (€ Italia, £ Inghilterra), 0 = Gratis.
-- Filtri combinabili (tipo, luogo, formato, esperienza Crudo / Al Dente / Stracotto) e "Ordina per" data o prezzo; tutto salvato nell'indirizzo della pagina.
+- Un solo pulsante "Filtri" apre i sotto-filtri (tipo, luogo, formato, esperienza Crudo / Al Dente / Stracotto), con il conteggio (es. 6/6) accanto e "Ordina per" data o prezzo; tutto salvato nell'indirizzo della pagina.
 - Ogni evento ha un oggetto di pasta 3D (`src/lib/pasta3d.js`) fatto con lo stesso studio e gli stessi materiali di cover e charm: nella pagina dell'evento è in 3D dal vivo, nelle schede è un'immagine dello stesso motore (`scripts/render-events.py`). Le immagini della home si rigenerano con `scripts/render-home.py`.
-- Evento gratuito "Recipe Club": ricettario interattivo (`src/data/recipes.js`) con soli piatti tradizionali riconosciuti. Con un paio di scelte propone la ricetta tradizionale più vicina (ingredienti mancanti, procedimento, pulsante per completarla); gli ingredienti scelti compaiono in 3D sul piatto (`src/lib/ingredients3d.js`, immagini rigenerabili con `scripts/render-ingredients.py`).
+- Evento gratuito "Recipe Club": ricettario interattivo (`src/data/recipes.js`) con soli piatti tradizionali riconosciuti. Con un paio di scelte propone la ricetta tradizionale più vicina (ingredienti mancanti, procedimento, pulsante per completarla); gli ingredienti scelti compaiono in 3D sul piatto (`src/lib/ingredients3d.js`, immagini rigenerabili con `scripts/render-ingredients.py`). Ogni ricetta ha origini storiche (formulate con cautela dove non certe), spiegazione degli ingredienti meno noti e la condivisione facoltativa della foto del piatto: la foto resta sul dispositivo e si condivide solo con il menu di condivisione del telefono.
 - Prenotazione **demo**: partecipanti, totale, nome ed email con validazione, conferma con riferimento DEMO. Nessun pagamento, nessuna email, nessun dato inviato.
 
 ### Dati da verificare (da completare con le schede tecniche)

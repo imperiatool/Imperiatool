@@ -17,7 +17,7 @@ JS = """async () => {
   host.style.cssText = 'position:fixed;left:0;top:0;width:900px;height:900px;z-index:9999';
   document.body.appendChild(host);
   const st = new Studio(host, { transparent: true });
-  st.setObject(buildCover({ pattern: 'ravioli', color: '#e1201b', material: 'aldente', model: 'iphone-17-pro' }), { height: 2.2 });
+  st.setObject(buildCover({ pattern: 'reginette', color: '#e1201b', material: 'aldente', model: 'iphone-17-pro' }), { height: 2.2 });
   const t = st.controls.target, d = st.fitDistance;
   st.camera.position.set(t.x + d * 0.28, t.y + d * 0.12, t.z + d * 0.95);
   st.controls.update();
