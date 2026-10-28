@@ -85,9 +85,46 @@ input[type='range'] {
 .home-breathe { animation: home-breathe 7s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) {
   .home-sway, .home-float, .home-tilt, .home-breathe { animation: none; }
+  .home-card { transition: none; }
+  .home-card:hover { transform: none; }
 }
 
 /* recipe builder: an ingredient lands on the plate */
 @keyframes recipe-pop { from { opacity: 0; transform: translate(-50%, -80%) scale(0.6); } to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
 .recipe-pop { animation: recipe-pop 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
 @media (prefers-reduced-motion: reduce) { .recipe-pop { animation: none; } }
+
+/* Home cards: white with a soft shadow on touch screens; with a mouse they sit
+   on the grey page and the one under the pointer turns white, grows and lifts
+   (as on imperia.com) */
+.home-card {
+  position: relative;
+  background: #fff;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.07);
+  transition: transform 0.35s cubic-bezier(0.2, 0.7, 0.2, 1), background-color 0.35s ease, box-shadow 0.35s ease;
+}
+.home-link { text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 1px; }
+@media (hover: hover) and (pointer: fine) {
+  .home-card { background: transparent; box-shadow: none; }
+  .home-card:hover, .home-card:focus-visible {
+    z-index: 2;
+    background: #fff;
+    transform: scale(1.045);
+    box-shadow: 0 14px 40px rgba(0, 0, 0, 0.12);
+  }
+  /* the call to action: same colour, the underline thickens smoothly */
+  .home-link { transition: text-decoration-thickness 0.25s ease, text-underline-offset 0.25s ease; }
+  .home-card:hover .home-link, .home-link:hover { text-decoration-thickness: 2px; text-underline-offset: 6px; }
+}
+@media (hover: none) {
+  .home-card:active { transform: scale(0.985); }
+}
+
+/* Sticker: one corner lifts a little, as if caught by a breeze (display only) */
+@keyframes sticker-breeze {
+  0%, 62%, 100% { transform: perspective(900px) rotate3d(1, -1, 0, 0deg); filter: drop-shadow(0 2px 3px rgba(0,0,0,0.10)); }
+  74% { transform: perspective(900px) rotate3d(1, -1, 0, 9deg) translateZ(4px); filter: drop-shadow(-4px 8px 8px rgba(0,0,0,0.16)); }
+  84% { transform: perspective(900px) rotate3d(1, -1, 0, 3deg); filter: drop-shadow(-1px 4px 5px rgba(0,0,0,0.12)); }
+}
+.sticker-breeze { animation: sticker-breeze 6s ease-in-out infinite; transform-origin: 18% 85%; }
+@media (prefers-reduced-motion: reduce) { .sticker-breeze { animation: none; } }

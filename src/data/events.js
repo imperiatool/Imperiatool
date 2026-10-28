@@ -16,11 +16,11 @@ const L = (en, it, es, fr, de, zh, hi) => ({ en, it, es, fr, de, zh, hi });
 
 export const EVENT_TYPES = ['workshop', 'shapelab', 'supper', 'collab'];
 export const EVENT_FORMATS = ['hands-on', 'social', 'design-led'];
-export const EVENT_COUNTRIES = ['it', 'uk'];
+export const EVENT_COUNTRIES = ['online', 'it', 'uk'];
 // experience levels use the names of the Imperia finishes
 export const EVENT_LEVELS = ['raw', 'aldente', 'overcooked'];
 export const EVENT_SORTS = ['date', 'priceAsc', 'priceDesc'];
-export const CURRENCY_OF = { it: 'EUR', uk: 'GBP' };
+export const CURRENCY_OF = { it: 'EUR', uk: 'GBP', online: 'EUR' };
 
 /** filters = { type, country, format, level } — 'all' (or empty) means no filter */
 export function filterEvents(list, { type, country, format, level } = {}) {
@@ -36,7 +36,8 @@ export function filterEvents(list, { type, country, format, level } = {}) {
 
 /** Sorted copy: by date (default) or by the numeric price (free = 0). */
 export function sortEvents(list, sort = 'date') {
-  const byDate = (a, b) => a.start.localeCompare(b.start);
+  // online, self-paced experiences (no date) come first
+  const byDate = (a, b) => (a.start || '').localeCompare(b.start || '');
   const out = [...list];
   if (sort === 'priceAsc') return out.sort((a, b) => a.price - b.price || byDate(a, b));
   if (sort === 'priceDesc') return out.sort((a, b) => b.price - a.price || byDate(a, b));
@@ -50,8 +51,55 @@ export const tx = (field, lang) => (field && typeof field === 'object' && !Array
 // scripts/render-events.py) + palette colours for the object and its backdrop
 export const EVENTS = [
   {
-    id: 'shape-of-pasta',
+    id: 'recipe-club',
     number: '01',
+    type: 'workshop',
+    formats: ['hands-on', 'social'],
+    // online and self-paced: no date, no fixed length, no limit on places
+    country: 'online',
+    online: true,
+    city: L('Online', 'Online', 'Online', 'En ligne', 'Online', '线上', 'ऑनलाइन'),
+    venue: null,
+    start: null,
+    minutes: null,
+    price: 0,
+    places: null,
+    level: 'raw',
+    recipes: true,
+    visual: { shape: 'ravioli', color: '#ffb548', finish: 'raw', bg: '#ffffff', ink: '#1d1d1b', img: ravioliImg },
+    title: L('Recipe Club', 'Il club delle ricette', 'El club de las recetas', 'Le club des recettes', 'Der Rezept-Club', '食谱俱乐部', 'रेसिपी क्लब'),
+    short: L(
+      'A free online club, at your own pace: pair pasta shapes with the sauces they were made for.',
+      'Un club online gratuito, al tuo ritmo: abbina le forme di pasta ai condimenti per cui sono nate.',
+      'Un club online gratuito, a tu ritmo: combina formas de pasta con las salsas para las que nacieron.',
+      'Un club en ligne gratuit, à votre rythme : associez les formes de pâtes aux sauces pour lesquelles elles sont nées.',
+      'Ein kostenloser Online-Club in deinem Tempo: kombiniere Pastaformen mit den Saucen, für die sie gemacht sind.',
+      '免费线上俱乐部，按你的节奏：为每种意面形状配上它天生搭配的酱汁。',
+      'मुफ़्त ऑनलाइन क्लब, अपनी गति से: पास्ता आकारों को उन सॉस से जोड़ें जिनके लिए वे बने हैं।',
+    ),
+    description: L(
+      'Why does each pasta shape have its sauce? Pick a pasta and a couple of ingredients below and the club shows you the traditional Italian dish they lead to, with its ingredients, method and a little of its history. Cook it at home, then share a photo of your plate if you like.',
+      'Perché ogni forma di pasta ha il suo condimento? Scegli qui sotto una pasta e un paio di ingredienti: il club ti mostra il piatto tradizionale italiano a cui portano, con ingredienti, preparazione e un po’ della sua storia. Cucinalo a casa e, se vuoi, condividi la foto del tuo piatto.',
+      '¿Por qué cada forma de pasta tiene su salsa? Elige abajo una pasta y un par de ingredientes y el club te muestra el plato tradicional italiano al que llevan, con ingredientes, preparación y algo de su historia. Cocínalo en casa y, si quieres, comparte la foto de tu plato.',
+      'Pourquoi chaque forme de pâtes a-t-elle sa sauce ? Choisissez ci-dessous des pâtes et quelques ingrédients : le club vous montre le plat traditionnel italien auquel ils mènent, avec ingrédients, préparation et un peu de son histoire. Cuisinez-le chez vous et, si vous le souhaitez, partagez la photo de votre assiette.',
+      'Warum hat jede Pastaform ihre Sauce? Wähle unten eine Pasta und ein paar Zutaten, und der Club zeigt dir das traditionelle italienische Gericht dazu, mit Zutaten, Zubereitung und ein wenig Geschichte. Koche es zu Hause und teile, wenn du magst, ein Foto deines Tellers.',
+      '为什么每种意面形状都有它的酱汁？在下面选择一种意面和几种配料，俱乐部会告诉你它们对应的意大利传统菜，以及配料、做法和一点历史。在家做好后，如果愿意，可以分享你的成品照片。',
+      'हर पास्ता आकार की अपनी सॉस क्यों होती है? नीचे एक पास्ता और कुछ सामग्री चुनें, क्लब आपको वह पारंपरिक इतालवी व्यंजन दिखाएगा, उसकी सामग्री, विधि और थोड़ा इतिहास भी। इसे घर पर बनाएँ और चाहें तो अपनी प्लेट की फ़ोटो शेयर करें।',
+    ),
+    included: [
+      L('Nine traditional recipes, step by step', 'Nove ricette tradizionali, passo per passo', 'Nueve recetas tradicionales, paso a paso', 'Neuf recettes traditionnelles, pas à pas', 'Neun traditionelle Rezepte Schritt für Schritt', '九道传统食谱，逐步讲解', 'नौ पारंपरिक रेसिपी, कदम दर कदम'),
+      L('The story behind each dish', 'La storia di ogni piatto', 'La historia de cada plato', 'L’histoire de chaque plat', 'Die Geschichte hinter jedem Gericht', '每道菜背后的故事', 'हर व्यंजन के पीछे की कहानी'),
+      L('Ingredients explained', 'Gli ingredienti spiegati', 'Los ingredientes explicados', 'Les ingrédients expliqués', 'Zutaten erklärt', '配料说明', 'सामग्री की जानकारी'),
+    ],
+    make: [
+      L('Your own shape-and-sauce pairing', 'Il tuo abbinamento di forma e condimento', 'Tu propia combinación de forma y salsa', 'Votre propre accord forme et sauce', 'Deine eigene Kombination aus Form und Sauce', '你自己的形状与酱汁搭配', 'आकार और सॉस की आपकी अपनी जोड़ी'),
+      L('A traditional Italian dish at home', 'Un piatto tradizionale italiano a casa', 'Un plato tradicional italiano en casa', 'Un plat traditionnel italien chez vous', 'Ein traditionelles italienisches Gericht zu Hause', '在家做一道意大利传统菜', 'घर पर एक पारंपरिक इतालवी व्यंजन'),
+      L('A photo of your plate to share', 'Una foto del tuo piatto da condividere', 'Una foto de tu plato para compartir', 'Une photo de votre assiette à partager', 'Ein Foto deines Tellers zum Teilen', '一张可分享的成品照片', 'शेयर करने के लिए अपनी प्लेट की फ़ोटो'),
+    ],
+  },
+  {
+    id: 'shape-of-pasta',
+    number: '02',
     type: 'workshop',
     formats: ['hands-on'],
     country: 'it',
@@ -95,7 +143,7 @@ export const EVENTS = [
   },
   {
     id: 'pasta-atelier',
-    number: '02',
+    number: '03',
     type: 'shapelab',
     formats: ['design-led', 'hands-on'],
     country: 'uk',
@@ -139,7 +187,7 @@ export const EVENTS = [
   },
   {
     id: 'pasta-after-hours',
-    number: '03',
+    number: '04',
     type: 'supper',
     formats: ['social'],
     country: 'uk',
@@ -183,7 +231,7 @@ export const EVENTS = [
   },
   {
     id: 'aperitivo',
-    number: '04',
+    number: '05',
     type: 'supper',
     kindKey: 'aperitivo',
     formats: ['social'],
@@ -228,7 +276,7 @@ export const EVENTS = [
   },
   {
     id: 'make-shoot-share',
-    number: '05',
+    number: '06',
     type: 'collab',
     formats: ['design-led', 'social'],
     country: 'uk',
@@ -241,20 +289,20 @@ export const EVENTS = [
     level: 'aldente',
     visual: { shape: 'fusilli', color: '#1a5632', finish: 'aldente', bg: '#ffb548', ink: '#1d1d1b', img: fusilliImg },
     title: L(
-      'Make, Shoot & Share — Sunday Edition',
-      'Crea, scatta e condividi — Edizione della domenica',
-      'Crea, fotografía y comparte — Edición de domingo',
-      'Créer, photographier, partager — Édition du dimanche',
-      'Machen, fotografieren, teilen – Sonntagsausgabe',
-      '制作·拍摄·分享——周日特别场',
-      'बनाओ, खींचो और शेयर करो — संडे एडिशन',
+      'Make, Shoot and Share: Sunday Edition',
+      'Crea, scatta e condividi: edizione della domenica',
+      'Crea, fotografía y comparte: edición de domingo',
+      'Créer, photographier, partager : édition du dimanche',
+      'Machen, fotografieren, teilen: Sonntagsausgabe',
+      '制作、拍摄、分享：周日特别场',
+      'बनाओ, खींचो और शेयर करो: संडे एडिशन',
     ),
     short: L(
       'A Sunday of food styling, photography and short videos, with pasta as the subject.',
       'Una domenica di food styling, fotografia e video brevi, con la pasta come protagonista.',
       'Un domingo de food styling, fotografía y vídeos cortos, con la pasta como protagonista.',
       'Un dimanche de stylisme culinaire, de photo et de vidéos courtes, avec les pâtes pour sujet.',
-      'Ein Sonntag mit Foodstyling, Fotografie und Kurzvideos – mit Pasta als Motiv.',
+      'Ein Sonntag mit Foodstyling, Fotografie und Kurzvideos, mit Pasta als Motiv.',
       '一个以意面为主角的周日：美食造型、摄影和短视频。',
       'फ़ूड स्टाइलिंग, फ़ोटोग्राफ़ी और छोटे वीडियो का एक रविवार, पास्ता के साथ।',
     ),
@@ -276,51 +324,6 @@ export const EVENTS = [
       L('A batch of fresh fusilli', 'Una porzione di fusilli freschi', 'Una tanda de fusilli frescos', 'Une fournée de fusilli frais', 'Eine Portion frische Fusilli', '一批新鲜螺旋面', 'ताज़ा फ़्यूज़िली का एक बैच'),
       L('A styled still-life shoot', 'Uno still life in stile editoriale', 'Un bodegón de estilo editorial', 'Une nature morte stylisée', 'Ein gestyltes Stillleben', '一组风格化静物摄影', 'एक स्टाइल किया हुआ स्टिल-लाइफ़ शूट'),
       L('A 15-second vertical story', 'Una storia verticale di 15 secondi', 'Una historia vertical de 15 segundos', 'Une story verticale de 15 secondes', 'Eine 15-Sekunden-Story im Hochformat', '一段 15 秒竖屏短片', '15 सेकंड की वर्टिकल स्टोरी'),
-    ],
-  },
-  {
-    id: 'recipe-club',
-    number: '06',
-    type: 'workshop',
-    formats: ['hands-on', 'social'],
-    country: 'it',
-    city: L('Florence', 'Firenze', 'Florencia', 'Florence', 'Florenz', '佛罗伦萨', 'फ्लोरेंस'),
-    venue: 'Casa Sfoglia',
-    start: '2027-01-24T11:30',
-    minutes: 90,
-    price: 0,
-    places: 20,
-    level: 'raw',
-    recipes: true,
-    visual: { shape: 'ravioli', color: '#ffb548', finish: 'raw', bg: '#ececea', ink: '#1d1d1b', img: ravioliImg },
-    title: L('Recipe Club', 'Il club delle ricette', 'El club de las recetas', 'Le club des recettes', 'Der Rezept-Club', '食谱俱乐部', 'रेसिपी क्लब'),
-    short: L(
-      'A free drop-in to pair pasta shapes with the sauces they were made for.',
-      'Un incontro gratuito per abbinare le forme di pasta ai condimenti per cui sono nate.',
-      'Un encuentro gratuito para combinar formas de pasta con las salsas para las que nacieron.',
-      'Une rencontre gratuite pour associer les formes de pâtes aux sauces pour lesquelles elles sont nées.',
-      'Ein kostenloses Treffen, um Pastaformen mit den Saucen zu kombinieren, für die sie gemacht sind.',
-      '免费参加：为每种意面形状配上它天生搭配的酱汁。',
-      'मुफ़्त सेशन: पास्ता आकारों को उन सॉस के साथ जोड़ें जिनके लिए वे बने हैं।',
-    ),
-    description: L(
-      'A short, free Sunday session on why each shape has its sauce: spaghetti and carbonara, tagliatelle and ragù, gnocchi with butter and sage. You taste small portions, roll a few gnocchi and leave with the recipes. Try the recipe builder below before you come.',
-      'Un breve incontro gratuito della domenica sul perché ogni forma ha il suo condimento: spaghetti e carbonara, tagliatelle e ragù, gnocchi burro e salvia. Assaggi piccole porzioni, prepari qualche gnocco e porti a casa le ricette. Prova il ricettario qui sotto prima di venire.',
-      'Una breve sesión gratuita de domingo sobre por qué cada forma tiene su salsa: espaguetis y carbonara, tagliatelle y ragú, ñoquis con mantequilla y salvia. Pruebas pequeñas porciones, haces algunos ñoquis y te llevas las recetas. Prueba el recetario de abajo antes de venir.',
-      'Une courte séance gratuite du dimanche sur la raison pour laquelle chaque forme a sa sauce : spaghetti et carbonara, tagliatelles et ragù, gnocchis beurre et sauge. Vous goûtez de petites portions, roulez quelques gnocchis et repartez avec les recettes. Essayez le créateur de recettes ci-dessous avant de venir.',
-      'Ein kurzes, kostenloses Sonntagstreffen darüber, warum jede Form ihre Sauce hat: Spaghetti und Carbonara, Tagliatelle und Ragù, Gnocchi mit Butter und Salbei. Du probierst kleine Portionen, rollst ein paar Gnocchi und nimmst die Rezepte mit. Probier vorher den Rezept-Baukasten unten aus.',
-      '一场简短的免费周日活动，讲讲每种形状为何有它的酱汁：意大利面配卡邦尼、宽面配肉酱、团子配黄油鼠尾草。品尝小份、搓几个团子，并带走食谱。来之前先试试下面的食谱搭配器。',
-      'रविवार का एक छोटा, मुफ़्त सेशन कि हर आकार की अपनी सॉस क्यों होती है: स्पेगेटी और कार्बोनारा, टैग्लियाटेले और रागू, न्योकी मक्खन और सेज के साथ। आप छोटे हिस्से चखेंगे, कुछ न्योकी बनाएँगे और रेसिपी साथ ले जाएँगे। आने से पहले नीचे रेसिपी बिल्डर आज़माएँ।',
-    ),
-    included: [
-      L('Tasting portions of three classics', 'Assaggi di tre grandi classici', 'Degustación de tres clásicos', 'Dégustation de trois classiques', 'Kostproben von drei Klassikern', '三款经典的试吃份', 'तीन क्लासिक व्यंजनों का स्वाद'),
-      L('A gnocchi board to practise with', 'Un tagliere per gli gnocchi su cui esercitarti', 'Una tabla de ñoquis para practicar', 'Une planche à gnocchis pour s’exercer', 'Ein Gnocchibrett zum Üben', '一块练习用的团子板', 'अभ्यास के लिए न्योकी बोर्ड'),
-      L('Printed recipe cards', 'Schede delle ricette stampate', 'Fichas de recetas impresas', 'Fiches recettes imprimées', 'Gedruckte Rezeptkarten', '打印的食谱卡片', 'छपे हुए रेसिपी कार्ड'),
-    ],
-    make: [
-      L('A handful of ridged gnocchi', 'Una manciata di gnocchi rigati', 'Un puñado de ñoquis rayados', 'Une poignée de gnocchis striés', 'Eine Handvoll gerillter Gnocchi', '一把带纹团子', 'मुट्ठी भर धारीदार न्योकी'),
-      L('Your own shape-and-sauce pairing', 'Il tuo abbinamento di forma e condimento', 'Tu propia combinación de forma y salsa', 'Votre propre accord forme et sauce', 'Deine eigene Kombination aus Form und Sauce', '你自己的形状与酱汁搭配', 'आकार और सॉस की आपकी अपनी जोड़ी'),
-      L('Three recipes to cook at home', 'Tre ricette da rifare a casa', 'Tres recetas para cocinar en casa', 'Trois recettes à refaire chez soi', 'Drei Rezepte zum Nachkochen', '三道可在家做的食谱', 'घर पर बनाने के लिए तीन रेसिपी'),
     ],
   },
 ];

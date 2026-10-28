@@ -5,11 +5,18 @@ import { matchRecipe, suggestRecipe, recipesFor, RECIPES, INGREDIENTS, RECIPE_PA
 const LANGS = ['en', 'it', 'es', 'fr', 'de', 'zh', 'hi'];
 
 describe('events programme', () => {
-  it('has six distinct events split between Italy and England, fully translated', () => {
+  it('has six distinct experiences (online, Italy, England), fully translated, Recipe Club first', () => {
     expect(EVENTS).toHaveLength(6);
     expect(new Set(EVENTS.map((e) => e.title.en)).size).toBe(6);
-    expect(EVENTS.filter((e) => e.country === 'it').length).toBe(3);
+    expect(EVENTS.filter((e) => e.country === 'it').length).toBe(2);
     expect(EVENTS.filter((e) => e.country === 'uk').length).toBe(3);
+    const club = EVENTS[0];
+    expect(club.id).toBe('recipe-club');
+    expect([club.number, club.online, club.price, club.places, club.minutes]).toEqual(['01', true, 0, null, null]);
+    expect(sortEvents(EVENTS, 'date')[0].id).toBe('recipe-club');
+    // no em dashes in the copy
+    expect(JSON.stringify(EVENTS)).not.toMatch(/—/);
+    expect(EVENTS.find((e) => e.id === 'make-shoot-share').title.en).toBe('Make, Shoot and Share: Sunday Edition');
     for (const e of EVENTS) {
       expect(CURRENCY_OF[e.country]).toBeTruthy();
       expect(EVENT_TYPES).toContain(e.type);
@@ -19,7 +26,7 @@ describe('events programme', () => {
         for (const k of ['title', 'short', 'description', 'city']) expect(e[k][lang], `${e.id}.${k}.${lang}`).toBeTruthy();
         for (const x of [...e.included, ...e.make]) expect(x[lang], `${e.id} list ${lang}`).toBeTruthy();
       }
-      expect(new Date(e.start).toString()).not.toBe('Invalid Date');
+      if (e.start) expect(new Date(e.start).toString()).not.toBe('Invalid Date');
     }
     // names asked for: no "Shape Lab" and no "Al dente" event; Shape of Pasta translated in Italian
     expect(EVENTS.some((e) => /shape lab/i.test(e.title.en) || /^al dente$/i.test(e.title.en))).toBe(false);
@@ -50,7 +57,7 @@ describe('events programme', () => {
     expect(asc[0]).toBe(0);
     const desc = sortEvents(EVENTS, 'priceDesc').map((e) => e.price);
     expect(desc).toEqual([...desc].sort((a, b) => b - a));
-    const dates = sortEvents(EVENTS, 'date').map((e) => e.start);
+    const dates = sortEvents(EVENTS, 'date').map((e) => e.start || '');
     expect(dates).toEqual([...dates].sort());
   });
 });

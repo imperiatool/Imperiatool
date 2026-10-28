@@ -58,7 +58,7 @@ export const COVER_OPTIONS = {
     { id: 'aldente', surcharge: 0 },
     { id: 'overcooked', surcharge: 0 },
   ],
-  patterns: ['spaghetti', 'tagliatelle', 'ravioli', 'reginette', 'sfoglia', 'raviolo'],
+  patterns: ['spaghetti', 'tagliatelle', 'reginette', 'sfoglia', 'raviolo', 'maccheroni', 'penne'],
   models: [
     { id: 'iphone-17-pro-max', label: 'iPhone 17 Pro Max' },
     { id: 'iphone-17-pro', label: 'iPhone 17 Pro' },
