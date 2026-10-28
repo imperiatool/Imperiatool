@@ -4,6 +4,7 @@ import Button from '../ui/Button.jsx';
 import { useI18n } from '../../i18n/index.js';
 import { INGREDIENTS, RECIPE_PASTAS, matchRecipe, suggestRecipe, recipesFor } from '../../data/recipes.js';
 import { tx } from '../../data/events.js';
+import DishPhoto from './DishPhoto.jsx';
 
 // 3D ingredients (rendered with the app's studio, scripts/render-ingredients.py)
 const ING_IMG = Object.fromEntries(
@@ -11,7 +12,7 @@ const ING_IMG = Object.fromEntries(
 );
 // places around the pasta on the plate (%, centre of each ingredient)
 const SPOTS = [
-  [31, 31], [69, 31], [71, 69], [29, 69], [50, 24], [50, 77], [24, 50], [76, 50], [40, 42], [60, 58], [50, 50],
+  [33, 33], [67, 33], [67, 67], [33, 67], [50, 27], [50, 74], [27, 50], [73, 50], [41, 41], [59, 59], [50, 50],
 ];
 
 /**
@@ -38,15 +39,25 @@ export default function RecipeBuilder() {
   // inside a sentence: lower case, except names of protected cheeses
   const inText = (id) => (['pecorino', 'parmigiano'].includes(id) || lang === 'de' ? name(id) : name(id).toLocaleLowerCase(lang));
   const list = (ids) => ids.map(inText).join(', ');
+  // culturally specific ingredients get a short explanation (Italian readers know them)
+  const withNote = (id) => {
+    const n = INGREDIENTS.find((i) => i.id === id)?.note;
+    return n && lang !== 'it' ? `${name(id)} (${tx(n, lang)})` : name(id);
+  };
   const pastaName = (id) => tx(RECIPE_PASTAS.find((p) => p.id === id)?.name, lang);
   const shown = exact || (chosen.length ? suggestion?.recipe : null);
   const extras = shown ? chosen.filter((i) => !shown.need.includes(i) && !shown.may.includes(i)) : [];
 
   const method = (r) => (
     <>
+      {r.history && (
+        <p className="mt-3 text-sm leading-relaxed" data-testid="recipe-history">
+          <span className="font-bold">{t('recipe.history')}:</span> {tx(r.history, lang)}
+        </p>
+      )}
       <p className="mt-3 text-sm">
         <span className="font-bold">{t('recipe.ingredients')}:</span>{' '}
-        {[pastaName(r.pasta), ...r.need.map((i) => (chosen.includes(i) || r.pasta !== pasta ? name(i) : `${name(i)} (${t('recipe.toAdd')})`)), ...r.may.filter((i) => chosen.includes(i)).map(name)].join(', ')}
+        {[pastaName(r.pasta), ...r.need.map((i) => (chosen.includes(i) || r.pasta !== pasta ? withNote(i) : `${withNote(i)}, ${t('recipe.toAdd')}`)), ...r.may.filter((i) => chosen.includes(i)).map(withNote)].join('; ')}
       </p>
       <h4 className="mt-3 text-xs font-semibold uppercase tracking-wider text-muted">{t('recipe.method')}</h4>
       <ol className="mt-1.5 space-y-1.5 text-sm">
@@ -61,7 +72,7 @@ export default function RecipeBuilder() {
   );
 
   return (
-    <section className="mt-10 rounded-2xl border border-line p-4 sm:p-5" data-testid="recipe-builder">
+    <section id="recipe-builder" className="mt-10 scroll-mt-28 rounded-2xl border border-line p-4 sm:p-5" data-testid="recipe-builder">
       <div className="flex items-start justify-between gap-3">
         <div>
           <h2 className="text-lg font-bold tracking-tight">{t('recipe.title')}</h2>
@@ -126,7 +137,7 @@ export default function RecipeBuilder() {
                 src={ING_IMG[id]}
                 alt={name(id)}
                 title={name(id)}
-                className="recipe-pop absolute h-[27%] w-[27%] -translate-x-1/2 -translate-y-1/2 object-contain drop-shadow-sm"
+                className="recipe-pop absolute h-[24%] w-[24%] -translate-x-1/2 -translate-y-1/2 object-contain drop-shadow-sm"
                 style={{ left: `${x}%`, top: `${y}%` }}
                 data-testid={`plate-${id}`}
               />
@@ -171,6 +182,7 @@ export default function RecipeBuilder() {
                 </div>
               )}
               {method(shown)}
+              <DishPhoto dish={shown.name} />
             </>
           ) : (
             <>

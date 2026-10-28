@@ -9,6 +9,7 @@ import { useLibrary } from '../../hooks/useLibrary.js';
 import { COVER_OPTIONS } from '../../data/defaults.js';
 import { COLOR_LABELS } from '../../data/labels.js';
 import PageHeader from '../layout/PageHeader.jsx';
+import PreviewHint from '../ui/PreviewHint.jsx';
 import { useCartStore } from '../../store/useCartStore.js';
 import { useI18n } from '../../i18n/index.js';
 
@@ -19,7 +20,7 @@ function Option({ title, value, children }) {
     <section className="border-t border-line py-4 first:border-t-0">
       <h2 className="mb-3 text-sm">
         <span className="font-semibold">{title}</span>
-        {value && <span className="text-muted"> · {value}</span>}
+        {value && <span className="text-ink"> · {value}</span>}
       </h2>
       {children}
     </section>
@@ -40,7 +41,7 @@ function Circle({ active, onClick, label, children, testid }) {
       <span className={`grid rounded-full p-[3px] transition ${active ? 'ring-2 ring-brand' : 'ring-1 ring-transparent group-hover:ring-line'}`}>
         {children}
       </span>
-      <span className={`text-center text-xs leading-tight ${active ? 'font-semibold text-brand' : 'text-ink/75'}`}>{label}</span>
+      <span className={`text-center text-xs leading-tight ${active ? 'font-semibold text-brand' : 'text-ink'}`}>{label}</span>
     </button>
   );
 }
@@ -117,7 +118,7 @@ export default function CoverPage() {
               </Suspense>
             </div>
           </div>
-          <p className="pb-3 text-center text-xs text-muted">{t('order.preview3d')}</p>
+          <PreviewHint className="pb-3">{t('viewer.hint3d')}</PreviewHint>
         </section>
 
         {/* options */}
@@ -167,6 +168,7 @@ export default function CoverPage() {
                 <SpecList
                   testid="case-specs"
                   rows={[
+                    ['spec.product', `Imperia® ${t('cover.productName', { pattern: patternName })}`],
                     ['spec.pattern', patternName],
                     ['spec.colour', label(colorEntry) || cover.color],
                     ['spec.finish', t(`order.materials.${cover.material}.name`)],

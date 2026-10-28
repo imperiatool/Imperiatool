@@ -15,7 +15,7 @@ import { useI18n } from '../../i18n/index.js';
  *   kind="pasta"     → pasta = { shape, color, finish }: Events visuals (`transparent` shows the page behind)
  * `onReady(api)` receives { snapshot() }.
  */
-export default function Viewer3D({ kind, items, assetsById, material, attachment, sizeMm, cover, pasta, transparent = false, onReady, className = '', hint = true }) {
+export default function Viewer3D({ kind, items, assetsById, material, attachment, sizeMm, cover, pasta, transparent = false, onReady, className = '', hint = false }) {
   const { t } = useI18n();
   const hostRef = useRef(null);
   const studioRef = useRef(null);
@@ -67,6 +67,8 @@ export default function Viewer3D({ kind, items, assetsById, material, attachment
         } else if (kind === 'cover') studio.setObject(buildCover(cover), { height: 2.2 });
         else if (kind === 'pasta') studio.setObject(buildPasta(pasta), { height: 1.3 });
         else studio.setObject(buildCharm(items || [], assetsById || {}, material, { attachment, sizeMm }), { height: 2 });
+        // charms swing gently, like a charm hanging from a phone or a bag
+        studio.setSwing(kind === 'charm');
         // "jelly" bounce when the finish changes, once the new model is shown:
         // you can see how soft it is (same strengths as before)
         const mat = kind === 'charm' ? material : cover?.material;

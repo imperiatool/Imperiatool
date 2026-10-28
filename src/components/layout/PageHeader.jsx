@@ -9,7 +9,7 @@ export default function PageHeader({ title, subtitle, children, className = '' }
         <h1 className="text-2xl font-bold leading-tight tracking-tight text-brand sm:text-[28px]" data-testid="page-title">
           {title}
         </h1>
-        {subtitle && <p className="mt-1 text-sm text-muted">{subtitle}</p>}
+        {subtitle && <p className="mt-1 text-sm text-ink">{subtitle}</p>}
       </div>
       {children}
     </div>

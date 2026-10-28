@@ -8,6 +8,7 @@ import packagingSvg from '../assets/packaging/case-packaging.svg?raw';
 import pastaNames from '../assets/packaging/pastaNames.json';
 import windowShape from '../assets/packaging/window.json';
 import { buildCover, coverSize } from './cover3d.js';
+import { patternMarkup } from './patternArt.js';
 
 const PT = 72 / 25.4; // dieline units (pt) per mm
 const VB = { x: 320, y: 125, w: 762, h: 770 }; // dieline viewBox
@@ -30,13 +31,14 @@ const BOX = { w: 100, h: 190, d: 25, tab: 25 };
 export const PACK_NAMES = {
   spaghetti: 'Spaghetto',
   tagliatelle: 'Tagliatelle',
-  ravioli: 'Ravioli',
   reginette: 'Reginette',
   sfoglia: 'Pasta Cuts',
   raviolo: 'Raviolo',
+  maccheroni: 'Macaroni',
+  penne: 'Penne',
 };
 // title artwork from "Pasta Names for Phone Cases.svg" (already includes "phone case")
-const TITLE_ART = { ravioli: 'ravioli', reginette: 'reginette', sfoglia: 'pastacuts', spaghetti: 'spaghetto', tagliatelle: 'tagliatelle', raviolo: 'raviolo' };
+const TITLE_ART = { reginette: 'reginette', sfoglia: 'pastacuts', spaghetti: 'spaghetto', tagliatelle: 'tagliatelle', raviolo: 'raviolo' };
 // colour circles printed on the back (palette id → circle centre)
 const COLOUR_DOTS = {
   'c-ambra': { name: 'Egg', y: 323.5 },
@@ -46,7 +48,11 @@ const COLOUR_DOTS = {
   'c-marrone': { name: 'Ragù', y: 603 },
 };
 // pattern circles printed on the right side ("Patterns available")
-const PATTERN_DOTS = { spaghetti: 323.5, tagliatelle: 393.5, ravioli: 463, reginette: 533, sfoglia: 603, raviolo: 672.5 };
+// "Patterns available" on the right side: the list is redrawn over the
+// artwork so it always matches the patterns on sale, same order as the app
+const SIDE_PATTERNS = ['spaghetti', 'tagliatelle', 'reginette', 'sfoglia', 'raviolo', 'maccheroni', 'penne'];
+const SIDE = { x: 1004.65, y0: 330, step: 65.5, r: 17.5 };
+const PATTERN_DOTS = Object.fromEntries(SIDE_PATTERNS.map((p, i) => [p, SIDE.y0 + i * SIDE.step]));
 export const PACK_FINISH = {
   // protection: the same for every finish
   raw: { name: 'Raw', material: 'Polycarbonate (PC) · Matte finish', protection: 'Shock absorbing' },
@@ -123,26 +129,21 @@ export function packagingOverlay({ pattern, colorId, colorName, finish, modelLab
   // ring around the chosen colour
   const dot = COLOUR_DOTS[colorId];
   if (dot) parts.push(`<circle cx="362.6" cy="${dot.y}" r="25.5" fill="none" stroke="#fff" stroke-width="2.4"/>`);
-  // the pattern is called "Spaghetto" (the artwork still says "Spaghetti")
-  parts.push(`<rect x="981" y="350.5" width="47" height="16" fill="${RED}"/>`);
-  parts.push(`<text x="1004.65" y="362.6" text-anchor="middle" ${FONT} font-size="9.6" letter-spacing="-0.25" fill="#fff">Spaghetto</text>`);
-  // Raviolo, the sixth pattern, under Pasta Cuts in the same style as the
-  // printed ones: egg-yellow disc, white rim, crimped raviolo border
-  {
-    const cx = 1004.65;
-    const cy = PATTERN_DOTS.raviolo;
-    const wave = Array.from({ length: 73 }, (_, i) => {
-      const a = (i / 72) * Math.PI * 2;
-      const r = 14.2 + 1.1 * Math.cos(a * 18);
-      return `${i ? 'L' : 'M'}${(cx + r * Math.cos(a)).toFixed(2)} ${(cy + r * Math.sin(a)).toFixed(2)}`;
-    }).join('');
-    parts.push(`<circle cx="${cx}" cy="${cy}" r="19.86" fill="${YELLOW}" stroke="#fff" stroke-width="1.3"/>`);
-    parts.push(`<path d="${wave}Z" fill="none" stroke="#fff" stroke-width="0.9" stroke-linejoin="round"/>`);
-    parts.push(`<circle cx="${cx}" cy="${cy}" r="10.6" fill="none" stroke="#fff" stroke-width="0.8" stroke-dasharray="0.1 1.9" stroke-linecap="round"/>`);
-    parts.push(`<text x="${cx}" y="${(cy + 39.1).toFixed(1)}" text-anchor="middle" ${FONT} font-size="9.6" letter-spacing="-0.25" fill="#fff">Raviolo</text>`);
-  }
+  // patterns available: egg-yellow discs with the pattern in white, name underneath
+  parts.push(`<rect x="972.5" y="303" width="64" height="474" fill="${RED}"/>`);
+  SIDE_PATTERNS.forEach((p, i) => {
+    const cy = SIDE.y0 + i * SIDE.step;
+    const k = SIDE.r / 19.86;
+    parts.push(
+      `<clipPath id="pd-${p}"><circle cx="${SIDE.x}" cy="${cy}" r="${SIDE.r}"/></clipPath>` +
+        `<g clip-path="url(#pd-${p})"><rect x="${SIDE.x - SIDE.r}" y="${cy - SIDE.r}" width="${SIDE.r * 2}" height="${SIDE.r * 2}" fill="${YELLOW}"/>` +
+        `<g transform="translate(${SIDE.x} ${cy}) scale(${k.toFixed(4)})">${patternMarkup(p, YELLOW)}</g></g>` +
+        `<circle cx="${SIDE.x}" cy="${cy}" r="${SIDE.r}" fill="none" stroke="#fff" stroke-width="1.2"/>` +
+        `<text x="${SIDE.x}" y="${(cy + SIDE.r + 12.5).toFixed(1)}" text-anchor="middle" ${FONT} font-size="9.6" letter-spacing="-0.25" fill="#fff">${esc(PACK_NAMES[p])}</text>`,
+    );
+  });
   // …and around the chosen pattern
-  if (PATTERN_DOTS[pattern]) parts.push(`<circle cx="1004.65" cy="${PATTERN_DOTS[pattern]}" r="25.5" fill="none" stroke="#fff" stroke-width="2.4"/>`);
+  if (PATTERN_DOTS[pattern]) parts.push(`<circle cx="${SIDE.x}" cy="${PATTERN_DOTS[pattern]}" r="${SIDE.r + 4.5}" fill="none" stroke="#fff" stroke-width="2"/>`);
 
   // spine (next to the "garanzia 2 anni" seal): product name
   parts.push(`<rect x="611" y="436" width="69.5" height="58" fill="${RED}"/>`);

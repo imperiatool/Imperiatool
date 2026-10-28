@@ -11,7 +11,7 @@ export default function EventCard({ event: e, search = '', onOpen }) {
   const tag = 'absolute top-3.5 text-[11px] font-semibold uppercase tracking-[0.12em]';
   return (
     <Link to={`/events/${e.id}`} state={{ from: search }} onClick={onOpen} className="group flex flex-col focus-visible:outline-none" data-testid={`event-${e.id}`}>
-      <div className="relative aspect-[5/2] overflow-hidden rounded-2xl ring-brand ring-offset-2 group-focus-visible:ring-2" style={{ background: e.visual.bg, color: e.visual.ink }}>
+      <div className={`relative aspect-[5/2] overflow-hidden rounded-2xl ring-brand ring-offset-2 group-focus-visible:ring-2 ${e.visual.bg === '#ffffff' ? 'border border-line' : ''}`} style={{ background: e.visual.bg, color: e.visual.ink }}>
         <img
           src={e.visual.img}
           alt={t(`events.shape.${e.visual.shape}`)}
@@ -23,7 +23,7 @@ export default function EventCard({ event: e, search = '', onOpen }) {
       </div>
       <div className="flex flex-1 flex-col pt-3">
         <div className="flex items-center justify-between gap-2">
-          <p className="truncate text-[11px] font-semibold uppercase tracking-[0.12em] text-brand">{f.kind(e)}</p>
+          <p className="truncate text-[15px] font-bold uppercase leading-tight tracking-[-0.01em] text-brand">{f.kind(e)}</p>
           <span className="shrink-0 rounded-full bg-cream px-2 py-0.5 text-[11px] font-medium text-ink/75" title={t(`events.levelDesc.${e.level}`)}>
             {t('events.level')}: <span className="font-semibold text-ink" data-testid="event-card-level">{f.level(e)}</span>
           </span>
@@ -33,7 +33,7 @@ export default function EventCard({ event: e, search = '', onOpen }) {
         </h3>
         <ul className="mt-2 space-y-0.5 text-sm text-ink/80">
           <li>
-            {f.date(e.start)} · {f.time(e.start)}
+            {f.when(e)}
           </li>
           <li>
             {f.place(e)} · {f.duration(e.minutes)}

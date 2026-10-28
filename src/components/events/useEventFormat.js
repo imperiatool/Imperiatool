@@ -8,7 +8,10 @@ export function useEventFormat() {
   return useMemo(() => {
     const date = (iso) => new Date(iso).toLocaleDateString(locale, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
     const time = (iso) => new Date(iso).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
+    // when: date and time, or "available now" for online, self-paced ones
+    const when = (e) => (e.start ? `${date(e.start)} · ${time(e.start)}` : t('events.anytime'));
     const duration = (min) => {
+      if (!min) return t('events.ownPace');
       const h = Math.floor(min / 60);
       const m = min % 60;
       if (!h) return t('events.minutes', { m });
@@ -17,10 +20,11 @@ export function useEventFormat() {
     // in the event's own currency (no conversion): £ in England, € in Italy
     const price = (amount, country) =>
       !amount ? t('events.free') : Number(amount).toLocaleString(locale, { style: 'currency', currency: CURRENCY_OF[country], minimumFractionDigits: Number.isInteger(amount) ? 0 : 2, maximumFractionDigits: 2 });
-    const place = (e) => `${tx(e.city, lang)}, ${t(`events.loc.${e.country}`)}`;
+    const place = (e) => (e.online ? t('events.online') : `${tx(e.city, lang)}, ${t(`events.loc.${e.country}`)}`);
+    const places = (e) => (e.places ? t('events.places', { n: e.places }) : t('events.unlimited'));
     const kind = (e) => t(`events.kind.${e.kindKey || e.type}`);
     // experience levels have the names of the finishes (Raw, Al Dente, Overcooked)
     const level = (e) => t(`order.materials.${e.level}.name`);
-    return { date, time, duration, price, place, kind, level, text: (f) => tx(f, lang), lang };
+    return { date, time, when, duration, price, place, places, kind, level, text: (f) => tx(f, lang), lang };
   }, [t, lang, locale]);
 }

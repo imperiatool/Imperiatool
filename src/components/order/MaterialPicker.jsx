@@ -23,7 +23,7 @@ export default function MaterialPicker({ options, value, onChange }) {
             <span className="h-8 w-8 shrink-0 rounded-full border border-ink/10 shadow-inner" style={{ background: MATERIAL_SWATCH[m.id] }} />
             <span className="min-w-0 break-words font-display text-sm font-bold leading-tight">{t(`order.materials.${m.id}.name`)}</span>
           </span>
-          <span className="mt-1.5 block text-xs leading-snug text-muted">{t(`order.materials.${m.id}.desc`)}</span>
+          <span className="mt-1.5 block text-xs leading-snug text-ink">{t(`order.materials.${m.id}.desc`)}</span>
           {m.surcharge > 0 && <span className="mt-1 block text-xs font-semibold">{t('order.surcharge', { price: money(m.surcharge) })}</span>}
         </label>
       ))}

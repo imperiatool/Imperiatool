@@ -9,6 +9,7 @@ import { useLibrary } from '../../hooks/useLibrary.js';
 import { useEditorStore } from '../../store/useEditorStore.js';
 import { useI18n } from '../../i18n/index.js';
 import PageHeader from '../layout/PageHeader.jsx';
+import PreviewHint from '../ui/PreviewHint.jsx';
 
 /**
  * Character editor shared by the Charm and Sticker products.
@@ -125,7 +126,7 @@ export default function EditorPage({ mode = 'charm' }) {
               )}
             </div>
           </div>
-          {items.length > 0 && <p className="text-center text-xs text-muted">{t('editor.canvasHint')}</p>}
+          {items.length > 0 && <PreviewHint className="pt-0">{t('editor.canvasHint')}</PreviewHint>}
         </section>
 
         <aside className="border-t border-line bg-cream lg:min-h-0 lg:border-l lg:border-t-0">

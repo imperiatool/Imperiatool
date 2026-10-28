@@ -4,6 +4,7 @@ import Button from '../ui/Button.jsx';
 import Icon from '../ui/Icon.jsx';
 import BookingModal from './BookingModal.jsx';
 import RecipeBuilder from './RecipeBuilder.jsx';
+import PreviewHint from '../ui/PreviewHint.jsx';
 import { eventById, EVENTS } from '../../data/events.js';
 import { useI18n } from '../../i18n/index.js';
 import { useEventFormat } from './useEventFormat.js';
@@ -32,6 +33,9 @@ export default function EventDetailPage() {
   const e = eventById(id);
   if (!e) return <Navigate to="/events" replace />;
   const back = `/events${state?.from || ''}`;
+  // online, self-paced: nothing to book, the button goes straight to the recipes
+  const cta = () => (e.online ? document.getElementById('recipe-builder')?.scrollIntoView({ behavior: 'smooth', block: 'start' }) : setBooking(true));
+  const ctaLabel = e.online ? t('events.join') : `${t('events.book')} · ${f.price(e.price, e.country)}`;
   const others = EVENTS.filter((x) => x.id !== e.id && (x.type === e.type || x.country === e.country)).slice(0, 2);
 
   return (
@@ -44,7 +48,7 @@ export default function EventDetailPage() {
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] lg:gap-14">
           {/* the shape, live in 3D (picture while it loads) */}
           <div className="min-w-0 lg:sticky lg:top-6 lg:self-start">
-            <div className="relative aspect-square overflow-hidden rounded-3xl" style={{ background: e.visual.bg, color: e.visual.ink }}>
+            <div className={`relative aspect-square overflow-hidden rounded-3xl ${e.visual.bg === '#ffffff' ? 'border border-line' : ''}`} style={{ background: e.visual.bg, color: e.visual.ink }}>
               <Suspense fallback={<img src={e.visual.img} alt="" className="absolute inset-0 h-full w-full object-contain p-[14%]" />}>
                 <div className="absolute inset-0">
                   <Viewer3D kind="pasta" pasta={{ shape: e.visual.shape, color: e.visual.color, finish: e.visual.finish }} transparent hint={false} className="h-full w-full" />
@@ -55,12 +59,13 @@ export default function EventDetailPage() {
                 {t(`events.shape.${e.visual.shape}`)} · {t(`order.materials.${e.visual.finish}.name`)}
               </span>
             </div>
-            <p className="mt-2 text-center text-xs text-muted">{t('events.visualNote')}</p>
+            <PreviewHint>{t('viewer.hint3d')}</PreviewHint>
           </div>
 
           <div className="min-w-0">
-            <p className="text-lg font-bold leading-tight tracking-tight text-brand sm:text-xl">
-              Imperia® {t('nav.events')} · {f.kind(e)}
+            {/* same style as "Product specifications" */}
+            <p className="text-[15px] font-bold uppercase leading-tight tracking-[-0.01em] text-brand" data-testid="event-kind">
+              {f.kind(e)}
             </p>
             <h1 className="mt-1.5 text-2xl font-bold leading-tight tracking-tight sm:text-[28px]" data-testid="event-title">
               {f.text(e.title)}
@@ -70,17 +75,17 @@ export default function EventDetailPage() {
             <dl className="mt-6 border-b border-line">
               <Fact label={t('events.location')}>
                 {f.place(e)}
-                <span className="block text-xs font-normal text-muted">{t('events.venue', { venue: e.venue })}</span>
+                {e.venue && <span className="block text-xs font-normal text-muted">{t('events.venue', { venue: e.venue })}</span>}
               </Fact>
-              <Fact label={t('events.date')} note={t('events.illustrative')}>
-                {f.date(e.start)} · {f.time(e.start)}
+              <Fact label={t('events.date')} note={e.start ? t('events.illustrative') : null}>
+                {f.when(e)}
               </Fact>
               <Fact label={t('events.duration')}>{f.duration(e.minutes)}</Fact>
               <Fact label={t('events.price')}>
                 {f.price(e.price, e.country)} {e.price > 0 && <span className="font-normal text-muted">{t('events.perPerson')}</span>}
               </Fact>
-              <Fact label={t('events.placesLabel')} note={t('events.illustrative')}>
-                {t('events.places', { n: e.places })}
+              <Fact label={t('events.placesLabel')} note={e.places ? t('events.illustrative') : null}>
+                {f.places(e)}
               </Fact>
               <Fact label={t('events.level')}>
                 {f.level(e)} <span className="font-normal text-muted">· {t(`events.levelDesc.${e.level}`)}</span>
@@ -88,10 +93,10 @@ export default function EventDetailPage() {
             </dl>
 
             <div className="mt-6 hidden lg:block">
-              <Button variant="primary" size="lg" className="w-full justify-center" onClick={() => setBooking(true)} data-testid="book-open">
-                {t('events.book')} · {f.price(e.price, e.country)}
+              <Button variant="primary" size="lg" className="w-full justify-center" onClick={cta} data-testid="book-open">
+                {ctaLabel}
               </Button>
-              <p className="mt-2 text-center text-xs text-muted">{t('book.demo')}</p>
+              {!e.online && <p className="mt-2 text-center text-xs text-muted">{t('book.demo')}</p>}
             </div>
 
             <section className="mt-10">
@@ -153,8 +158,8 @@ export default function EventDetailPage() {
 
       {/* phones: booking bar at the bottom, like the product pages */}
       <div className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-white/95 p-3 backdrop-blur lg:hidden">
-        <Button variant="primary" size="lg" className="w-full justify-center" onClick={() => setBooking(true)} data-testid="book-open-mobile">
-          {t('events.book')} · {f.price(e.price, e.country)}
+        <Button variant="primary" size="lg" className="w-full justify-center" onClick={cta} data-testid="book-open-mobile">
+          {ctaLabel}
         </Button>
       </div>
 

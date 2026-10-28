@@ -23,6 +23,7 @@ export default function ExportModal({ open, onClose, items, library }) {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
   const [copied, setCopied] = useState(false);
+  const [saved, setSaved] = useState(false);
   const platform = useMemo(() => (typeof navigator !== 'undefined' ? detectPlatform() : 'desktop'), []);
   const border = withBorder ? BORDER : { width: 0 };
   const name = () => `imperia-sticker-${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')}.png`;
@@ -74,6 +75,8 @@ export default function ExportModal({ open, onClose, items, library }) {
       const blob = await png();
       if (platform !== 'desktop' && canShareFiles()) await shareBlob(blob, name());
       else downloadBlob(blob, name());
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
     });
 
   return (
@@ -82,7 +85,7 @@ export default function ExportModal({ open, onClose, items, library }) {
         {/* neutral surface: the file itself is transparent */}
         <div className="checker grid min-h-64 place-items-center rounded-3xl p-6">
           {preview ? (
-            <img src={preview} alt={t('export.preview')} className="max-h-[46vh] w-auto max-w-full drop-shadow-[0_8px_16px_rgba(0,0,0,0.16)]" data-testid="sticker-preview" />
+            <img src={preview} alt={t('export.preview')} className="sticker-breeze max-h-[46vh] w-auto max-w-full" data-testid="sticker-preview" />
           ) : (
             <span className="text-sm text-muted">…</span>
           )}
@@ -97,7 +100,7 @@ export default function ExportModal({ open, onClose, items, library }) {
               <Icon name={copied ? 'check' : 'copy'} /> {copied ? t('export.copied') : t('export.copy')}
             </Button>
             <Button variant="secondary" size="lg" className="justify-center whitespace-nowrap px-3" disabled={busy || !preview} onClick={save} data-testid="sticker-save">
-              <Icon name="download" /> {t('export.save')}
+              <Icon name={saved ? 'check' : 'download'} /> {saved ? t('export.saved') : t('export.save')}
             </Button>
           </div>
           {copied && <p className="-mt-2 text-center text-sm text-brand" data-testid="sticker-copied">{t('export.pasteHint')}</p>}

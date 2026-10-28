@@ -33,7 +33,7 @@ export default function BookingModal({ open, onClose, event: e, back = '/events'
     setTouched({});
   }, [open, e.id]);
 
-  const max = Math.min(MAX_PER_BOOKING, e.places);
+  const max = Math.min(MAX_PER_BOOKING, e.places || MAX_PER_BOOKING);
   const total = e.price * guests;
   const errors = {
     name: name.trim().length < 2 ? t('book.nameError') : '',
@@ -87,7 +87,7 @@ export default function BookingModal({ open, onClose, event: e, back = '/events'
         <p className="font-bold leading-tight" data-testid="book-event">{f.text(e.title)}</p>
         <p className="mt-1 text-muted">{f.place(e)}</p>
         <p className="text-muted">
-          {f.date(e.start)} · {f.time(e.start)} <span className="text-[11px]">({t('events.illustrative').toLowerCase()})</span>
+          {f.when(e)} {e.start && <span className="text-[11px]">({t('events.illustrative').toLowerCase()})</span>}
         </p>
       </div>
     </div>

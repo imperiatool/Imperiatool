@@ -87,6 +87,7 @@ export class Studio {
     }
     this.resize();
     this.wobbleUntil = 0;
+    this.reducedMotion = !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
     const loop = () => {
       if (!this.running) return;
       if (!this.visible || document.hidden) {
@@ -178,7 +179,18 @@ export class Studio {
     this.wobbleStrength = strength;
   }
 
+  /** Gentle, natural swing (charms): a slow rock around the base, a few degrees. */
+  setSwing(on) {
+    this.swing = on;
+    if (!on && this.object) this.object.rotation.set(0, 0, 0);
+  }
+
   applyWobble() {
+    if (this.object && this.swing && !this.reducedMotion) {
+      const t = performance.now() / 1000;
+      this.object.rotation.z = 0.05 * Math.sin(t * 1.25);
+      this.object.rotation.x = 0.018 * Math.sin(t * 0.8 + 1);
+    }
     if (!this.object || !this.wobbleUntil) return;
     const now = performance.now();
     const s = this.baseScale;

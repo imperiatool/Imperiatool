@@ -5,6 +5,7 @@ import Icon from '../ui/Icon.jsx';
 import { useCartStore } from '../../store/useCartStore.js';
 import MaterialPicker from '../order/MaterialPicker.jsx';
 import SpecList from '../order/SpecList.jsx';
+import PreviewHint from '../ui/PreviewHint.jsx';
 import { CHARM_OPTIONS } from '../../data/defaults.js';
 import { buildStickerSvg, svgToPngBlob, blobToDataUrl } from '../../lib/exportImage.js';
 import { useI18n } from '../../i18n/index.js';
@@ -122,6 +123,7 @@ export default function OrderModal({ open, onClose, items, library }) {
               )}
             </Suspense>
           </div>
+          <PreviewHint className="-mt-2">{t('viewer.hint3d')}</PreviewHint>
           <div>
             <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">{t('order.finish')}</h3>
             <MaterialPicker options={CHARM_OPTIONS.materials} value={material} onChange={setMaterial} />

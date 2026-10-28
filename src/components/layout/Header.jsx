@@ -3,7 +3,7 @@ import { NavLink, Link, useLocation } from 'react-router-dom';
 import Icon from '../ui/Icon.jsx';
 import Flag from '../ui/Flag.jsx';
 import Drawer from '../ui/Drawer.jsx';
-import logoUrl from '../../assets/imperia-logo-1932.svg';
+import logoUrl from '../../assets/imperia-logo.svg';
 import { EVENTS, tx } from '../../data/events.js';
 import { useI18n, LANGUAGES } from '../../i18n/index.js';
 import { useCartStore, cartCount } from '../../store/useCartStore.js';
@@ -125,8 +125,8 @@ export default function Header() {
   const iconBtn = 'relative grid h-10 w-10 place-items-center rounded-full text-brand transition hover:bg-brand/5';
 
   const tab = ({ isActive }) =>
-    `relative flex h-11 flex-1 items-center justify-center px-2 text-[15px] transition sm:flex-none sm:px-6 ${
-      isActive ? 'font-semibold text-brand after:absolute after:inset-x-3 after:-bottom-px after:h-[2px] after:rounded-full after:bg-brand' : 'font-medium text-ink/55 hover:text-ink'
+    `relative flex h-11 flex-1 items-center justify-center whitespace-nowrap px-1.5 text-[14px] transition sm:flex-none sm:px-6 sm:text-[15px] ${
+      isActive ? 'font-semibold text-brand after:absolute after:inset-x-3 after:-bottom-px after:h-[2px] after:rounded-full after:bg-brand' : 'font-medium text-ink hover:text-brand'
     }`;
 
   return (
@@ -141,7 +141,7 @@ export default function Header() {
           </button>
         </div>
         <Link to="/" className="justify-self-center" aria-label="Imperia">
-          <img src={logoUrl} alt="Imperia, dal 1932" className="h-9 w-auto sm:h-10" />
+          <img src={logoUrl} alt="Imperia" className="h-8 w-auto sm:h-9" />
         </Link>
         <div className="flex items-center justify-end gap-1">
           <button type="button" className={iconBtn} onClick={() => show('account')} aria-label={t('account.title')} data-testid="account-button">
