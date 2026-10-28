@@ -44,6 +44,8 @@ export default function RecipeBuilder() {
     const n = INGREDIENTS.find((i) => i.id === id)?.note;
     return n && lang !== 'it' ? `${name(id)} (${tx(n, lang)})` : name(id);
   };
+  // the dish in the visitor's language (Italian keeps its own name)
+  const dish = (r) => tx(r.title, lang) || r.name;
   const pastaName = (id) => tx(RECIPE_PASTAS.find((p) => p.id === id)?.name, lang);
   const shown = exact || (chosen.length ? suggestion?.recipe : null);
   const extras = shown ? chosen.filter((i) => !shown.need.includes(i) && !shown.may.includes(i)) : [];
@@ -155,7 +157,7 @@ export default function RecipeBuilder() {
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {recipesFor(pasta).map((r) => (
                   <button key={r.id} type="button" onClick={() => use(r)} className="rounded-full border border-line px-3 py-1.5 text-[13px] font-semibold hover:border-brand hover:text-brand" data-testid={`recipe-try-${r.id}`}>
-                    {r.name}
+                    {dish(r)}
                   </button>
                 ))}
               </div>
@@ -171,6 +173,7 @@ export default function RecipeBuilder() {
               <h3 className="mt-2 text-lg font-bold leading-tight" data-testid="recipe-name">
                 {shown.name}
               </h3>
+              {lang !== 'it' && <p className="text-sm text-ink/80" data-testid="recipe-title">{dish(shown)}</p>}
               {!exact && (
                 <div className="mt-1 text-sm text-muted">
                   {suggestion.missing.length > 0 && <p>{t('recipe.missing', { list: list(suggestion.missing) })}</p>}
@@ -182,7 +185,7 @@ export default function RecipeBuilder() {
                 </div>
               )}
               {method(shown)}
-              <DishPhoto dish={shown.name} />
+              <DishPhoto dish={dish(shown)} />
             </>
           ) : (
             <>

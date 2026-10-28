@@ -147,13 +147,35 @@ const BUILD = {
     });
     return g;
   },
+  // ragù: a small white bowl of slow-cooked meat sauce (red-brown, minced
+  // texture, glossy), so it reads as a sauce and not as a lump
   ragu() {
-    const m = glossy('#7a3627', 0.45, 0.45);
-    const mound = new THREE.Mesh(lumpy(new THREE.SphereGeometry(18, 72, 48), 0.09, 3, 5), m);
-    mound.scale.y = 0.42;
-    mound.position.y = 6;
     const g = new THREE.Group();
-    g.add(mound);
+    const porcelain = new THREE.MeshPhysicalMaterial({ color: '#fbfaf6', roughness: 0.18, clearcoat: 1, clearcoatRoughness: 0.08 });
+    const profile = [
+      [0, 0], [9, 0], [10, 0.6], [10.4, 1.6], [15, 4], [19.5, 9], [21, 12.5], [21.6, 13.4], [20.6, 13.6], [19.2, 10.6], [14.6, 6], [9.5, 3.2], [0, 3],
+    ].map(([x, y]) => new THREE.Vector2(x, y));
+    const bowl = new THREE.Mesh(new THREE.LatheGeometry(profile, 72), porcelain);
+    porcelain.side = THREE.DoubleSide;
+    g.add(bowl);
+    // the sauce surface, slightly domed, filling the bowl
+    const sauce = glossy('#9a321d', 0.32, 0.7);
+    const top = new THREE.Mesh(lumpy(new THREE.SphereGeometry(19, 64, 24, 0, TAU, 0, Math.PI / 2), 0.025, 6, 3), sauce);
+    top.scale.y = 0.2;
+    top.position.y = 9.2;
+    g.add(top);
+    // minced meat: many small irregular bits in a few tones
+    const tones = ['#7a2a1a', '#963822', '#6b2416', '#a5452a'].map((c) => glossy(c, 0.45, 0.4));
+    let seed = 9;
+    const rand = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+    for (let i = 0; i < 160; i++) {
+      const a = rand() * TAU;
+      const r = Math.sqrt(rand()) * 16.5;
+      const bit = new THREE.Mesh(lumpy(new THREE.IcosahedronGeometry(0.55 + rand() * 0.7, 2), 0.3, 3, i), tones[i % tones.length]);
+      bit.position.set(Math.cos(a) * r, 9.3 + 3.6 * (1 - (r / 19) ** 2) * 0.95 + rand() * 0.3, Math.sin(a) * r);
+      bit.rotation.set(rand() * 3, rand() * 3, rand() * 3);
+      g.add(bit);
+    }
     return g;
   },
   parmigiano() {

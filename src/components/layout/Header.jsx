@@ -8,11 +8,12 @@ import { EVENTS, tx } from '../../data/events.js';
 import { useI18n, LANGUAGES } from '../../i18n/index.js';
 import { useCartStore, cartCount } from '../../store/useCartStore.js';
 
+// same order as the home page: Experiences first, then the products
 export const PRODUCTS = [
+  { to: '/events', key: 'nav.events' },
   { to: '/case', key: 'nav.case' },
   { to: '/charm', key: 'nav.charm' },
   { to: '/sticker', key: 'nav.sticker' },
-  { to: '/events', key: 'nav.events' },
 ];
 
 function MenuDrawer({ open, onClose }) {
@@ -58,10 +59,10 @@ function SearchDrawer({ open, onClose }) {
   const { t, lang } = useI18n();
   const [q, setQ] = useState('');
   const pages = [
+    { to: '/events', title: `Imperia® ${t('nav.events')}`, text: t('home.events.text') },
     { to: '/case', title: `Imperia® ${t('home.case.title')}`, text: t('home.case.text') },
     { to: '/charm', title: `Imperia® ${t('home.charm.title')}`, text: t('home.charm.text') },
     { to: '/sticker', title: `Imperia® ${t('home.sticker.title')}`, text: t('home.sticker.text') },
-    { to: '/events', title: `Imperia® ${t('nav.events')}`, text: t('home.events.text') },
   ];
   const events = EVENTS.map((e) => ({ to: `/events/${e.id}`, title: tx(e.title, lang), text: `${tx(e.city, lang)} · ${t(`events.kind.${e.kindKey || e.type}`)}` }));
   const norm = (x) => x.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');

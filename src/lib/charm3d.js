@@ -92,12 +92,25 @@ export function buildCharm(items, assetsById, materialId = 'aldente', { attachme
     const bt = Math.max(0.6, Math.min(Math.min(depth * 0.42, piece.level === 0 ? 26 : 10) * shapeHints.bevel, depth * 0.4));
     // rounded edge width: with an outline it IS the outline (same colour as
     // the sides), as wide as the drawn stroke; never wide enough to fold over
-    const bs = piece.sideColor
+    // how thick the shape really is (≈ inradius = 2·area / perimeter): a
+    // rounded edge wider than a fraction of it folds the top face inside out
+    // (small crimped pupils came out as a coloured ring with no top)
+    let area = 0;
+    let perim = 0;
+    for (const sh of resampled) {
+      const pts = sh.getPoints();
+      area += Math.abs(THREE.ShapeUtils.area(pts));
+      for (let i = 0; i < pts.length; i++) perim += pts[i].distanceTo(pts[(i + 1) % pts.length]);
+    }
+    const inradius = perim ? (2 * area) / perim : minDim / 2;
+    let bs = piece.sideColor
       ? Math.max(1.2, Math.min(Math.max((piece.strokeWidth || 3) * 1.15, minDim > 60 ? 3 : 1.2), bt * 1.2, minDim * 0.08, 12))
       : Math.max(0.4, Math.min(bt * 0.9, minDim * 0.07, 9));
+    bs = Math.max(0.3, Math.min(bs, inradius * 0.22));
     // sharp tips are softly rounded (radius ≈ the rounded edge) so the edge
-    // never pokes out like spilled rubber
-    const shapes = resampled.map((s) => roundCorners(s, Math.max(bs, 1.5), step));
+    // never pokes out like spilled rubber; details on top (pupils) are smoothed
+    // a little more, so their small crimps can't fold under the rounded edge
+    const shapes = resampled.map((s) => roundCorners(s, Math.max(piece.level > 0 ? bs * 2.4 : bs, 1.5), step));
 
     let z0 = 0;
     for (const p of placed) if (p.box.intersectsBox(box)) z0 = Math.max(z0, p.top - 2);
