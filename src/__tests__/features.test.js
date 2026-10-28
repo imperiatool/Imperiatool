@@ -229,14 +229,16 @@ describe('3D packaging', () => {
     expect(svg).toContain('Google Pixel 10');
     expect(svg).toContain('cy="533"'); // ring around the basil circle
     expect(svg).toContain('Pattern:');
-    expect(svg).toContain('cx="1004.65" cy="395.5" r="22"'); // ring around the tagliatelle pattern
+    expect(svg).toContain('cx="1004.65" cy="400" r="22"'); // ring around the tagliatelle pattern
     // every pattern has its name on the top flap (with "phone case") and in the side list
-    for (const p of ['spaghetti', 'tagliatelle', 'reginette', 'sfoglia', 'raviolo', 'maccheroni', 'penne']) {
+    for (const p of ['spaghetti', 'tagliatelle', 'ravioli', 'reginette', 'sfoglia', 'raviolo']) {
       const s = packagingOverlay({ pattern: p, finish: 'raw', modelLabel: 'x', colorName: 'Egg' });
       expect(s, p).toContain('phone case');
       expect(s, p).toContain(`clip-path="url(#pd-${p})"`);
     }
-    expect(svg).not.toContain('>Ravioli<');
+    expect(svg).toContain('>Ravioli<');
+    expect(svg).not.toContain('Macaroni');
+    expect(svg).not.toContain('>Penne<');
     // the material stays on one line
     expect(svg.match(/Material:/g)).toHaveLength(1);
   });

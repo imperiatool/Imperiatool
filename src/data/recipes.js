@@ -2,21 +2,27 @@
 // traditional Italian dish they make. Only well-established recipes are listed;
 // any other combination is shown as a creative variation, never as tradition.
 // Dish names stay in Italian (they are the dishes' own names).
-import spaghettiImg from '../assets/events/spaghetti.webp';
-import tagliatelleImg from '../assets/events/tagliatelle.webp';
-import gnocchiImg from '../assets/events/gnocchi.webp';
-import ravioliImg from '../assets/events/ravioli.webp';
-import fusilliImg from '../assets/events/fusilli.webp';
+// every pasta in its natural colour (scripts/render-recipe-pasta.py)
+const IMG = Object.fromEntries(
+  Object.entries(import.meta.glob('../assets/recipe-pasta/*.webp', { eager: true, import: 'default' })).map(([k, v]) => [k.split('/').pop().replace('.webp', ''), v]),
+);
 
 const L = (en, it, es, fr, de, zh, hi) => ({ en, it, es, fr, de, zh, hi });
 
 export const RECIPE_PASTAS = [
-  { id: 'spaghetti', img: spaghettiImg, name: L('Spaghetti', 'Spaghetti', 'Espaguetis', 'Spaghetti', 'Spaghetti', '意大利面', 'स्पेगेटी') },
-  { id: 'tagliatelle', img: tagliatelleImg, name: L('Tagliatelle', 'Tagliatelle', 'Tagliatelle', 'Tagliatelles', 'Tagliatelle', '宽面', 'टैग्लियाटेले') },
-  { id: 'gnocchi', img: gnocchiImg, name: L('Gnocchi', 'Gnocchi', 'Ñoquis', 'Gnocchis', 'Gnocchi', '团子', 'न्योकी') },
-  { id: 'ravioli', img: ravioliImg, name: L('Ricotta ravioli', 'Ravioli di ricotta', 'Ravioli de ricotta', 'Raviolis à la ricotta', 'Ricotta-Ravioli', '乳清干酪方饺', 'रिकोटा रैवियोली') },
-  { id: 'fusilli', img: fusilliImg, name: L('Fusilli', 'Fusilli', 'Fusilli', 'Fusilli', 'Fusilli', '螺旋面', 'फ़्यूज़िली') },
-];
+  { id: 'spaghetti', name: L('Spaghetti', 'Spaghetti', 'Espaguetis', 'Spaghetti', 'Spaghetti', '意大利面', 'स्पेगेटी') },
+  { id: 'bucatini', name: L('Bucatini', 'Bucatini', 'Bucatini', 'Bucatini', 'Bucatini', '空心粗面', 'बुकाटिनी') },
+  { id: 'tagliatelle', name: L('Tagliatelle', 'Tagliatelle', 'Tagliatelle', 'Tagliatelles', 'Tagliatelle', '宽面', 'टैग्लियाटेले') },
+  { id: 'penne', name: L('Penne', 'Penne', 'Penne', 'Penne', 'Penne', '斜管面', 'पेन्ने') },
+  { id: 'maccheroni', name: L('Macaroni', 'Maccheroni', 'Macarrones', 'Macaronis', 'Makkaroni', '通心粉', 'मैकरोनी') },
+  { id: 'rigatoni', name: L('Rigatoni', 'Rigatoni', 'Rigatoni', 'Rigatoni', 'Rigatoni', '粗纹通心粉', 'रिगाटोनी') },
+  { id: 'fusilli', name: L('Fusilli', 'Fusilli', 'Fusilli', 'Fusilli', 'Fusilli', '螺旋面', 'फ़्यूज़िली') },
+  { id: 'trofie', name: L('Trofie', 'Trofie', 'Trofie', 'Trofie', 'Trofie', '特罗菲面', 'ट्रोफ़ी') },
+  { id: 'orecchiette', name: L('Orecchiette', 'Orecchiette', 'Orecchiette', 'Orecchiette', 'Orecchiette', '猫耳朵面', 'ओरेक्कियेत्ते') },
+  { id: 'farfalle', name: L('Farfalle', 'Farfalle', 'Farfalle', 'Farfalle', 'Farfalle', '蝴蝶面', 'फ़ार्फ़ाले') },
+  { id: 'gnocchi', name: L('Gnocchi', 'Gnocchi', 'Ñoquis', 'Gnocchis', 'Gnocchi', '团子', 'न्योकी') },
+  { id: 'ravioli', name: L('Ricotta ravioli', 'Ravioli di ricotta', 'Ravioli de ricotta', 'Raviolis à la ricotta', 'Ricotta-Ravioli', '乳清干酪方饺', 'रिकोटा रैवियोली') },
+].map((p) => ({ ...p, img: IMG[p.id] }));
 
 // ingredients as colours, like the colour pickers of the configurators
 export const INGREDIENTS = [
@@ -31,6 +37,17 @@ export const INGREDIENTS = [
   { id: 'mozzarella', hex: '#faf8f0', name: L('Mozzarella', 'Mozzarella', 'Mozzarella', 'Mozzarella', 'Mozzarella', '马苏里拉', 'मोज़ेरेला') , note: L('fresh stretched-curd cheese', 'formaggio fresco a pasta filata', 'queso fresco de pasta hilada', 'fromage frais à pâte filée', 'frischer Filata-Käse', '新鲜拉丝奶酪', 'ताज़ा मुलायम चीज़') },
   { id: 'butter', hex: '#f7df8e', name: L('Butter', 'Burro', 'Mantequilla', 'Beurre', 'Butter', '黄油', 'मक्खन') },
   { id: 'sage', hex: '#8ca383', name: L('Sage', 'Salvia', 'Salvia', 'Sauge', 'Salbei', '鼠尾草', 'सेज') },
+  { id: 'garlic', hex: '#f3ece0', name: L('Garlic', 'Aglio', 'Ajo', 'Ail', 'Knoblauch', '大蒜', 'लहसुन') },
+  { id: 'oliveoil', hex: '#b2a228', name: L('Extra virgin olive oil', 'Olio extravergine d’oliva', 'Aceite de oliva virgen extra', 'Huile d’olive vierge extra', 'Natives Olivenöl extra', '特级初榨橄榄油', 'एक्स्ट्रा वर्जिन जैतून का तेल') },
+  { id: 'chilli', hex: '#c8161a', name: L('Chilli', 'Peperoncino', 'Guindilla', 'Piment', 'Chili', '辣椒', 'लाल मिर्च') },
+  { id: 'parsley', hex: '#3f8a2f', name: L('Parsley', 'Prezzemolo', 'Perejil', 'Persil', 'Petersilie', '欧芹', 'अजमोद') },
+  { id: 'clams', hex: '#ddd0bb', name: L('Clams', 'Vongole', 'Almejas', 'Palourdes', 'Venusmuscheln', '蛤蜊', 'क्लैम') },
+  { id: 'anchovy', hex: '#8a4a38', name: L('Anchovies', 'Acciughe', 'Anchoas', 'Anchois', 'Sardellen', '凤尾鱼', 'एंचोवी') },
+  { id: 'aubergine', hex: '#3b1f45', name: L('Aubergine', 'Melanzana', 'Berenjena', 'Aubergine', 'Aubergine', '茄子', 'बैंगन') },
+  { id: 'cimedirapa', hex: '#2f6a2a', name: L('Turnip tops', 'Cime di rapa', 'Grelos', 'Brocoli-rave', 'Stängelkohl', '芜菁嫩叶', 'शलजम के पत्ते') , note: L('leafy greens with small buds, typical of Puglia', 'verdura a foglia con piccole cime, tipica della Puglia', 'verdura de hoja con pequeños brotes, típica de Apulia', 'légume-feuille à petits boutons, typique des Pouilles', 'Blattgemüse mit kleinen Knospen, typisch für Apulien', '带小花蕾的绿叶菜，普利亚特产', 'छोटी कलियों वाली पत्तेदार सब्ज़ी, पुलिया की ख़ास') },
+  { id: 'ricottasalata', hex: '#f8f5ec', name: L('Ricotta salata', 'Ricotta salata', 'Ricotta salata', 'Ricotta salata', 'Ricotta salata', '咸里科塔', 'रिकोटा सलाटा') , note: L('pressed, salted and aged ricotta', 'ricotta pressata, salata e stagionata', 'ricotta prensada, salada y curada', 'ricotta pressée, salée et affinée', 'gepresster, gesalzener und gereifter Ricotta', '压制、加盐并熟成的里科塔奶酪', 'दबाकर, नमक लगाकर पकाई गई रिकोटा') },
+  { id: 'breadcrumbs', hex: '#d29d4d', name: L('Toasted breadcrumbs', 'Pangrattato tostato', 'Pan rallado tostado', 'Chapelure grillée', 'Geröstete Semmelbrösel', '烤面包屑', 'भुने ब्रेडक्रम्ब्स') },
+  { id: 'pesto', hex: '#4f7d2a', name: L('Genoese pesto', 'Pesto alla genovese', 'Pesto genovés', 'Pesto génois', 'Pesto Genovese', '热那亚青酱', 'जेनोवा पेस्तो') , note: L('basil, pine nuts, garlic, cheese and olive oil', 'basilico, pinoli, aglio, formaggio e olio', 'albahaca, piñones, ajo, queso y aceite', 'basilic, pignons, ail, fromage et huile d’olive', 'Basilikum, Pinienkerne, Knoblauch, Käse und Olivenöl', '罗勒、松子、大蒜、奶酪和橄榄油', 'तुलसी, चिलगोज़े, लहसुन, चीज़ और जैतून का तेल') },
 ];
 
 /*
@@ -174,6 +191,118 @@ export const RECIPES = [
       L('Toss carefully in the butter and finish with grated Parmigiano Reggiano.', 'Saltali con delicatezza nel burro e completa con Parmigiano Reggiano grattugiato.', 'Saltéalos con cuidado en la mantequilla y termina con Parmigiano Reggiano rallado.', 'Enrobez-les délicatement de beurre et terminez avec du Parmigiano Reggiano râpé.', 'Vorsichtig in der Butter schwenken und mit geriebenem Parmigiano Reggiano vollenden.', '小心地在黄油中翻拌，撒上帕玛森干酪。', 'सावधानी से मक्खन में मिलाएँ और कद्दूकस पार्मिजानो रेज्जानो से पूरा करें।'),
     ],
   },
+  {
+    id: 'aglioolio',
+    pasta: 'spaghetti',
+    name: 'Spaghetti aglio, olio e peperoncino',
+    title: L('Spaghetti with garlic, olive oil and chilli', 'Spaghetti aglio, olio e peperoncino', 'Espaguetis con ajo, aceite y guindilla', 'Spaghetti à l’ail, à l’huile et au piment', 'Spaghetti mit Knoblauch, Öl und Chili', '蒜香橄榄油辣椒意大利面', 'लहसुन, जैतून के तेल और मिर्च वाली स्पेगेटी'),
+    need: ['garlic', 'oliveoil', 'chilli'],
+    may: ['parsley'],
+    history: L('A Neapolitan dish of cucina povera, made with what every larder holds. In Italy it is the classic “spaghettata di mezzanotte”, cooked late at night among friends.', 'Un piatto napoletano della cucina povera, fatto con quello che c’è in ogni dispensa. In Italia è la classica “spaghettata di mezzanotte”, cucinata a tarda sera tra amici.', 'Un plato napolitano de la cocina pobre, hecho con lo que hay en cualquier despensa. En Italia es la clásica “spaghettata di mezzanotte”, que se cocina de madrugada entre amigos.', 'Un plat napolitain de la cucina povera, fait avec ce que contient chaque garde-manger. En Italie, c’est la fameuse « spaghettata di mezzanotte », préparée tard le soir entre amis.', 'Ein neapolitanisches Gericht der Cucina povera, gemacht aus dem, was jede Vorratskammer hergibt. In Italien ist es die klassische „Spaghettata di mezzanotte“, spät nachts unter Freunden gekocht.', '一道那不勒斯的“穷人料理”，用家家储藏室都有的食材做成。在意大利，它是经典的“午夜意面”，常在深夜和朋友一起煮。', 'नेपल्स की “कुचीना पोवेरा” का व्यंजन, जो हर रसोई में मौजूद चीज़ों से बनता है। इटली में यह मशहूर “आधी रात की स्पेगेटी” है, जो देर रात दोस्तों के साथ पकाई जाती है।'),
+    steps: [
+      L('Warm the olive oil gently with sliced garlic and chilli, without letting the garlic brown.', 'Scalda dolcemente l’olio con l’aglio a fettine e il peperoncino, senza far scurire l’aglio.', 'Calienta el aceite a fuego suave con el ajo laminado y la guindilla, sin que el ajo se dore demasiado.', 'Chauffez doucement l’huile avec l’ail émincé et le piment, sans laisser l’ail brunir.', 'Olivenöl mit Knoblauchscheiben und Chili sanft erwärmen, ohne dass der Knoblauch braun wird.', '用小火加热橄榄油、蒜片和辣椒，不要让大蒜变焦。', 'जैतून के तेल को कटे लहसुन और मिर्च के साथ धीमी आँच पर गरम करें, लहसुन को भूरा न होने दें।'),
+      L('Cook the spaghetti al dente and keep some of the cooking water.', 'Cuoci gli spaghetti al dente e tieni da parte un po’ d’acqua di cottura.', 'Cuece los espaguetis al dente y guarda un poco del agua de cocción.', 'Faites cuire les spaghetti al dente et gardez un peu d’eau de cuisson.', 'Spaghetti al dente kochen und etwas Kochwasser aufheben.', '把意大利面煮至弹牙，留一些煮面水。', 'स्पेगेटी को अल डेंटे पकाएँ और थोड़ा पकाने का पानी बचा लें।'),
+      L('Toss in the pan with a splash of pasta water and finish with chopped parsley, if you like.', 'Salta in padella con un goccio d’acqua di cottura e, se vuoi, completa con prezzemolo tritato.', 'Saltea en la sartén con un chorrito de agua de cocción y, si quieres, termina con perejil picado.', 'Faites sauter à la poêle avec un peu d’eau de cuisson et, si vous voulez, ajoutez du persil haché.', 'In der Pfanne mit etwas Nudelwasser schwenken und nach Belieben mit gehackter Petersilie vollenden.', '加少许煮面水在锅中翻拌，喜欢的话撒上欧芹碎。', 'थोड़े पास्ता पानी के साथ कड़ाही में मिलाएँ और चाहें तो कटा अजमोद डालें।'),
+    ],
+  },
+  {
+    id: 'vongole',
+    pasta: 'spaghetti',
+    name: 'Spaghetti alle vongole',
+    title: L('Spaghetti with clams', 'Spaghetti alle vongole', 'Espaguetis con almejas', 'Spaghetti aux palourdes', 'Spaghetti mit Venusmuscheln', '蛤蜊意大利面', 'क्लैम वाली स्पेगेटी'),
+    need: ['clams', 'garlic', 'oliveoil'],
+    may: ['parsley', 'chilli'],
+    history: L('From Naples and the Campania coast. In many Neapolitan homes it is served on Christmas Eve, when dinner is traditionally meat-free. Tradition keeps cheese off seafood pasta.', 'Viene da Napoli e dalla costa campana. In molte case napoletane si prepara la sera della Vigilia di Natale, quando per tradizione la cena è senza carne. La tradizione vuole niente formaggio sulla pasta di mare.', 'Viene de Nápoles y de la costa de Campania. En muchas casas napolitanas se sirve en Nochebuena, cuando la cena es tradicionalmente sin carne. La tradición no pone queso en la pasta con marisco.', 'Elle vient de Naples et de la côte de Campanie. Dans beaucoup de foyers napolitains, on la sert le soir du 24 décembre, quand le dîner est traditionnellement sans viande. La tradition exclut le fromage des pâtes aux fruits de mer.', 'Aus Neapel und von der Küste Kampaniens. In vielen neapolitanischen Familien kommt es an Heiligabend auf den Tisch, wenn das Abendessen traditionell fleischlos ist. Käse gehört nach der Tradition nicht auf Pasta mit Meeresfrüchten.', '来自那不勒斯和坎帕尼亚海岸。在许多那不勒斯家庭里，它是平安夜的菜，因为按传统那天晚餐不吃肉。按传统，海鲜意面不加奶酪。', 'नेपल्स और कैम्पानिया के तट से। कई नेपल्स परिवारों में इसे क्रिसमस की पूर्व संध्या पर बनाया जाता है, जब परंपरा के अनुसार रात का खाना बिना मांस का होता है। परंपरा में सीफ़ूड पास्ता पर चीज़ नहीं डाला जाता।'),
+    steps: [
+      L('Soak the clams in salted water, then open them in a covered pan with olive oil and garlic.', 'Fai spurgare le vongole in acqua salata, poi falle aprire in padella coperta con olio e aglio.', 'Deja las almejas en agua con sal y ábrelas en una sartén tapada con aceite y ajo.', 'Faites dégorger les palourdes dans de l’eau salée, puis ouvrez-les à couvert dans une poêle avec huile et ail.', 'Venusmuscheln in Salzwasser wässern und in einer abgedeckten Pfanne mit Olivenöl und Knoblauch öffnen.', '蛤蜊在盐水中吐沙，再和橄榄油、大蒜一起加盖焖到开口。', 'क्लैम को नमक वाले पानी में भिगोएँ, फिर ढकी कड़ाही में जैतून के तेल और लहसुन के साथ खुलने तक पकाएँ।'),
+      L('Cook the spaghetti and finish them in the pan with the clam juices.', 'Cuoci gli spaghetti e finisci la cottura in padella con il sughetto delle vongole.', 'Cuece los espaguetis y termínalos en la sartén con el jugo de las almejas.', 'Faites cuire les spaghetti et finissez la cuisson dans la poêle avec le jus des palourdes.', 'Spaghetti kochen und in der Pfanne im Muschelsud fertig garen.', '煮意大利面，再放进锅里用蛤蜊汁收尾。', 'स्पेगेटी पकाएँ और क्लैम के रस के साथ कड़ाही में पकाना पूरा करें।'),
+      L('Add chopped parsley, and a little chilli if you like.', 'Aggiungi prezzemolo tritato e, se vuoi, un po’ di peperoncino.', 'Añade perejil picado y, si quieres, un poco de guindilla.', 'Ajoutez du persil haché et, si vous voulez, un peu de piment.', 'Gehackte Petersilie und nach Belieben etwas Chili zugeben.', '撒上欧芹碎，喜欢的话加一点辣椒。', 'कटा अजमोद डालें और चाहें तो थोड़ी मिर्च।'),
+    ],
+  },
+  {
+    id: 'arrabbiata',
+    pasta: 'penne',
+    name: 'Penne all’arrabbiata',
+    title: L('Penne arrabbiata (spicy tomato sauce)', 'Penne all’arrabbiata', 'Penne all’arrabbiata (tomate picante)', 'Penne all’arrabbiata (sauce tomate pimentée)', 'Penne all’arrabbiata (scharfe Tomatensauce)', '辣味番茄斜管面', 'पेन्ने अराबियाता (तीखी टमाटर सॉस)'),
+    need: ['tomato', 'garlic', 'chilli'],
+    may: ['oliveoil', 'parsley'],
+    history: L('A dish from Rome and Lazio. “Arrabbiata” means “angry”: the name refers to the heat of the chilli.', 'Un piatto di Roma e del Lazio. “Arrabbiata” si riferisce al calore del peperoncino, che fa “arrabbiare” chi la mangia.', 'Un plato de Roma y del Lacio. “Arrabbiata” significa “enfadada”: el nombre se refiere al picante de la guindilla.', 'Un plat de Rome et du Latium. « Arrabbiata » signifie « en colère » : le nom évoque le piquant du piment.', 'Ein Gericht aus Rom und Latium. „Arrabbiata“ heißt „wütend“: Der Name spielt auf die Schärfe des Chilis an.', '来自罗马和拉齐奥。“Arrabbiata”意为“生气的”，指辣椒的辣劲。', 'रोम और लात्सियो का व्यंजन। “अराबियाता” का मतलब है “गुस्से में”: यह नाम मिर्च के तीखेपन से आया है।'),
+    steps: [
+      L('Fry garlic and dried chilli in olive oil, add the tomatoes and simmer for about 15 minutes.', 'Soffriggi aglio e peperoncino secco nell’olio, aggiungi il pomodoro e cuoci per circa 15 minuti.', 'Sofríe ajo y guindilla seca en aceite, añade el tomate y cuece unos 15 minutos.', 'Faites revenir l’ail et le piment séché dans l’huile, ajoutez la tomate et laissez mijoter environ 15 minutes.', 'Knoblauch und getrockneten Chili in Olivenöl anbraten, Tomaten zugeben und etwa 15 Minuten köcheln.', '用橄榄油炒香大蒜和干辣椒，加入番茄，小火煮约 15 分钟。', 'जैतून के तेल में लहसुन और सूखी मिर्च भूनें, टमाटर डालें और लगभग 15 मिनट पकाएँ।'),
+      L('Cook the penne al dente.', 'Cuoci le penne al dente.', 'Cuece los penne al dente.', 'Faites cuire les penne al dente.', 'Penne al dente kochen.', '把斜管面煮至弹牙。', 'पेन्ने को अल डेंटे पकाएँ।'),
+      L('Toss with the sauce and finish with chopped parsley.', 'Salta con il sugo e completa con prezzemolo tritato.', 'Saltea con la salsa y termina con perejil picado.', 'Mélangez à la sauce et terminez avec du persil haché.', 'Mit der Sauce schwenken und mit gehackter Petersilie vollenden.', '与酱汁拌匀，撒上欧芹碎。', 'सॉस में मिलाएँ और कटे अजमोद से पूरा करें।'),
+    ],
+  },
+  {
+    id: 'norma',
+    pasta: 'maccheroni',
+    name: 'Maccheroni alla Norma',
+    title: L('Macaroni with aubergine, tomato and ricotta salata', 'Maccheroni alla Norma', 'Macarrones con berenjena, tomate y ricotta salata', 'Macaronis à l’aubergine, tomate et ricotta salata', 'Makkaroni mit Aubergine, Tomate und Ricotta salata', '茄子番茄咸里科塔通心粉', 'बैंगन, टमाटर और रिकोटा सलाटा वाली मैकरोनी'),
+    need: ['tomato', 'aubergine', 'ricottasalata', 'basil'],
+    may: ['garlic', 'oliveoil'],
+    history: L('From Catania, in Sicily. It takes its name from Norma, the opera by the Catanian composer Vincenzo Bellini; a popular story credits the writer Nino Martoglio with comparing the dish to that masterpiece.', 'Viene da Catania. Prende il nome dalla Norma, l’opera del compositore catanese Vincenzo Bellini; un racconto popolare attribuisce allo scrittore Nino Martoglio il paragone tra il piatto e quel capolavoro.', 'Viene de Catania, en Sicilia. Toma su nombre de Norma, la ópera del compositor catanés Vincenzo Bellini; una historia popular atribuye al escritor Nino Martoglio la comparación del plato con esa obra maestra.', 'Elle vient de Catane, en Sicile. Son nom vient de Norma, l’opéra du compositeur catanais Vincenzo Bellini ; une histoire populaire attribue à l’écrivain Nino Martoglio la comparaison entre le plat et ce chef-d’œuvre.', 'Aus Catania auf Sizilien. Benannt nach Norma, der Oper des aus Catania stammenden Komponisten Vincenzo Bellini; eine beliebte Geschichte schreibt dem Schriftsteller Nino Martoglio den Vergleich des Gerichts mit diesem Meisterwerk zu.', '来自西西里岛的卡塔尼亚。名字来自卡塔尼亚作曲家贝利尼的歌剧《诺尔玛》；民间传说是作家尼诺·马尔托利奥把这道菜比作那部杰作。', 'सिसिली के कातानिया से। इसका नाम कातानिया के संगीतकार विन्चेंज़ो बेलिनी के ओपेरा “नॉर्मा” से आया है; एक लोकप्रिय कहानी के अनुसार लेखक नीनो मार्तोलियो ने इस व्यंजन की तुलना उस उत्कृष्ट कृति से की थी।'),
+    steps: [
+      L('Fry cubes of aubergine in olive oil until golden.', 'Friggi la melanzana a cubetti nell’olio finché è dorata.', 'Fríe la berenjena en dados con aceite hasta que se dore.', 'Faites frire l’aubergine en dés dans l’huile jusqu’à ce qu’elle dore.', 'Auberginenwürfel in Olivenöl goldbraun braten.', '将茄子切丁，用橄榄油炸至金黄。', 'बैंगन के टुकड़ों को जैतून के तेल में सुनहरा होने तक तलें।'),
+      L('Make a simple tomato sauce with garlic and basil, and cook the pasta al dente.', 'Prepara un semplice sugo di pomodoro con aglio e basilico e cuoci la pasta al dente.', 'Prepara una salsa de tomate sencilla con ajo y albahaca y cuece la pasta al dente.', 'Préparez une simple sauce tomate à l’ail et au basilic, et faites cuire les pâtes al dente.', 'Eine einfache Tomatensauce mit Knoblauch und Basilikum kochen und die Pasta al dente garen.', '用大蒜和罗勒做简单的番茄酱，把面煮至弹牙。', 'लहसुन और तुलसी के साथ सादी टमाटर सॉस बनाएँ और पास्ता को अल डेंटे पकाएँ।'),
+      L('Toss with the sauce, top with the aubergine, grated ricotta salata and fresh basil.', 'Condisci con il sugo, aggiungi le melanzane, ricotta salata grattugiata e basilico fresco.', 'Mezcla con la salsa y cubre con la berenjena, ricotta salata rallada y albahaca fresca.', 'Mélangez à la sauce, ajoutez l’aubergine, de la ricotta salata râpée et du basilic frais.', 'Mit der Sauce mischen, mit Aubergine, geriebenem Ricotta salata und frischem Basilikum belegen.', '与酱汁拌匀，铺上茄子、刨碎的咸里科塔和新鲜罗勒。', 'सॉस में मिलाएँ, ऊपर बैंगन, कसी हुई रिकोटा सलाटा और ताज़ी तुलसी डालें।'),
+    ],
+  },
+  {
+    id: 'cimedirapa',
+    pasta: 'orecchiette',
+    name: 'Orecchiette alle cime di rapa',
+    title: L('Orecchiette with turnip tops', 'Orecchiette alle cime di rapa', 'Orecchiette con grelos', 'Orecchiette aux brocolis-raves', 'Orecchiette mit Stängelkohl', '芜菁嫩叶猫耳朵面', 'शलजम के पत्तों वाली ओरेक्कियेत्ते'),
+    need: ['cimedirapa', 'garlic', 'oliveoil'],
+    may: ['chilli', 'anchovy', 'breadcrumbs'],
+    history: L('The best-known dish of Puglia. In the old town of Bari, women still make orecchiette by hand in the street, dragging each one over a wooden board with a knife.', 'Il piatto più famoso della Puglia. Nella città vecchia di Bari le donne fanno ancora le orecchiette a mano per strada, trascinandole una a una con il coltello su una tavola di legno.', 'El plato más conocido de Apulia. En el casco antiguo de Bari, las mujeres aún hacen orecchiette a mano en la calle, arrastrando cada una con un cuchillo sobre una tabla de madera.', 'Le plat le plus connu des Pouilles. Dans la vieille ville de Bari, des femmes font encore les orecchiette à la main dans la rue, en traînant chacune au couteau sur une planche en bois.', 'Das bekannteste Gericht Apuliens. In der Altstadt von Bari formen Frauen Orecchiette noch heute auf der Straße von Hand, jede einzeln mit dem Messer über ein Holzbrett gezogen.', '普利亚最有名的菜。在巴里老城，妇女们至今仍在街边手工制作猫耳朵面，用小刀在木板上一个个拖出形状。', 'पुलिया का सबसे मशहूर व्यंजन। बारी के पुराने शहर में महिलाएँ आज भी गली में हाथ से ओरेक्कियेत्ते बनाती हैं, हर एक को चाकू से लकड़ी के तख़्ते पर खींचकर।'),
+    steps: [
+      L('Cook the turnip tops and the orecchiette together in the same salted water.', 'Cuoci insieme cime di rapa e orecchiette nella stessa acqua salata.', 'Cuece los grelos y las orecchiette juntos en la misma agua con sal.', 'Faites cuire ensemble les brocolis-raves et les orecchiette dans la même eau salée.', 'Stängelkohl und Orecchiette zusammen im selben Salzwasser kochen.', '把芜菁嫩叶和猫耳朵面放进同一锅盐水里一起煮。', 'शलजम के पत्ते और ओरेक्कियेत्ते एक ही नमक वाले पानी में साथ पकाएँ।'),
+      L('Warm olive oil with garlic, chilli and, if you like, a few anchovies until they melt.', 'Scalda l’olio con aglio, peperoncino e, se vuoi, qualche acciuga finché si scioglie.', 'Calienta el aceite con ajo, guindilla y, si quieres, unas anchoas hasta que se deshagan.', 'Chauffez l’huile avec ail, piment et, si vous voulez, quelques anchois jusqu’à ce qu’ils fondent.', 'Olivenöl mit Knoblauch, Chili und nach Belieben ein paar Sardellen erwärmen, bis sie zerfallen.', '橄榄油加大蒜、辣椒加热，喜欢的话放几条凤尾鱼煮到化开。', 'जैतून के तेल को लहसुन, मिर्च और चाहें तो कुछ एंचोवी के साथ उनके घुलने तक गरम करें।'),
+      L('Toss everything in the pan; a handful of toasted breadcrumbs adds crunch.', 'Salta tutto in padella; una manciata di pangrattato tostato aggiunge croccantezza.', 'Saltea todo en la sartén; un puñado de pan rallado tostado aporta un toque crujiente.', 'Faites tout sauter à la poêle ; une poignée de chapelure grillée ajoute du croquant.', 'Alles in der Pfanne schwenken; eine Handvoll geröstete Semmelbrösel sorgt für Biss.', '全部倒进锅里翻拌；撒一把烤面包屑会更香脆。', 'सब कुछ कड़ाही में मिलाएँ; मुट्ठी भर भुने ब्रेडक्रम्ब्स कुरकुरापन लाते हैं।'),
+    ],
+  },
+  {
+    id: 'pesto',
+    pasta: 'trofie',
+    name: 'Trofie al pesto',
+    title: L('Trofie with Genoese pesto', 'Trofie al pesto', 'Trofie al pesto genovés', 'Trofie au pesto génois', 'Trofie mit Pesto Genovese', '热那亚青酱特罗菲面', 'जेनोवा पेस्तो वाली ट्रोफ़ी'),
+    need: ['pesto'],
+    may: ['parmigiano', 'pecorino'],
+    history: L('From Genoa and the Ligurian coast. The name comes from “pestare”, to pound: the sauce is traditionally made in a marble mortar with a wooden pestle.', 'Viene da Genova e dalla Riviera ligure. Il nome deriva da “pestare”: il condimento si prepara per tradizione nel mortaio di marmo con il pestello di legno.', 'Viene de Génova y de la costa de Liguria. El nombre viene de “pestare”, machacar: la salsa se prepara tradicionalmente en un mortero de mármol con mano de madera.', 'Elle vient de Gênes et de la côte ligure. Le nom vient de « pestare », piler : la sauce se prépare traditionnellement dans un mortier en marbre avec un pilon en bois.', 'Aus Genua und von der ligurischen Küste. Der Name kommt von „pestare“, zerstoßen: Die Sauce wird traditionell im Marmormörser mit einem Holzstößel zubereitet.', '来自热那亚和利古里亚海岸。名字来自“pestare”（捣碎）：按传统，酱汁要用大理石研钵和木杵捣成。', 'जेनोवा और लिगुरिया के तट से। नाम “पेस्तारे” यानी कूटना से आया है: यह सॉस परंपरागत रूप से संगमरमर की ओखली और लकड़ी के मूसल में बनती है।'),
+    steps: [
+      L('Pound basil, garlic and pine nuts with a little salt, then add grated cheese and extra virgin olive oil.', 'Pesta basilico, aglio e pinoli con un pizzico di sale, poi aggiungi formaggio grattugiato e olio extravergine.', 'Machaca albahaca, ajo y piñones con un poco de sal y añade queso rallado y aceite de oliva virgen extra.', 'Pilez basilic, ail et pignons avec un peu de sel, puis ajoutez du fromage râpé et de l’huile d’olive vierge extra.', 'Basilikum, Knoblauch und Pinienkerne mit etwas Salz zerstoßen, dann geriebenen Käse und natives Olivenöl extra zugeben.', '把罗勒、大蒜和松子加少许盐捣碎，再加入奶酪碎和特级初榨橄榄油。', 'तुलसी, लहसुन और चिलगोज़े को थोड़े नमक के साथ कूटें, फिर कसा चीज़ और एक्स्ट्रा वर्जिन जैतून का तेल मिलाएँ।'),
+      L('Cook the trofie and keep a little of the cooking water.', 'Cuoci le trofie e tieni da parte un po’ d’acqua di cottura.', 'Cuece las trofie y guarda un poco del agua de cocción.', 'Faites cuire les trofie et gardez un peu d’eau de cuisson.', 'Trofie kochen und etwas Kochwasser aufheben.', '煮特罗菲面，留一点煮面水。', 'ट्रोफ़ी पकाएँ और थोड़ा पकाने का पानी बचा लें।'),
+      L('Off the heat, toss with the pesto, loosening it with the water: pesto is never cooked.', 'A fuoco spento, condisci con il pesto allungandolo con l’acqua: il pesto non si cuoce mai.', 'Fuera del fuego, mezcla con el pesto aligerándolo con el agua: el pesto nunca se cocina.', 'Hors du feu, mélangez avec le pesto en le détendant avec l’eau : le pesto ne se cuit jamais.', 'Abseits vom Herd mit dem Pesto mischen und mit dem Wasser lockern: Pesto wird nie gekocht.', '离火后拌入青酱，用煮面水稀释：青酱从不加热烹煮。', 'आँच बंद करके पेस्तो में मिलाएँ और पानी से ढीला करें: पेस्तो को कभी पकाया नहीं जाता।'),
+    ],
+  },
+  {
+    id: 'bucatiniamatriciana',
+    pasta: 'bucatini',
+    name: 'Bucatini all’amatriciana',
+    title: L('Bucatini with guanciale, tomato and Pecorino', 'Bucatini all’amatriciana', 'Bucatini a la amatriciana', 'Bucatini à l’amatriciana', 'Bucatini all’Amatriciana', '阿马特里切风味空心粗面', 'ग्वान्चाले, टमाटर और पेकोरिनो वाली बुकाटिनी'),
+    need: ['guanciale', 'tomato', 'pecorino'],
+    may: ['pepper'],
+    history: L('In Rome amatriciana is very often made with bucatini, thick spaghetti with a hole through the middle. In Amatrice, the town that gave the dish its name, the recipe calls for spaghetti.', 'A Roma l’amatriciana si fa molto spesso con i bucatini, spaghetti grossi con un buco al centro. Ad Amatrice, la cittadina che dà il nome al piatto, la ricetta prevede gli spaghetti.', 'En Roma la amatriciana se hace muy a menudo con bucatini, espaguetis gruesos con un agujero en el centro. En Amatrice, el pueblo que da nombre al plato, la receta lleva espaguetis.', 'À Rome, l’amatriciana se fait très souvent avec des bucatini, de gros spaghetti percés au centre. À Amatrice, la ville qui a donné son nom au plat, la recette prévoit des spaghetti.', 'In Rom wird Amatriciana sehr oft mit Bucatini zubereitet, dicken Spaghetti mit einem Loch in der Mitte. In Amatrice, dem Ort, der dem Gericht den Namen gab, verlangt das Rezept Spaghetti.', '在罗马，阿马特里切酱常配空心粗面，也就是中间有孔的粗意面。而在给这道菜命名的小镇阿马特里切，食谱用的是意大利面。', 'रोम में अमात्रिचाना अक्सर बुकाटिनी से बनती है, यानी बीच में छेद वाली मोटी स्पेगेटी। अमात्रिचे में, जिस कस्बे से इस व्यंजन का नाम आया, नुस्खे में स्पेगेटी होती है।'),
+    steps: [
+      L('Brown the guanciale, then add the tomatoes and simmer for about 10 minutes.', 'Rosola il guanciale, poi aggiungi il pomodoro e cuoci per circa 10 minuti.', 'Dora el guanciale, añade el tomate y cuece unos 10 minutos.', 'Faites dorer le guanciale, ajoutez la tomate et laissez mijoter environ 10 minutes.', 'Guanciale anbraten, dann Tomaten zugeben und etwa 10 Minuten köcheln.', '将猪脸肉煎香，加入番茄，小火煮约 10 分钟。', 'ग्वान्चाले को भूनें, फिर टमाटर डालकर लगभग 10 मिनट पकाएँ।'),
+      L('Cook the bucatini al dente.', 'Cuoci i bucatini al dente.', 'Cuece los bucatini al dente.', 'Faites cuire les bucatini al dente.', 'Bucatini al dente kochen.', '把空心粗面煮至弹牙。', 'बुकाटिनी को अल डेंटे पकाएँ।'),
+      L('Toss with the sauce and finish with grated Pecorino Romano.', 'Salta con il sugo e completa con Pecorino Romano grattugiato.', 'Saltea con la salsa y termina con Pecorino Romano rallado.', 'Mélangez à la sauce et terminez avec du Pecorino Romano râpé.', 'Mit der Sauce schwenken und mit geriebenem Pecorino Romano vollenden.', '与酱汁拌匀，撒上刨碎的罗马羊奶酪。', 'सॉस में मिलाएँ और कसे हुए पेकोरिनो रोमानो से पूरा करें।'),
+    ],
+  },
+  {
+    id: 'rigatonigricia',
+    pasta: 'rigatoni',
+    name: 'Rigatoni alla gricia',
+    title: L('Rigatoni with guanciale, Pecorino and pepper', 'Rigatoni alla gricia', 'Rigatoni con guanciale, pecorino y pimienta', 'Rigatoni au guanciale, pecorino et poivre', 'Rigatoni mit Guanciale, Pecorino und Pfeffer', '猪脸肉羊奶酪胡椒粗纹通心粉', 'ग्वान्चाले, पेकोरिनो और काली मिर्च वाली रिगाटोनी'),
+    need: ['guanciale', 'pecorino', 'pepper'],
+    may: [],
+    history: L('In Roman trattorie gricia is very often served with rigatoni, whose ridges hold the creamy sauce. Its name is commonly linked to Grisciano, a village near Amatrice.', 'Nelle trattorie romane la gricia si serve molto spesso con i rigatoni, le cui righe trattengono la crema. Il nome viene comunemente collegato a Grisciano, frazione vicino ad Amatrice.', 'En las trattorie romanas la gricia se sirve muy a menudo con rigatoni, cuyas estrías retienen la salsa cremosa. Su nombre suele relacionarse con Grisciano, una aldea cerca de Amatrice.', 'Dans les trattorias romaines, la gricia est très souvent servie avec des rigatoni, dont les stries retiennent la sauce crémeuse. Son nom est souvent rattaché à Grisciano, un hameau près d’Amatrice.', 'In römischen Trattorien wird Gricia sehr oft mit Rigatoni serviert, deren Rillen die cremige Sauce halten. Der Name wird meist mit Grisciano verbunden, einem Dorf bei Amatrice.', '在罗马的小餐馆里，这道菜常配粗纹通心粉，面上的纹路能挂住浓滑的酱汁。名字通常被认为来自阿马特里切附近的村庄格里夏诺。', 'रोम की त्रात्तोरिया में ग्रीचा अक्सर रिगाटोनी के साथ परोसी जाती है, जिनकी धारियाँ गाढ़ी सॉस को पकड़ती हैं। इसका नाम आम तौर पर अमात्रिचे के पास के गाँव ग्रिशानो से जोड़ा जाता है।'),
+    steps: [
+      L('Render the guanciale slowly until golden.', 'Rosola lentamente il guanciale finché è dorato.', 'Dora el guanciale a fuego lento.', 'Faites fondre doucement le guanciale jusqu’à ce qu’il dore.', 'Guanciale langsam goldbraun auslassen.', '用小火慢慢煎猪脸肉至金黄。', 'ग्वान्चाले को धीमी आँच पर सुनहरा होने तक भूनें।'),
+      L('Add the rigatoni to the pan with a ladle of cooking water.', 'Aggiungi i rigatoni in padella con un mestolo d’acqua di cottura.', 'Añade los rigatoni a la sartén con un cucharón de agua de cocción.', 'Ajoutez les rigatoni dans la poêle avec une louche d’eau de cuisson.', 'Rigatoni mit einer Kelle Kochwasser in die Pfanne geben.', '把粗纹通心粉和一勺煮面水一起倒进锅里。', 'एक करछी पकाने के पानी के साथ रिगाटोनी को कड़ाही में डालें।'),
+      L('Off the heat, stir in Pecorino Romano and black pepper until creamy.', 'A fuoco spento, manteca con Pecorino Romano e pepe nero fino a ottenere una crema.', 'Fuera del fuego, mezcla con Pecorino Romano y pimienta negra hasta que quede cremoso.', 'Hors du feu, incorporez le Pecorino Romano et le poivre noir jusqu’à obtenir une sauce crémeuse.', 'Abseits vom Herd Pecorino Romano und schwarzen Pfeffer cremig unterrühren.', '离火后拌入罗马羊奶酪和黑胡椒，直到酱汁浓滑。', 'आँच बंद करके पेकोरिनो रोमानो और काली मिर्च मिलाएँ जब तक मलाईदार न हो जाए।'),
+    ],
+  },
 ];
 
 /**
@@ -220,3 +349,45 @@ export const recipesFor = (pasta) => {
   const own = RECIPES.filter((r) => r.pasta === pasta);
   return own.length ? own : RECIPES;
 };
+
+/* ---- origins, groups and hashtags (Recipe Club presentation and sharing) ---- */
+
+// where each dish comes from, shown above its story
+export const REGIONS = {
+  lazio: L('Rome and Lazio', 'Roma e Lazio', 'Roma y el Lacio', 'Rome et le Latium', 'Rom und Latium', '罗马与拉齐奥', 'रोम और लात्सियो'),
+  campania: L('Naples and Campania', 'Napoli e Campania', 'Nápoles y Campania', 'Naples et la Campanie', 'Neapel und Kampanien', '那不勒斯与坎帕尼亚', 'नेपल्स और कैम्पानिया'),
+  emilia: L('Bologna, Emilia-Romagna', 'Bologna, Emilia-Romagna', 'Bolonia, Emilia-Romaña', 'Bologne, Émilie-Romagne', 'Bologna, Emilia-Romagna', '博洛尼亚，艾米利亚-罗马涅', 'बोलोन्या, एमिलिया-रोमान्या'),
+  sicilia: L('Catania, Sicily', 'Catania, Sicilia', 'Catania, Sicilia', 'Catane, Sicile', 'Catania, Sizilien', '卡塔尼亚，西西里', 'कातानिया, सिसिली'),
+  puglia: L('Bari, Puglia', 'Bari, Puglia', 'Bari, Apulia', 'Bari, Pouilles', 'Bari, Apulien', '巴里，普利亚', 'बारी, पुलिया'),
+  liguria: L('Genoa, Liguria', 'Genova, Liguria', 'Génova, Liguria', 'Gênes, Ligurie', 'Genua, Ligurien', '热那亚，利古里亚', 'जेनोवा, लिगुरिया'),
+  north: L('Northern Italy', 'Nord Italia', 'Norte de Italia', 'Nord de l’Italie', 'Norditalien', '意大利北部', 'उत्तरी इटली'),
+  northcentre: L('Northern and central Italy', 'Nord e Centro Italia', 'Norte y centro de Italia', 'Nord et centre de l’Italie', 'Nord- und Mittelitalien', '意大利北部和中部', 'उत्तरी और मध्य इटली'),
+};
+const REGION_OF = {
+  pomodoro: 'campania', cacioepepe: 'lazio', carbonara: 'lazio', gricia: 'lazio', amatriciana: 'lazio', ragu: 'emilia', sorrentina: 'campania',
+  gnocchiburro: 'north', raviolibutter: 'northcentre', aglioolio: 'campania', vongole: 'campania', arrabbiata: 'lazio', norma: 'sicilia',
+  cimedirapa: 'puglia', pesto: 'liguria', bucatiniamatriciana: 'lazio', rigatonigricia: 'lazio',
+};
+export const regionOf = (recipe) => (recipe ? REGIONS[REGION_OF[recipe.id]] : null);
+
+// ingredients shown in families, so the longer list stays easy to scan
+export const INGREDIENT_GROUPS = [
+  { id: 'sauces', name: L('Sauces and oil', 'Sughi e condimenti', 'Salsas y aceite', 'Sauces et huile', 'Saucen und Öl', '酱汁与油', 'सॉस और तेल'), ids: ['tomato', 'ragu', 'pesto', 'oliveoil', 'butter'] },
+  { id: 'meat', name: L('Meat and fish', 'Carne e pesce', 'Carne y pescado', 'Viande et poisson', 'Fleisch und Fisch', '肉类与海鲜', 'मांस और मछली'), ids: ['guanciale', 'clams', 'anchovy'] },
+  { id: 'cheese', name: L('Eggs and cheeses', 'Uova e formaggi', 'Huevos y quesos', 'Œufs et fromages', 'Eier und Käse', '蛋与奶酪', 'अंडे और चीज़'), ids: ['egg', 'pecorino', 'parmigiano', 'mozzarella', 'ricottasalata'] },
+  { id: 'veg', name: L('Vegetables', 'Verdure', 'Verduras', 'Légumes', 'Gemüse', '蔬菜', 'सब्ज़ियाँ'), ids: ['aubergine', 'cimedirapa', 'garlic', 'chilli'] },
+  { id: 'herbs', name: L('Herbs and finishing touches', 'Erbe e tocchi finali', 'Hierbas y toques finales', 'Herbes et touches finales', 'Kräuter und der letzte Schliff', '香草与点睛之笔', 'जड़ी-बूटियाँ और आख़िरी स्पर्श'), ids: ['basil', 'sage', 'parsley', 'pepper', 'breadcrumbs'] },
+];
+
+// hashtags for sharing: the branded ones and one for the dish (or the pasta)
+export const HASHTAGS = ['#ImperiaRecipeClub', '#MadeWithImperia', '#PastaYourWay'];
+const DISH_TAG = {
+  pomodoro: 'PastaAlPomodoro', cacioepepe: 'CacioEPepe', carbonara: 'Carbonara', gricia: 'Gricia', amatriciana: 'Amatriciana', ragu: 'TagliatelleAlRagu',
+  sorrentina: 'GnocchiAllaSorrentina', gnocchiburro: 'BurroESalvia', raviolibutter: 'BurroESalvia', aglioolio: 'AglioOlioEPeperoncino', vongole: 'SpaghettiAlleVongole',
+  arrabbiata: 'Arrabbiata', norma: 'PastaAllaNorma', cimedirapa: 'OrecchietteAlleCimeDiRapa', pesto: 'PestoGenovese', bucatiniamatriciana: 'Amatriciana', rigatonigricia: 'Gricia',
+};
+/** The hashtags for a card: three branded ones plus the dish (or, for a creative plate, the pasta). */
+export function hashtagsFor(recipe, pastaId) {
+  const own = recipe ? DISH_TAG[recipe.id] : (RECIPE_PASTAS.find((p) => p.id === pastaId)?.name.it || '').replace(/[^A-Za-z]/g, '');
+  return own ? [...HASHTAGS, `#${own}`] : [...HASHTAGS];
+}

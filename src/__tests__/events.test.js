@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { EVENTS, filterEvents, sortEvents, EVENT_TYPES, EVENT_COUNTRIES, EVENT_FORMATS, EVENT_LEVELS, CURRENCY_OF } from '../data/events.js';
-import { matchRecipe, suggestRecipe, recipesFor, RECIPES, INGREDIENTS, RECIPE_PASTAS } from '../data/recipes.js';
+import { matchRecipe, suggestRecipe, recipesFor, RECIPES, INGREDIENTS, RECIPE_PASTAS, INGREDIENT_GROUPS, regionOf, hashtagsFor } from '../data/recipes.js';
 
 const LANGS = ['en', 'it', 'es', 'fr', 'de', 'zh', 'hi'];
 
@@ -93,5 +93,31 @@ describe('recipe builder', () => {
     expect(suggestRecipe('fusilli', ['ragu']).recipe.id).toBe('ragu');
     expect(recipesFor('fusilli').length).toBe(RECIPES.length);
     expect(recipesFor('gnocchi').every((r) => r.pasta === 'gnocchi')).toBe(true);
+  });
+  it('has the new pastas (macaroni, penne…) and regional classics', () => {
+    for (const id of ['maccheroni', 'penne', 'rigatoni', 'bucatini', 'orecchiette', 'farfalle', 'trofie']) {
+      const p = RECIPE_PASTAS.find((x) => x.id === id);
+      expect(p, id).toBeTruthy();
+      for (const lang of LANGS) expect(p.name[lang], `${id}:${lang}`).toBeTruthy();
+    }
+    expect(matchRecipe('penne', ['tomato', 'garlic', 'chilli']).recipe.id).toBe('arrabbiata');
+    expect(matchRecipe('maccheroni', ['tomato', 'aubergine', 'ricottasalata', 'basil']).recipe.id).toBe('norma');
+    expect(matchRecipe('orecchiette', ['cimedirapa', 'garlic', 'oliveoil', 'anchovy']).kind).toBe('traditional');
+    expect(matchRecipe('trofie', ['pesto']).recipe.id).toBe('pesto');
+    expect(matchRecipe('spaghetti', ['clams', 'garlic', 'oliveoil', 'parsley']).recipe.id).toBe('vongole');
+    // farfalle have no traditional recipe here: always a creative variation
+    expect(matchRecipe('farfalle', ['tomato', 'basil'])).toEqual({ kind: 'variation', recipe: null });
+  });
+  it('shows every ingredient in exactly one group, with origins and hashtags for each dish', () => {
+    const grouped = INGREDIENT_GROUPS.flatMap((g) => g.ids);
+    expect(grouped.sort()).toEqual(INGREDIENTS.map((i) => i.id).sort());
+    for (const i of INGREDIENTS) for (const lang of LANGS) expect(i.name[lang], `${i.id}:${lang}`).toBeTruthy();
+    for (const r of RECIPES) {
+      for (const lang of LANGS) expect(regionOf(r)?.[lang], `${r.id}:${lang}`).toBeTruthy();
+      const tags = hashtagsFor(r, r.pasta);
+      expect(tags[0]).toBe('#ImperiaRecipeClub');
+      expect(tags.length).toBe(4);
+    }
+    expect(hashtagsFor(null, 'farfalle')).toContain('#Farfalle');
   });
 });
