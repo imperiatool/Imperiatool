@@ -74,15 +74,15 @@ input[type='range'] {
   .ev-float { animation: none; }
 }
 
-/* Home: small, slow movements on the product images */
-@keyframes home-sway { 0%, 100% { transform: rotate(-2deg); } 50% { transform: rotate(2deg); } }
-@keyframes home-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
+/* Home: small, slow movements on the product images, each suited to its object */
+@keyframes home-sway { 0%, 100% { transform: rotate(-4deg) translateY(0); } 50% { transform: rotate(4deg) translateY(-6px); } }
+@keyframes home-float { 0%, 100% { transform: rotate(-5deg); } 50% { transform: rotate(5deg); } }
 @keyframes home-tilt { 0%, 100% { transform: rotate(0deg) scale(1); } 50% { transform: rotate(-3deg) scale(1.02); } }
-@keyframes home-breathe { 0%, 100% { transform: scale(1) rotate(0deg); } 50% { transform: scale(1.035) rotate(1.5deg); } }
-.home-sway { animation: home-sway 6s ease-in-out infinite; transform-origin: 50% 85%; }
-.home-float { animation: home-float 5s ease-in-out infinite; }
+@keyframes home-breathe { 0%, 100% { transform: translateY(0) scale(1) rotate(0deg); } 50% { transform: translateY(-8px) scale(1.04) rotate(2deg); } }
+.home-sway { animation: home-sway 5s ease-in-out infinite; transform-origin: 50% 90%; }
+.home-float { animation: home-float 3.8s ease-in-out infinite; transform-origin: 50% 4%; } /* the charm swings from its top */
 .home-tilt { animation: home-tilt 6.5s ease-in-out infinite; }
-.home-breathe { animation: home-breathe 7s ease-in-out infinite; }
+.home-breathe { animation: home-breathe 5.5s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) {
   .home-sway, .home-float, .home-tilt, .home-breathe { animation: none; }
   .home-card { transition: none; }
@@ -112,9 +112,18 @@ input[type='range'] {
     transform: scale(1.045);
     box-shadow: 0 14px 40px rgba(0, 0, 0, 0.12);
   }
-  /* the call to action: same colour, the underline thickens smoothly */
-  .home-link { transition: text-decoration-thickness 0.25s ease, text-underline-offset 0.25s ease; }
-  .home-card:hover .home-link, .home-link:hover { text-decoration-thickness: 2px; text-underline-offset: 6px; }
+  /* call to action: no underline at rest, a line draws itself under the text
+     on hover; the colour never changes */
+  .home-link {
+    text-decoration: none;
+    background-image: linear-gradient(currentColor, currentColor);
+    background-repeat: no-repeat;
+    background-position: 0 100%;
+    background-size: 0% 1.5px;
+    padding-bottom: 3px;
+    transition: background-size 0.35s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+  .home-card:hover .home-link, .home-card:focus-visible .home-link { background-size: 100% 1.5px; }
 }
 @media (hover: none) {
   .home-card:active { transform: scale(0.985); }

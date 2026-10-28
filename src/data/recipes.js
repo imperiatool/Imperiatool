@@ -43,6 +43,8 @@ export const RECIPES = [
     id: 'pomodoro',
     pasta: 'spaghetti',
     name: 'Spaghetti al pomodoro e basilico',
+    // the dish in each language (the Italian name above is the dish's own name)
+    title: L("Spaghetti with tomato and basil", "Spaghetti al pomodoro e basilico", "Espaguetis con tomate y albahaca", "Spaghetti à la tomate et au basilic", "Spaghetti mit Tomate und Basilikum", "番茄罗勒意大利面", "टमाटर और तुलसी वाली स्पेगेटी"),
     need: ['tomato', 'basil'],
     may: ['parmigiano'],
     history: L('Pasta with tomato sauce became an everyday dish in southern Italy, especially around Naples, during the 1800s; basil and olive oil make it the simplest of the classics.', 'La pasta al pomodoro diventa un piatto quotidiano nel Sud Italia, soprattutto nell’area di Napoli, nel corso dell’Ottocento; basilico e olio ne fanno il più semplice dei classici.', 'La pasta con salsa de tomate se volvió un plato cotidiano en el sur de Italia, sobre todo en la zona de Nápoles, durante el siglo XIX; albahaca y aceite la convierten en el más sencillo de los clásicos.', 'Les pâtes à la sauce tomate deviennent un plat du quotidien dans le sud de l’Italie, surtout autour de Naples, au XIXe siècle ; basilic et huile d’olive en font le plus simple des classiques.', 'Pasta mit Tomatensauce wurde im 19. Jahrhundert in Süditalien, besonders rund um Neapel, zum Alltagsgericht; Basilikum und Olivenöl machen sie zum einfachsten Klassiker.', '番茄酱意面在 19 世纪成为意大利南部（尤其是那不勒斯一带）的家常菜；罗勒和橄榄油让它成为最简单的经典。', 'टमाटर सॉस वाला पास्ता 1800 के दशक में दक्षिणी इटली, ख़ासकर नेपल्स के आसपास, रोज़ का व्यंजन बना; तुलसी और जैतून का तेल इसे सबसे सरल क्लासिक बनाते हैं।'),
@@ -56,6 +58,8 @@ export const RECIPES = [
     id: 'cacioepepe',
     pasta: 'spaghetti',
     name: 'Spaghetti cacio e pepe',
+    // the dish in each language (the Italian name above is the dish's own name)
+    title: L("Spaghetti with Pecorino and black pepper", "Spaghetti cacio e pepe", "Espaguetis con pecorino y pimienta negra", "Spaghetti au pecorino et au poivre noir", "Spaghetti mit Pecorino und schwarzem Pfeffer", "羊奶酪黑胡椒意大利面", "पेकोरिनो और काली मिर्च वाली स्पेगेटी"),
     need: ['pecorino', 'pepper'],
     may: [],
     history: L('A Roman classic. It is often linked to the shepherds of the Lazio countryside, whose pecorino and pepper kept well on long journeys, though that story is hard to document.', 'Un classico romano. Viene spesso legato ai pastori della campagna laziale, il cui pecorino e pepe si conservavano bene nei lunghi spostamenti, anche se è una storia difficile da documentare.', 'Un clásico romano. Se suele asociar a los pastores del campo del Lacio, cuyo pecorino y pimienta se conservaban bien en largos viajes, aunque es una historia difícil de documentar.', 'Un classique romain. On le relie souvent aux bergers de la campagne du Latium, dont le pecorino et le poivre se conservaient bien pendant les longs trajets, même si cette histoire est difficile à documenter.', 'Ein römischer Klassiker. Er wird oft mit den Hirten der Latium-Landschaft verbunden, deren Pecorino und Pfeffer sich auf langen Wegen gut hielten, eine Geschichte, die sich allerdings schwer belegen lässt.', '罗马经典菜。人们常把它与拉齐奥乡间的牧羊人联系在一起：羊奶酪和胡椒便于长途携带保存，不过这一说法难以考证。', 'रोम का एक क्लासिक। इसे अक्सर लाज़ियो के ग्रामीण इलाक़ों के चरवाहों से जोड़ा जाता है, जिनका पेकोरिनो और मिर्च लंबी यात्राओं में अच्छी तरह टिकते थे, हालाँकि इस कहानी के प्रमाण कम हैं।'),
@@ -69,6 +73,8 @@ export const RECIPES = [
     id: 'carbonara',
     pasta: 'spaghetti',
     name: 'Spaghetti alla carbonara',
+    // the dish in each language (the Italian name above is the dish's own name)
+    title: L("Spaghetti carbonara", "Spaghetti alla carbonara", "Espaguetis a la carbonara", "Spaghetti à la carbonara", "Spaghetti Carbonara", "卡邦尼意大利面", "स्पेगेटी कार्बोनारा"),
     need: ['guanciale', 'egg', 'pecorino', 'pepper'],
     may: [],
     history: L('A Roman dish whose origins are still debated: it first appears in print after the Second World War, and none of the many stories about its birth is certain.', 'Un piatto romano dalle origini ancora discusse: compare per la prima volta nei libri dopo la Seconda guerra mondiale e nessuna delle tante storie sulla sua nascita è certa.', 'Un plato romano de orígenes aún discutidos: aparece por primera vez en textos tras la Segunda Guerra Mundial y ninguna de las muchas historias sobre su nacimiento es segura.', 'Un plat romain aux origines encore débattues : il apparaît pour la première fois dans les livres après la Seconde Guerre mondiale, et aucune des nombreuses histoires sur sa naissance n’est certaine.', 'Ein römisches Gericht mit umstrittener Herkunft: Es taucht erst nach dem Zweiten Weltkrieg in gedruckten Quellen auf, und keine der vielen Entstehungsgeschichten ist gesichert.', '一道起源仍有争议的罗马菜：它在第二次世界大战后才首次见于文字记载，关于它诞生的种种说法都无定论。', 'रोम का एक व्यंजन जिसकी उत्पत्ति पर आज भी बहस है: यह पहली बार दूसरे विश्व युद्ध के बाद छपे स्रोतों में मिलता है, और इसके जन्म की कोई भी कहानी पक्की नहीं है।'),
@@ -82,6 +88,8 @@ export const RECIPES = [
     id: 'gricia',
     pasta: 'spaghetti',
     name: 'Spaghetti alla gricia',
+    // the dish in each language (the Italian name above is the dish's own name)
+    title: L("Spaghetti with guanciale, Pecorino and pepper", "Spaghetti alla gricia", "Espaguetis con guanciale, pecorino y pimienta", "Spaghetti au guanciale, pecorino et poivre", "Spaghetti mit Guanciale, Pecorino und Pfeffer", "猪脸肉羊奶酪胡椒意大利面", "ग्वान्चाले, पेकोरिनो और काली मिर्च वाली स्पेगेटी"),
     need: ['guanciale', 'pecorino', 'pepper'],
     may: [],
     history: L('From Lazio, often described as amatriciana without the tomato. Its name is commonly linked to Grisciano, a village near Amatrice.', 'Viene dal Lazio ed è spesso descritta come l’amatriciana senza pomodoro. Il nome è comunemente legato a Grisciano, un paese vicino ad Amatrice.', 'Procede del Lacio y suele describirse como la amatriciana sin tomate. Su nombre se asocia habitualmente a Grisciano, un pueblo cerca de Amatrice.', 'Originaire du Latium, elle est souvent décrite comme l’amatriciana sans tomate. Son nom est couramment rattaché à Grisciano, un village proche d’Amatrice.', 'Aus dem Latium, oft als Amatriciana ohne Tomate beschrieben. Der Name wird meist mit Grisciano verbunden, einem Dorf nahe Amatrice.', '来自拉齐奥，常被称为“不加番茄的阿玛特里切酱面”。名字通常被认为与阿马特里切附近的小村格里夏诺有关。', 'लाज़ियो से, जिसे अक्सर बिना टमाटर वाली अमात्रिचाना कहा जाता है। इसका नाम आमतौर पर अमात्रिचे के पास के गाँव ग्रिश्यानो से जोड़ा जाता है।'),
@@ -95,6 +103,8 @@ export const RECIPES = [
     id: 'amatriciana',
     pasta: 'spaghetti',
     name: 'Spaghetti all’amatriciana',
+    // the dish in each language (the Italian name above is the dish's own name)
+    title: L("Spaghetti with guanciale, tomato and Pecorino", "Spaghetti all’amatriciana", "Espaguetis a la amatriciana", "Spaghetti à l’amatriciana", "Spaghetti all’Amatriciana", "阿马特里切风味意大利面", "स्पेगेटी अमात्रिचाना"),
     need: ['guanciale', 'tomato', 'pecorino'],
     may: ['pepper'],
     history: L('Named after Amatrice, a mountain town in Lazio. The town’s own recipe uses guanciale, tomato and Pecorino, and calls for spaghetti.', 'Prende il nome da Amatrice, cittadina di montagna del Lazio. La ricetta della città usa guanciale, pomodoro e pecorino, e prevede gli spaghetti.', 'Debe su nombre a Amatrice, un pueblo de montaña del Lacio. La receta local usa guanciale, tomate y pecorino, y lleva espaguetis.', 'Elle tient son nom d’Amatrice, petite ville de montagne du Latium. La recette de la ville utilise guanciale, tomate et pecorino, avec des spaghetti.', 'Benannt nach Amatrice, einem Bergstädtchen im Latium. Das Rezept des Ortes verwendet Guanciale, Tomate und Pecorino und sieht Spaghetti vor.', '得名于拉齐奥山城阿马特里切。当地食谱使用猪脸肉、番茄和羊奶酪，并搭配意大利面条。', 'इसका नाम लाज़ियो के पहाड़ी कस्बे अमात्रिचे से आया है। कस्बे की अपनी रेसिपी में ग्वान्चाले, टमाटर और पेकोरिनो होते हैं और स्पेगेटी इस्तेमाल होती है।'),
@@ -108,6 +118,8 @@ export const RECIPES = [
     id: 'ragu',
     pasta: 'tagliatelle',
     name: 'Tagliatelle al ragù',
+    // the dish in each language (the Italian name above is the dish's own name)
+    title: L("Tagliatelle with Bolognese ragù", "Tagliatelle al ragù", "Tagliatelle con ragú boloñés", "Tagliatelles au ragù bolognais", "Tagliatelle mit Bologneser Ragù", "博洛尼亚肉酱宽面", "बोलोनीज़ रागू वाली टैग्लियाटेले"),
     need: ['ragu'],
     may: ['parmigiano'],
     history: L('The pride of Bologna, where ragù is served with fresh egg tagliatelle, not spaghetti. In 1982 the Accademia Italiana della Cucina registered a reference recipe with the city’s Chamber of Commerce.', 'Il vanto di Bologna, dove il ragù si serve con le tagliatelle fresche all’uovo, non con gli spaghetti. Nel 1982 l’Accademia Italiana della Cucina ha depositato una ricetta di riferimento alla Camera di Commercio della città.', 'El orgullo de Bolonia, donde el ragú se sirve con tagliatelle frescas al huevo, no con espaguetis. En 1982 la Accademia Italiana della Cucina registró una receta de referencia en la Cámara de Comercio de la ciudad.', 'La fierté de Bologne, où le ragù se sert avec des tagliatelles fraîches aux œufs, pas avec des spaghetti. En 1982, l’Accademia Italiana della Cucina a déposé une recette de référence à la Chambre de commerce de la ville.', 'Der Stolz Bolognas, wo Ragù mit frischen Eier-Tagliatelle serviert wird, nicht mit Spaghetti. 1982 hinterlegte die Accademia Italiana della Cucina ein Referenzrezept bei der Handelskammer der Stadt.', '博洛尼亚的骄傲：当地肉酱配新鲜鸡蛋宽面，而不是意大利面条。1982 年，意大利烹饪学会在该市商会登记了一份参考食谱。', 'बोलोन्या की शान, जहाँ रागू ताज़ा अंडे वाली टैग्लियाटेले के साथ परोसा जाता है, स्पेगेटी के साथ नहीं। 1982 में Accademia Italiana della Cucina ने शहर के चैंबर ऑफ़ कॉमर्स में एक मानक रेसिपी दर्ज की।'),
@@ -121,6 +133,8 @@ export const RECIPES = [
     id: 'sorrentina',
     pasta: 'gnocchi',
     name: 'Gnocchi alla sorrentina',
+    // the dish in each language (the Italian name above is the dish's own name)
+    title: L("Baked gnocchi with tomato and mozzarella, Sorrento style", "Gnocchi alla sorrentina", "Ñoquis al horno con tomate y mozzarella, al estilo de Sorrento", "Gnocchis gratinés tomate et mozzarella, façon Sorrente", "Überbackene Gnocchi mit Tomate und Mozzarella nach Sorrentiner Art", "索伦托风味番茄马苏里拉焗团子", "सोरेंतो शैली में टमाटर और मोज़ेरेला वाले बेक्ड न्योकी"),
     need: ['tomato', 'mozzarella', 'basil'],
     may: ['parmigiano'],
     history: L('Named after Sorrento, on the Campanian coast: potato gnocchi baked with tomato, mozzarella and basil, the colours and flavours of the Bay of Naples.', 'Prende il nome da Sorrento, sulla costa campana: gnocchi di patate passati in forno con pomodoro, mozzarella e basilico, i colori e i sapori del golfo di Napoli.', 'Debe su nombre a Sorrento, en la costa de Campania: ñoquis de patata al horno con tomate, mozzarella y albahaca, los colores y sabores del golfo de Nápoles.', 'Elle tient son nom de Sorrente, sur la côte campanienne : des gnocchis de pommes de terre gratinés avec tomate, mozzarella et basilic, les couleurs et saveurs du golfe de Naples.', 'Benannt nach Sorrent an der Küste Kampaniens: Kartoffel-Gnocchi, mit Tomate, Mozzarella und Basilikum überbacken, Farben und Aromen des Golfs von Neapel.', '得名于坎帕尼亚海岸的索伦托：土豆团子配番茄、马苏里拉和罗勒烤制，呈现那不勒斯湾的色彩与风味。', 'इसका नाम कैम्पानिया तट के सोरेंतो से आया है: टमाटर, मोज़ेरेला और तुलसी के साथ बेक किए आलू के न्योकी, नेपल्स की खाड़ी के रंग और स्वाद।'),
@@ -134,6 +148,8 @@ export const RECIPES = [
     id: 'gnocchiburro',
     pasta: 'gnocchi',
     name: 'Gnocchi burro e salvia',
+    // the dish in each language (the Italian name above is the dish's own name)
+    title: L("Gnocchi with butter and sage", "Gnocchi burro e salvia", "Ñoquis con mantequilla y salvia", "Gnocchis au beurre et à la sauge", "Gnocchi mit Butter und Salbei", "黄油鼠尾草团子", "मक्खन और सेज वाले न्योकी"),
     need: ['butter', 'sage'],
     may: ['parmigiano'],
     history: L('Butter and sage is a typical dressing of northern Italy, where butter traditionally replaced olive oil in cooking; it is a common way to serve potato gnocchi there.', 'Burro e salvia è un condimento tipico del Nord Italia, dove tradizionalmente il burro sostituiva l’olio in cucina; è un modo diffuso di servire gli gnocchi di patate.', 'Mantequilla y salvia es un aliño típico del norte de Italia, donde tradicionalmente la mantequilla sustituía al aceite en la cocina; es una forma habitual de servir los ñoquis de patata.', 'Beurre et sauge est un assaisonnement typique du nord de l’Italie, où le beurre remplaçait traditionnellement l’huile en cuisine ; c’est une façon courante d’y servir les gnocchis de pommes de terre.', 'Butter und Salbei ist ein typisches Dressing Norditaliens, wo traditionell Butter statt Olivenöl zum Kochen diente; so werden Kartoffel-Gnocchi dort oft serviert.', '黄油鼠尾草是意大利北部的典型调味：那里传统上用黄油代替橄榄油做菜，也常这样搭配土豆团子。', 'मक्खन और सेज उत्तरी इटली का एक आम ड्रेसिंग है, जहाँ परंपरागत रूप से खाना पकाने में जैतून के तेल की जगह मक्खन इस्तेमाल होता था; वहाँ आलू न्योकी ऐसे ही परोसे जाते हैं।'),
@@ -147,6 +163,8 @@ export const RECIPES = [
     id: 'raviolibutter',
     pasta: 'ravioli',
     name: 'Ravioli burro e salvia',
+    // the dish in each language (the Italian name above is the dish's own name)
+    title: L("Ricotta ravioli with butter and sage", "Ravioli burro e salvia", "Ravioli de ricotta con mantequilla y salvia", "Raviolis à la ricotta, beurre et sauge", "Ricotta-Ravioli mit Butter und Salbei", "黄油鼠尾草乳清干酪方饺", "मक्खन और सेज वाली रिकोटा रैवियोली"),
     need: ['butter', 'sage'],
     may: ['parmigiano'],
     history: L('The classic way to dress ricotta-filled ravioli in many parts of northern and central Italy: a light sauce that lets the filling speak.', 'Il modo classico di condire i ravioli di ricotta in molte zone del Nord e del Centro Italia: un condimento leggero che lascia parlare il ripieno.', 'La forma clásica de aliñar los ravioli de ricotta en muchas zonas del norte y el centro de Italia: una salsa ligera que deja hablar al relleno.', 'La façon classique d’assaisonner les raviolis à la ricotta dans de nombreuses régions du nord et du centre de l’Italie : une sauce légère qui laisse parler la farce.', 'Die klassische Art, Ricotta-Ravioli in vielen Gegenden Nord- und Mittelitaliens anzumachen: eine leichte Sauce, die der Füllung den Vortritt lässt.', '在意大利北部和中部许多地区，这是搭配乳清干酪方饺的经典做法：清淡的酱汁让馅料成为主角。', 'उत्तरी और मध्य इटली के कई हिस्सों में रिकोटा रैवियोली को परोसने का क्लासिक तरीका: हल्की सॉस जो भरावन का स्वाद उभरने देती है।'),
