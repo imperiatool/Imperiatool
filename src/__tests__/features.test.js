@@ -26,7 +26,7 @@ describe('admin password hashing', () => {
 
 describe('i18n', () => {
   // de / zh / hi translate every public page; the Admin area falls back to English
-  const PUBLIC = /^(lang|common|editor|picker|props|slot|export|order|cover|viewer|guide|cart|account|home|spec|events|book|search|recipe)\.|^nav\.(language|case|charm|sticker|home|events)$/;
+  const PUBLIC = /^(lang|common|editor|picker|props|slot|export|order|cover|viewer|guide|cart|account|home|spec|events|book|search|recipe|meta)\.|^nav\.(language|case|charm|sticker|home|events)$/;
   const publicKeys = Object.keys(en).filter((k) => PUBLIC.test(k)).sort();
   it('every language has exactly the English keys', () => {
     const keys = Object.keys(en).sort();
@@ -159,7 +159,7 @@ describe('pasta names', () => {
     expect(lib.assets.map((a) => a.name)).toEqual(['Cavatappi', 'Raviolo classico', 'Ravioli tondi']);
     expect(lib.assets[0].labels.es).toBe('Sacacorchos');
     const bodies = withLabels({ categories: [], palette: [], assets: ['Raviolo triangolare', 'Raviolo quadrato', 'Raviolo tondo'].map((name, i) => ({ id: `b${i}`, name })) });
-    expect(bodies.assets.map((a) => a.labels.en)).toEqual(['Classic tortellino', 'Classic raviolo', 'Giant raviolo']);
+    expect(bodies.assets.map((a) => a.labels.en)).toEqual(['Classic Tortellino', 'Raviolo', 'Giant Raviolo']);
   });
   it('has a translation in every language for every sample element', () => {
     for (const [name, l] of Object.entries(ASSET_LABELS)) for (const c of LANGUAGES.map((x) => x.code)) expect(l[c], `${name}/${c}`).toBeTruthy();

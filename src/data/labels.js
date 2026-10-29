@@ -22,20 +22,29 @@ export const COLOR_LABELS = {
 };
 const COLOR_NAMES = { 'c-rosso': 'Pomodoro', 'c-verde': 'Basilico', 'c-marrone': 'Ragù', 'c-ambra': 'Uovo', 'c-crema': 'Farina' };
 
-// keyed by the Italian name used in the seed
+// pasta names shared by bodies and eyes of the same shape
+const TORTELLINO = L('Classic Tortellino', 'Tortellino classico', 'Tortellino clásico', 'Tortellino classique', 'Klassischer Tortellino', '经典意式饺', 'क्लासिक टॉर्टेलिनो');
+const RAVIOLO = L('Raviolo', 'Raviolo', 'Raviolo', 'Raviolo', 'Raviolo', '方饺', 'रैवियोलो');
+const GIANT_RAVIOLO = L('Giant Raviolo', 'Raviolo gigante', 'Raviolo gigante', 'Raviolo géant', 'Riesen-Raviolo', '巨型圆饺', 'जायंट रैवियोलो');
+const REGINETTE = L('Reginette', 'Reginette', 'Reginette', 'Reginette', 'Reginette', '花边面', 'रेजिनेट');
+
+// keyed by the Italian name used in the seed (internal ids: the names shown
+// come from these labels)
 export const ASSET_LABELS = {
   // bodies
-  'Tortellino classico': L('Classic tortellino', 'Tortellino classico', 'Tortellino clásico', 'Tortellino classique', 'Klassischer Tortellino', '经典意式饺', 'क्लासिक टॉर्टेलिनो'),
-  'Raviolo classico': L('Classic raviolo', 'Raviolo classico', 'Raviolo clásico', 'Raviolo classique', 'Klassischer Raviolo', '经典方饺', 'क्लासिक रैवियोलो'),
-  'Raviolo gigante': L('Giant raviolo', 'Raviolo gigante', 'Raviolo gigante', 'Raviolo géant', 'Riesen-Raviolo', '巨型圆饺', 'जायंट रैवियोलो'),
-  Reginetta: L('Reginetta', 'Reginetta', 'Reginetta', 'Reginetta', 'Reginetta', '花边面条', 'रेजिनेटा'),
+  'Tortellino classico': TORTELLINO,
+  'Raviolo classico': RAVIOLO,
+  'Raviolo gigante': GIANT_RAVIOLO,
+  // the pasta is Reginette (plural) wherever it is named, body or eyes
+  Reginetta: REGINETTE,
   // eyes
-  Reginette: L('Reginette', 'Reginette', 'Reginette', 'Reginette', 'Reginette', '花边面', 'रेजिनेट'),
+  Reginette: REGINETTE,
   Bucatini: L('Bucatini', 'Bucatini', 'Bucatini', 'Bucatini', 'Bucatini', '吸管面', 'बुकाटिनी'),
   Orecchiette: L('Orecchiette', 'Orecchiette', 'Orecchiette', 'Orecchiette', 'Orecchiette', '猫耳朵面', 'ओरेकिएट'),
-  'Ravioli quadrati': L('Square ravioli', 'Ravioli quadrati', 'Ravioli cuadrados', 'Ravioli carrés', 'Eckige Ravioli', '方形饺', 'चौकोर रैवियोली'),
-  'Ravioli triangolari': L('Triangle ravioli', 'Ravioli triangolari', 'Ravioli triangulares', 'Ravioli triangulaires', 'Dreieckige Ravioli', '三角饺', 'तिकोनी रैवियोली'),
-  'Ravioli tondi': L('Round ravioli', 'Ravioli tondi', 'Ravioli redondos', 'Ravioli ronds', 'Runde Ravioli', '圆形饺', 'गोल रैवियोली'),
+  // eyes named like the bodies of the same shape (square, triangle, round)
+  'Ravioli quadrati': RAVIOLO,
+  'Ravioli triangolari': TORTELLINO,
+  'Ravioli tondi': GIANT_RAVIOLO,
   // mouths: named after pasta shapes
   Maccheroni: L('Macaroni', 'Maccheroni', 'Macarrones', 'Macaronis', 'Makkaroni', '通心粉', 'मैकरोनी'),
   Anelli: L('Anelli', 'Anelli', 'Anillos', 'Anneaux', 'Anelli', '圈圈面', 'अनेली'),

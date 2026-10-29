@@ -20,6 +20,12 @@ export const RECIPE_PASTAS = [
   { id: 'trofie', name: L('Trofie', 'Trofie', 'Trofie', 'Trofie', 'Trofie', '特罗菲面', 'ट्रोफ़ी') },
   { id: 'orecchiette', name: L('Orecchiette', 'Orecchiette', 'Orecchiette', 'Orecchiette', 'Orecchiette', '猫耳朵面', 'ओरेक्कियेत्ते') },
   { id: 'farfalle', name: L('Farfalle', 'Farfalle', 'Farfalle', 'Farfalle', 'Farfalle', '蝴蝶面', 'फ़ार्फ़ाले') },
+  { id: 'reginette', name: L('Reginette', 'Reginette', 'Reginette', 'Reginette', 'Reginette', '花边面', 'रेजिनेट') },
+  { id: 'cavatappi', name: L('Cavatappi', 'Cavatappi', 'Cavatappi', 'Cavatappi', 'Cavatappi', '螺旋通心粉', 'कावाटाप्पी') },
+  { id: 'conchiglie', name: L('Conchiglie', 'Conchiglie', 'Conchiglie', 'Conchiglie', 'Conchiglie', '贝壳面', 'कोंकिल्ये') },
+  { id: 'anelli', name: L('Anelli', 'Anelli', 'Anelli', 'Anelli', 'Anelli', '圈圈面', 'अनेली') },
+  { id: 'lasagne', name: L('Lasagne', 'Lasagne', 'Lasaña', 'Lasagnes', 'Lasagne', '千层面', 'लज़ानिया') },
+  { id: 'tortellini', name: L('Tortellini', 'Tortellini', 'Tortellini', 'Tortellini', 'Tortellini', '意式小馄饨', 'टॉर्टेलिनी') },
   { id: 'gnocchi', name: L('Gnocchi', 'Gnocchi', 'Ñoquis', 'Gnocchis', 'Gnocchi', '团子', 'न्योकी') },
   { id: 'ravioli', name: L('Ricotta ravioli', 'Ravioli di ricotta', 'Ravioli de ricotta', 'Raviolis à la ricotta', 'Ricotta-Ravioli', '乳清干酪方饺', 'रिकोटा रैवियोली') },
 ].map((p) => ({ ...p, img: IMG[p.id] }));
@@ -47,6 +53,8 @@ export const INGREDIENTS = [
   { id: 'cimedirapa', hex: '#2f6a2a', name: L('Turnip tops', 'Cime di rapa', 'Grelos', 'Brocoli-rave', 'Stängelkohl', '芜菁嫩叶', 'शलजम के पत्ते') , note: L('leafy greens with small buds, typical of Puglia', 'verdura a foglia con piccole cime, tipica della Puglia', 'verdura de hoja con pequeños brotes, típica de Apulia', 'légume-feuille à petits boutons, typique des Pouilles', 'Blattgemüse mit kleinen Knospen, typisch für Apulien', '带小花蕾的绿叶菜，普利亚特产', 'छोटी कलियों वाली पत्तेदार सब्ज़ी, पुलिया की ख़ास') },
   { id: 'ricottasalata', hex: '#f8f5ec', name: L('Ricotta salata', 'Ricotta salata', 'Ricotta salata', 'Ricotta salata', 'Ricotta salata', '咸里科塔', 'रिकोटा सलाटा') , note: L('pressed, salted and aged ricotta', 'ricotta pressata, salata e stagionata', 'ricotta prensada, salada y curada', 'ricotta pressée, salée et affinée', 'gepresster, gesalzener und gereifter Ricotta', '压制、加盐并熟成的里科塔奶酪', 'दबाकर, नमक लगाकर पकाई गई रिकोटा') },
   { id: 'breadcrumbs', hex: '#d29d4d', name: L('Toasted breadcrumbs', 'Pangrattato tostato', 'Pan rallado tostado', 'Chapelure grillée', 'Geröstete Semmelbrösel', '烤面包屑', 'भुने ब्रेडक्रम्ब्स') },
+  { id: 'broth', hex: '#d9a548', name: L('Meat broth', 'Brodo di carne', 'Caldo de carne', 'Bouillon de viande', 'Fleischbrühe', '肉汤', 'मीट ब्रॉथ') },
+  { id: 'bechamel', hex: '#f3ead6', name: L('Béchamel', 'Besciamella', 'Bechamel', 'Béchamel', 'Béchamel', '白酱', 'बेशमेल') , note: L('white sauce of milk, butter and flour', 'salsa di latte, burro e farina', 'salsa de leche, mantequilla y harina', 'sauce au lait, beurre et farine', 'Sauce aus Milch, Butter und Mehl', '牛奶、黄油和面粉做的白酱', 'दूध, मक्खन और आटे की सफ़ेद सॉस') },
   { id: 'pesto', hex: '#4f7d2a', name: L('Genoese pesto', 'Pesto alla genovese', 'Pesto genovés', 'Pesto génois', 'Pesto Genovese', '热那亚青酱', 'जेनोवा पेस्तो') , note: L('basil, pine nuts, garlic, cheese and olive oil', 'basilico, pinoli, aglio, formaggio e olio', 'albahaca, piñones, ajo, queso y aceite', 'basilic, pignons, ail, fromage et huile d’olive', 'Basilikum, Pinienkerne, Knoblauch, Käse und Olivenöl', '罗勒、松子、大蒜、奶酪和橄榄油', 'तुलसी, चिलगोज़े, लहसुन, चीज़ और जैतून का तेल') },
 ];
 
@@ -303,6 +311,34 @@ export const RECIPES = [
       L('Off the heat, stir in Pecorino Romano and black pepper until creamy.', 'A fuoco spento, manteca con Pecorino Romano e pepe nero fino a ottenere una crema.', 'Fuera del fuego, mezcla con Pecorino Romano y pimienta negra hasta que quede cremoso.', 'Hors du feu, incorporez le Pecorino Romano et le poivre noir jusqu’à obtenir une sauce crémeuse.', 'Abseits vom Herd Pecorino Romano und schwarzen Pfeffer cremig unterrühren.', '离火后拌入罗马羊奶酪和黑胡椒，直到酱汁浓滑。', 'आँच बंद करके पेकोरिनो रोमानो और काली मिर्च मिलाएँ जब तक मलाईदार न हो जाए।'),
     ],
   },
+  {
+    id: 'tortelliniinbrodo',
+    pasta: 'tortellini',
+    name: 'Tortellini in brodo',
+    title: L('Tortellini in broth', 'Tortellini in brodo', 'Tortellini en caldo', 'Tortellini en bouillon', 'Tortellini in Brühe', '清汤意式小馄饨', 'ब्रॉथ में टॉर्टेलिनी'),
+    need: ['broth'],
+    may: ['parmigiano'],
+    history: L('From Bologna and Modena, where it is the dish of Christmas Day in many homes. A popular legend says an innkeeper shaped the first tortellino after glimpsing the navel of Venus; in 1974 a reference recipe for the filling was registered with the Bologna Chamber of Commerce.', 'Viene da Bologna e Modena, dove in molte case è il piatto del giorno di Natale. Una leggenda popolare racconta che un oste modellò il primo tortellino dopo aver intravisto l’ombelico di Venere; nel 1974 una ricetta di riferimento del ripieno è stata depositata alla Camera di Commercio di Bologna.', 'Viene de Bolonia y Módena, donde en muchas casas es el plato del día de Navidad. Una leyenda popular cuenta que un posadero dio forma al primer tortellino tras vislumbrar el ombligo de Venus; en 1974 se registró una receta de referencia del relleno en la Cámara de Comercio de Bolonia.', 'Il vient de Bologne et de Modène, où il est le plat du jour de Noël dans de nombreuses familles. Une légende populaire raconte qu’un aubergiste façonna le premier tortellino après avoir aperçu le nombril de Vénus ; en 1974, une recette de référence de la farce a été déposée à la Chambre de commerce de Bologne.', 'Aus Bologna und Modena, wo es in vielen Familien das Gericht des Weihnachtstags ist. Einer Volkslegende nach formte ein Wirt den ersten Tortellino, nachdem er den Nabel der Venus erblickt hatte; 1974 wurde ein Referenzrezept für die Füllung bei der Handelskammer Bologna hinterlegt.', '来自博洛尼亚和摩德纳，在许多家庭里是圣诞节当天的菜。民间传说有位客栈老板瞥见维纳斯的肚脐后，捏出了第一个 tortellino；1974 年，馅料的参考配方在博洛尼亚商会登记备案。', 'बोलोन्या और मोडेना से, जहाँ कई घरों में यह क्रिसमस के दिन का व्यंजन है। एक लोककथा कहती है कि एक सराय वाले ने वीनस की नाभि की झलक देखकर पहला टॉर्टेलिनो बनाया; 1974 में भरावन का एक संदर्भ नुस्खा बोलोन्या के चैंबर ऑफ़ कॉमर्स में दर्ज किया गया।'),
+    steps: [
+      L('Bring a good meat broth (capon or beef) to a gentle simmer.', 'Porta a leggero bollore un buon brodo di carne (cappone o manzo).', 'Lleva a un hervor suave un buen caldo de carne (capón o ternera).', 'Portez à frémissement un bon bouillon de viande (chapon ou bœuf).', 'Eine gute Fleischbrühe (Kapaun oder Rind) sanft zum Sieden bringen.', '把一锅好的肉汤（阉鸡或牛肉）小火煮到微滚。', 'अच्छा मीट ब्रॉथ (कैपन या बीफ़) धीमी आँच पर हल्का उबालें।'),
+      L('Cook the tortellini in the broth for a few minutes.', 'Cuoci i tortellini nel brodo per pochi minuti.', 'Cuece los tortellini en el caldo unos minutos.', 'Faites cuire les tortellini quelques minutes dans le bouillon.', 'Die Tortellini einige Minuten in der Brühe garen.', '把意式小馄饨放进汤里煮几分钟。', 'टॉर्टेलिनी को ब्रॉथ में कुछ मिनट पकाएँ।'),
+      L('Serve them in their broth, with grated Parmigiano Reggiano if you like.', 'Servili nel loro brodo, se vuoi con Parmigiano Reggiano grattugiato.', 'Sírvelos en su caldo, con Parmigiano Reggiano rallado si quieres.', 'Servez-les dans leur bouillon, avec du Parmigiano Reggiano râpé si vous voulez.', 'In ihrer Brühe servieren, nach Belieben mit geriebenem Parmigiano Reggiano.', '连汤一起上桌，喜欢的话撒上帕玛森干酪碎。', 'उन्हें उनके ब्रॉथ में परोसें, चाहें तो कसा हुआ पार्मिजानो रेज्जानो डालें।'),
+    ],
+  },
+  {
+    id: 'lasagne',
+    pasta: 'lasagne',
+    name: 'Lasagne alla bolognese',
+    title: L('Lasagne Bolognese', 'Lasagne alla bolognese', 'Lasaña a la boloñesa', 'Lasagnes à la bolognaise', 'Lasagne alla Bolognese', '博洛尼亚千层面', 'बोलोनीज़ लज़ानिया'),
+    need: ['ragu', 'bechamel', 'parmigiano'],
+    may: [],
+    history: L('From Bologna, where the sheets of egg pasta are traditionally green, made with spinach, and layered with ragù, béchamel and Parmigiano Reggiano before baking.', 'Viene da Bologna, dove le sfoglie all’uovo sono per tradizione verdi, fatte con gli spinaci, e si alternano a ragù, besciamella e Parmigiano Reggiano prima di andare in forno.', 'Viene de Bolonia, donde las láminas de pasta al huevo son tradicionalmente verdes, hechas con espinacas, y se alternan con ragú, bechamel y Parmigiano Reggiano antes de hornearse.', 'Elles viennent de Bologne, où les feuilles de pâte aux œufs sont traditionnellement vertes, faites aux épinards, et alternées avec ragù, béchamel et Parmigiano Reggiano avant la cuisson au four.', 'Aus Bologna, wo die Eiernudelplatten traditionell grün sind, mit Spinat gemacht, und vor dem Backen mit Ragù, Béchamel und Parmigiano Reggiano geschichtet werden.', '来自博洛尼亚，那里的鸡蛋面皮按传统是用菠菜做的绿色面皮，与肉酱、白酱和帕玛森干酪层层叠放后入炉烘烤。', 'बोलोन्या से, जहाँ अंडे वाली पास्ता शीट परंपरागत रूप से पालक से बनी हरी होती हैं और बेक करने से पहले रागू, बेशमेल और पार्मिजानो रेज्जानो के साथ परतों में लगाई जाती हैं।'),
+    steps: [
+      L('Layer the lasagne sheets with ragù and béchamel, with grated Parmigiano Reggiano on every layer.', 'Alterna le sfoglie con ragù e besciamella, con Parmigiano Reggiano grattugiato su ogni strato.', 'Alterna las láminas con ragú y bechamel, con Parmigiano Reggiano rallado en cada capa.', 'Alternez les feuilles avec le ragù et la béchamel, avec du Parmigiano Reggiano râpé sur chaque couche.', 'Die Platten abwechselnd mit Ragù und Béchamel schichten, jede Schicht mit geriebenem Parmigiano Reggiano.', '把千层面皮和肉酱、白酱层层叠放，每层撒上帕玛森干酪碎。', 'लज़ानिया शीट को रागू और बेशमेल के साथ परतों में लगाएँ, हर परत पर कसा पार्मिजानो रेज्जानो डालें।'),
+      L('Finish with béchamel and Parmigiano on top.', 'Termina con besciamella e Parmigiano in superficie.', 'Termina con bechamel y Parmigiano por encima.', 'Terminez par de la béchamel et du Parmigiano sur le dessus.', 'Oben mit Béchamel und Parmigiano abschließen.', '最上层铺白酱并撒帕玛森干酪。', 'ऊपर बेशमेल और पार्मिजानो से पूरा करें।'),
+      L('Bake until golden and bubbling, then let it rest a few minutes before cutting.', 'Cuoci in forno finché è dorata e sfrigolante, poi lasciala riposare qualche minuto prima di tagliarla.', 'Hornea hasta que esté dorada y burbujeante y deja reposar unos minutos antes de cortar.', 'Faites cuire au four jusqu’à ce qu’elles soient dorées et frémissantes, puis laissez reposer quelques minutes avant de couper.', 'Backen, bis sie goldbraun ist und Blasen wirft, dann vor dem Schneiden ein paar Minuten ruhen lassen.', '烤到表面金黄冒泡，静置几分钟再切。', 'सुनहरा और बुलबुलेदार होने तक बेक करें, फिर काटने से पहले कुछ मिनट रहने दें।'),
+    ],
+  },
 ];
 
 /**
@@ -366,13 +402,13 @@ export const REGIONS = {
 const REGION_OF = {
   pomodoro: 'campania', cacioepepe: 'lazio', carbonara: 'lazio', gricia: 'lazio', amatriciana: 'lazio', ragu: 'emilia', sorrentina: 'campania',
   gnocchiburro: 'north', raviolibutter: 'northcentre', aglioolio: 'campania', vongole: 'campania', arrabbiata: 'lazio', norma: 'sicilia',
-  cimedirapa: 'puglia', pesto: 'liguria', bucatiniamatriciana: 'lazio', rigatonigricia: 'lazio',
+  cimedirapa: 'puglia', pesto: 'liguria', bucatiniamatriciana: 'lazio', rigatonigricia: 'lazio', tortelliniinbrodo: 'emilia', lasagne: 'emilia',
 };
 export const regionOf = (recipe) => (recipe ? REGIONS[REGION_OF[recipe.id]] : null);
 
 // ingredients shown in families, so the longer list stays easy to scan
 export const INGREDIENT_GROUPS = [
-  { id: 'sauces', name: L('Sauces and oil', 'Sughi e condimenti', 'Salsas y aceite', 'Sauces et huile', 'Saucen und Öl', '酱汁与油', 'सॉस और तेल'), ids: ['tomato', 'ragu', 'pesto', 'oliveoil', 'butter'] },
+  { id: 'sauces', name: L('Sauces and oil', 'Sughi e condimenti', 'Salsas y aceite', 'Sauces et huile', 'Saucen und Öl', '酱汁与油', 'सॉस और तेल'), ids: ['tomato', 'ragu', 'pesto', 'broth', 'bechamel', 'oliveoil', 'butter'] },
   { id: 'meat', name: L('Meat and fish', 'Carne e pesce', 'Carne y pescado', 'Viande et poisson', 'Fleisch und Fisch', '肉类与海鲜', 'मांस और मछली'), ids: ['guanciale', 'clams', 'anchovy'] },
   { id: 'cheese', name: L('Eggs and cheeses', 'Uova e formaggi', 'Huevos y quesos', 'Œufs et fromages', 'Eier und Käse', '蛋与奶酪', 'अंडे और चीज़'), ids: ['egg', 'pecorino', 'parmigiano', 'mozzarella', 'ricottasalata'] },
   { id: 'veg', name: L('Vegetables', 'Verdure', 'Verduras', 'Légumes', 'Gemüse', '蔬菜', 'सब्ज़ियाँ'), ids: ['aubergine', 'cimedirapa', 'garlic', 'chilli'] },
@@ -385,9 +421,49 @@ const DISH_TAG = {
   pomodoro: 'PastaAlPomodoro', cacioepepe: 'CacioEPepe', carbonara: 'Carbonara', gricia: 'Gricia', amatriciana: 'Amatriciana', ragu: 'TagliatelleAlRagu',
   sorrentina: 'GnocchiAllaSorrentina', gnocchiburro: 'BurroESalvia', raviolibutter: 'BurroESalvia', aglioolio: 'AglioOlioEPeperoncino', vongole: 'SpaghettiAlleVongole',
   arrabbiata: 'Arrabbiata', norma: 'PastaAllaNorma', cimedirapa: 'OrecchietteAlleCimeDiRapa', pesto: 'PestoGenovese', bucatiniamatriciana: 'Amatriciana', rigatonigricia: 'Gricia',
+  tortelliniinbrodo: 'TortelliniInBrodo', lasagne: 'LasagneAllaBolognese',
 };
 /** The hashtags for a card: three branded ones plus the dish (or, for a creative plate, the pasta). */
 export function hashtagsFor(recipe, pastaId) {
   const own = recipe ? DISH_TAG[recipe.id] : (RECIPE_PASTAS.find((p) => p.id === pastaId)?.name.it || '').replace(/[^A-Za-z]/g, '');
   return own ? [...HASHTAGS, `#${own}`] : [...HASHTAGS];
 }
+
+/* ---- Shared Dishes: illustrative sample posts (no real users, no real posts) ---- */
+// A demonstration of how the Recipe Club could become a community. The
+// accounts are made up and marked "demo"; nothing here was posted by anyone.
+export const SAMPLE_POSTS = [
+  {
+    id: 'p1',
+    handle: '@demo.cacio_club',
+    recipe: 'cacioepepe',
+    caption: L('Three ingredients, zero drama. Cacio e pepe on a Tuesday.', 'Tre ingredienti, zero drammi. Cacio e pepe di martedì.', 'Tres ingredientes, cero dramas. Cacio e pepe un martes.', 'Trois ingrédients, zéro drame. Cacio e pepe un mardi.', 'Drei Zutaten, null Drama. Cacio e pepe an einem Dienstag.', '三种食材，零压力。周二的芝士胡椒意面。', 'तीन चीज़ें, कोई झंझट नहीं। मंगलवार की कैचो ए पेपे।'),
+    comments: [
+      { handle: '@demo.sunday_sauce', text: L('the creamy part is a skill fr', 'la cremina è un’arte', 'la cremita es un arte', 'la crème, c’est un art', 'die Cremigkeit ist echte Kunst', '那层奶油感是真功夫', 'वो क्रीमीपन असली कला है') },
+      { handle: '@demo.pasta_notes', text: L('pasta water supremacy', 'acqua di cottura sempre', 'agua de cocción, siempre', 'l’eau de cuisson, toujours', 'Nudelwasser for the win', '煮面水才是灵魂', 'पास्ता पानी ही राज़ है') },
+    ],
+  },
+  {
+    id: 'p2',
+    handle: '@demo.liguria_lunch',
+    recipe: 'pesto',
+    caption: L('Mortar out, phone down. Trofie al pesto, never cooked.', 'Fuori il mortaio, giù il telefono. Trofie al pesto, mai cotto.', 'Mortero fuera, móvil abajo. Trofie al pesto, nunca cocinado.', 'Mortier sorti, téléphone posé. Trofie au pesto, jamais cuit.', 'Mörser raus, Handy weg. Trofie al pesto, nie gekocht.', '拿出研钵，放下手机。热那亚青酱特罗菲面，青酱从不加热。', 'ओखली बाहर, फ़ोन नीचे। पेस्तो वाली ट्रोफ़ी, कभी पकाया नहीं।'),
+    comments: [{ handle: '@demo.cacio_club', text: L('that green tho', 'quel verde però', 'ese verde, eh', 'ce vert quand même', 'dieses Grün!', '这个绿也太好看', 'वो हरा रंग तो देखो') }],
+  },
+  {
+    id: 'p3',
+    handle: '@demo.bari_bites',
+    recipe: 'cimedirapa',
+    caption: L('Orecchiette and cime di rapa, cooked in the same pot. Less washing up.', 'Orecchiette e cime di rapa nella stessa pentola. Meno piatti da lavare.', 'Orecchiette y grelos en la misma olla. Menos platos que fregar.', 'Orecchiette et brocoli-rave dans la même casserole. Moins de vaisselle.', 'Orecchiette und Stängelkohl im selben Topf. Weniger Abwasch.', '猫耳朵面和芜菁嫩叶同锅煮，少洗一个锅。', 'ओरेक्कियेत्ते और शलजम के पत्ते एक ही बर्तन में। कम बर्तन धोने।'),
+    comments: [{ handle: '@demo.pasta_notes', text: L('breadcrumbs on top = mandatory', 'pangrattato sopra = obbligatorio', 'pan rallado encima = obligatorio', 'chapelure dessus = obligatoire', 'Semmelbrösel obendrauf = Pflicht', '上面撒面包屑 = 必须', 'ऊपर ब्रेडक्रम्ब्स = ज़रूरी') }],
+  },
+  {
+    id: 'p4',
+    handle: '@demo.brodo_sundays',
+    recipe: 'tortelliniinbrodo',
+    caption: L('Tortellini in brodo: a hug in a bowl.', 'Tortellini in brodo: un abbraccio nel piatto.', 'Tortellini en caldo: un abrazo en un plato.', 'Tortellini en bouillon : un câlin dans un bol.', 'Tortellini in Brühe: eine Umarmung im Teller.', '清汤意式小馄饨：一碗温暖。', 'ब्रॉथ में टॉर्टेलिनी: कटोरे में एक झप्पी।'),
+    comments: [
+      { handle: '@demo.liguria_lunch', text: L('how many did you fold?', 'quanti ne hai chiusi?', '¿cuántos has cerrado?', 'tu en as plié combien ?', 'wie viele hast du gefaltet?', '你包了多少个？', 'कितने मोड़े?') },
+    ],
+  },
+];
