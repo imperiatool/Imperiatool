@@ -5,6 +5,7 @@ import PageHeader from '../layout/PageHeader.jsx';
 import EventCard from './EventCard.jsx';
 import { EVENTS, EVENT_TYPES, EVENT_COUNTRIES, EVENT_FORMATS, EVENT_LEVELS, EVENT_SORTS, filterEvents, sortEvents } from '../../data/events.js';
 import { useI18n } from '../../i18n/index.js';
+import { useMeta } from '../../lib/useMeta.js';
 import caseImg from '../../assets/previews/case.png';
 import charmImg from '../../assets/previews/charm.png';
 import stickerImg from '../../assets/previews/sticker.png';
@@ -14,6 +15,7 @@ const SCROLL_KEY = 'imperia:events-scroll';
 /** Imperia® Experiences: one Filters panel (with its sub-filters), the count, sorting and the programme straight away. */
 export default function EventsPage() {
   const { t } = useI18n();
+  useMeta({ title: `Imperia® ${t('nav.events')}`, description: t('meta.events.desc') });
   const [params, setParams] = useSearchParams();
   const { search } = useLocation();
   const [open, setOpen] = useState(false); // filters panel

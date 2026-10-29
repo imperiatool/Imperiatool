@@ -10,6 +10,7 @@ import Icon from '../ui/Icon.jsx';
 import { useLibrary } from '../../hooks/useLibrary.js';
 import { useEditorStore } from '../../store/useEditorStore.js';
 import { useI18n } from '../../i18n/index.js';
+import { useMeta } from '../../lib/useMeta.js';
 import PageHeader from '../layout/PageHeader.jsx';
 import PreviewHint from '../ui/PreviewHint.jsx';
 
@@ -18,8 +19,27 @@ import PreviewHint from '../ui/PreviewHint.jsx';
  * The design is the same: only the final action changes.
  */
 export default function EditorPage({ mode = 'charm' }) {
-  const { t } = useI18n();
+  const { t, label } = useI18n();
   const library = useLibrary();
+  // what the page offers, also for search engines and assistants: the parts
+  // (bodies, eyes, mouths) with their pasta names, colours and finishes
+  const title = mode === 'charm' ? t('editor.charmTitle') : t('editor.stickerTitle');
+  useMeta({
+    title,
+    description: t(mode === 'charm' ? 'meta.charm.desc' : 'meta.sticker.desc'),
+    jsonld: {
+      '@context': 'https://schema.org',
+      '@type': 'Product',
+      name: title,
+      brand: { '@type': 'Brand', name: 'Imperia' },
+      description: t(mode === 'charm' ? 'meta.charm.desc' : 'meta.sticker.desc'),
+      color: library.palette.map((c) => label(c)),
+      ...(mode === 'charm' ? { material: ['raw', 'aldente', 'overcooked'].map((m) => t(`order.materials.${m}.name`)) } : {}),
+      additionalProperty: library.categories.flatMap((c) =>
+        library.assets.filter((a) => a.categoryId === c.id).map((a) => ({ '@type': 'PropertyValue', name: label(c), value: label(a) })),
+      ),
+    },
+  });
   const items = useEditorStore((s) => s.items);
   const canUndo = useEditorStore((s) => s.past.length > 0);
   const canRedo = useEditorStore((s) => s.future.length > 0);
@@ -109,7 +129,7 @@ export default function EditorPage({ mode = 'charm' }) {
         <section className={`flex flex-col gap-2 p-3 sm:p-5 lg:min-h-0 ${mode === 'sticker' ? 'bg-white' : 'bg-studio'}`}>
           <div className="flex justify-center">{tools}</div>
           <div className="relative grid place-items-center lg:min-h-0 lg:flex-1">
-            <div className={`relative aspect-square w-full ${mode === 'sticker' ? 'max-w-[min(100%,calc(100vh-27rem))]' : 'max-w-[min(100%,calc(100vh-21rem))]'} overflow-hidden rounded-[28px] bg-white [background-image:radial-gradient(#1d1d1b10_1px,transparent_1px)] [background-size:22px_22px]`}>
+            <div className={`relative aspect-square w-full ${mode === 'sticker' ? 'max-w-[min(100%,calc(100vh-27rem))] [transform:translateZ(0)]' : 'max-w-[min(100%,calc(100vh-21rem))]'} overflow-hidden rounded-[28px] bg-white [background-image:radial-gradient(#1d1d1b10_1px,transparent_1px)] [background-size:22px_22px]`}>
               <StickerCanvas assetsById={library.assetsById} label={t('editor.canvasLabel')} outline={mode === 'sticker'} />
               {!items.length && (
                 <div className="absolute inset-0 grid place-items-center p-6 text-center">

@@ -7,6 +7,7 @@ import { renderAssetMarkup } from './svgParser.js';
 import { itemTransform } from './geometry.js';
 import { makeMaterial, MATERIAL_SHAPE } from './three/materials.js';
 import { resampleShape, samplePath, smoothGeometry } from './three/geometry.js';
+import polygonClipping from 'polygon-clipping';
 import logoUrl from '../assets/imperia-logo.svg?url';
 
 // canvas units per mm: a 1000-unit body ≈ 40 mm charm → grain tile of ~8 mm
@@ -110,7 +111,7 @@ export function buildCharm(items, assetsById, materialId = 'aldente', { attachme
     // sharp tips are softly rounded (radius ≈ the rounded edge) so the edge
     // never pokes out like spilled rubber; details on top (pupils) are smoothed
     // a little more, so their small crimps can't fold under the rounded edge
-    const shapes = resampled.map((s) => roundCorners(s, Math.max(piece.level > 0 ? bs * 2.4 : bs, 1.5), step));
+    const shapes = resampled.map((s) => roundCorners(s, Math.max(piece.level > 0 ? bs * 2.4 : bs, 1.5), step, piece.level > 0));
 
     // what lies underneath: only pieces this one really overlaps (a bounding
     // box is not enough: the mouth used to stack on the eyes, whose box spans
@@ -143,17 +144,35 @@ export function buildCharm(items, assetsById, materialId = 'aldente', { attachme
         }
       }
     }
-    const z1 = !placed.length ? 0 : uncovered > samples.length * 0.02 || lowest === Infinity ? 0 : lowest; // back of the piece
+    // the piece sits on what is under it (down to the lowest part it touches)
+    const z1 = !placed.length || lowest === Infinity ? 0 : lowest; // back of the piece
+    // part of it hangs past the pieces underneath (eyes sticking out of the
+    // head): that part only gets a support from the back of the charm up to
+    // the piece, so from the side nothing floats in the air and nothing goes
+    // through the body (the support stops exactly at the body's outline)
+    const overhang = placed.length && lowest !== Infinity && uncovered > samples.length * 0.02;
 
-    let geometry = new THREE.ExtrudeGeometry(shapes, {
-      depth: Math.max(1, z0 - z1 + depth - bt * 2),
-      bevelEnabled: true,
-      bevelThickness: bt,
-      bevelSize: bs,
-      bevelOffset: -bs,
-      bevelSegments: materialId === 'overcooked' ? 10 : 7,
-      curveSegments: 1, // already sampled by length
-    });
+    // the rounded edge is an inward offset of the outline: where a corner is
+    // tighter than the offset, the flat top folds over itself and vanishes
+    // (a hollow pupil). Check the top that came out and, if it lost most of
+    // its area, rebuild with a narrower rounded edge
+    const shapeArea = shapes.reduce((a, sh) => a + Math.abs(THREE.ShapeUtils.area(sh.getPoints())) - sh.holes.reduce((h, p) => h + Math.abs(THREE.ShapeUtils.area(p.getPoints())), 0), 0);
+    const extrude = (b) =>
+      new THREE.ExtrudeGeometry(shapes, {
+        depth: Math.max(1, z0 - z1 + depth - bt * 2),
+        bevelEnabled: true,
+        bevelThickness: bt,
+        bevelSize: b,
+        bevelOffset: -b,
+        bevelSegments: materialId === 'overcooked' ? 10 : 7,
+        curveSegments: 1, // already sampled by length
+      });
+    let geometry = extrude(bs);
+    for (let tries = 0; tries < 4 && capArea(geometry) < shapeArea * 0.35; tries++) {
+      geometry.dispose();
+      bs *= 0.55;
+      geometry = extrude(bs);
+    }
     geometry = smoothGeometry(geometry);
     // ExtrudeGeometry groups: 0 = front/back faces, 1 = sides incl. the bevel
     const material = piece.sideColor
@@ -163,6 +182,14 @@ export function buildCharm(items, assetsById, materialId = 'aldente', { attachme
     mesh.userData.body = piece.isFirstItem && piece.level === 0;
     mesh.position.z = z1 + bt;
     root.add(mesh);
+    if (overhang) {
+      const support = supportGeometry(polys, placed.filter((p) => p.box.intersectsBox(box)).map((p) => p.polys), z1 + bt, Math.min(bt, 4));
+      if (support) {
+        const m = new THREE.Mesh(support, makeMaterial(piece.sideColor || piece.color, materialId, UV_REPEAT));
+        m.position.z = 0.3;
+        root.add(m);
+      }
+    }
     const top = z0 + Math.max(1, depth - bt * 2) + bt * 2;
     piece.bevel = bt;
     piece.bevelSize = bs;
@@ -340,10 +367,85 @@ export function buildCharm(items, assetsById, materialId = 'aldente', { attachme
   return wrapper;
 }
 
+/** [[x, y], …] rings for polygon-clipping (outer first, then holes), closed. */
+const ring = (pts) => {
+  const r = pts.map((p) => [p.x, p.y]);
+  if (r.length && (r[0][0] !== r[r.length - 1][0] || r[0][1] !== r[r.length - 1][1])) r.push([...r[0]]);
+  return r;
+};
+const toGeom = (polys) => polys.map((q) => [ring(q.outer), ...q.holes.map(ring)]);
+
+/**
+ * The support under the overhanging part of a piece: the piece's outline
+ * minus everything already under it, extruded from the back of the charm up
+ * to `height`. Thin slivers left along shared edges are dropped.
+ */
+function supportGeometry(piecePolys, underPolys, height, edge) {
+  let parts;
+  try {
+    parts = polygonClipping.difference(toGeom(piecePolys), ...underPolys.map(toGeom));
+  } catch {
+    return null;
+  }
+  const shapes = [];
+  for (const poly of parts) {
+    const [outer, ...holes] = poly;
+    const pts = outer.slice(0, -1).map(([x, y]) => new THREE.Vector2(x, y));
+    const area = Math.abs(THREE.ShapeUtils.area(pts));
+    let perim = 0;
+    for (let i = 0; i < pts.length; i++) perim += pts[i].distanceTo(pts[(i + 1) % pts.length]);
+    // a sliver (thinner than about one unit) is a rounding leftover, not an overhang
+    if (pts.length < 3 || area < 20 || (2 * area) / perim < 1.5) continue;
+    const sh = new THREE.Shape(pts);
+    sh.holes = holes.map((h) => new THREE.Path(h.slice(0, -1).map(([x, y]) => new THREE.Vector2(x, y))));
+    shapes.push(sh);
+  }
+  if (!shapes.length) return null;
+  const b = Math.max(0.3, Math.min(edge, 3));
+  const g = new THREE.ExtrudeGeometry(shapes, {
+    depth: Math.max(0.5, height - 0.3 - b * 2),
+    bevelEnabled: true,
+    bevelThickness: b,
+    bevelSize: b * 0.6,
+    bevelOffset: -b * 0.6,
+    bevelSegments: 4,
+    curveSegments: 1,
+  });
+  g.translate(0, 0, b);
+  return smoothGeometry(g);
+}
+
+/** Area of the flat top of an extrusion (front cap triangles, before merging). */
+function capArea(geometry) {
+  const pos = geometry.attributes.position;
+  const cap = geometry.groups.filter((g) => g.materialIndex === 0);
+  let zTop = -Infinity;
+  for (let i = 0; i < pos.count; i++) zTop = Math.max(zTop, pos.getZ(i));
+  let area = 0;
+  for (const g of cap) {
+    for (let t = g.start; t < g.start + g.count; t += 3) {
+      if (pos.getZ(t) < zTop - 1e-4 || pos.getZ(t + 1) < zTop - 1e-4 || pos.getZ(t + 2) < zTop - 1e-4) continue;
+      const ax = pos.getX(t + 1) - pos.getX(t);
+      const ay = pos.getY(t + 1) - pos.getY(t);
+      const bx = pos.getX(t + 2) - pos.getX(t);
+      const by = pos.getY(t + 2) - pos.getY(t);
+      area += (ax * by - ay * bx) / 2;
+    }
+  }
+  return Math.abs(area);
+}
+
 /** Moving-average of the contour: rounds tips to about `radius`. */
-function smoothLoop(pts, radius, step) {
+function smoothLoop(pts, radius, step, measured = false) {
   const n = pts.length;
-  const k = Math.max(1, Math.round(radius / step / 2));
+  // window measured on the real spacing of the points (curves come back from
+  // getPoints() denser than the resampling step): with the nominal step the
+  // corners stayed much sharper than `radius`, and the rounded edge of small
+  // details (triangle pupils) folded over itself and lost its flat top
+  let len = 0;
+  for (let i = 0; i < n; i++) len += Math.hypot(pts[(i + 1) % n].x - pts[i].x, pts[(i + 1) % n].y - pts[i].y);
+  const spacing = n && measured ? Math.max(1e-3, Math.min(step, len / n)) : step;
+  const k = Math.max(1, Math.round(radius / spacing / 2));
   if (n < k * 4) return pts;
   let cur = pts.map((p) => new THREE.Vector2(p.x, p.y));
   for (let pass = 0; pass < 2; pass++) {
@@ -360,9 +462,9 @@ function smoothLoop(pts, radius, step) {
   }
   return cur;
 }
-function roundCorners(shape, radius, step) {
-  const s = new THREE.Shape(smoothLoop(shape.getPoints(), radius, step));
-  s.holes = shape.holes.map((h) => new THREE.Path(smoothLoop(h.getPoints(), radius, step)));
+function roundCorners(shape, radius, step, measured = false) {
+  const s = new THREE.Shape(smoothLoop(shape.getPoints(), radius, step, measured));
+  s.holes = shape.holes.map((h) => new THREE.Path(smoothLoop(h.getPoints(), radius, step, measured)));
   return s;
 }
 

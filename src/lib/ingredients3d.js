@@ -498,6 +498,20 @@ const EXTRA = {
   breadcrumbs() {
     return pile(['#c58d3e', '#d9a656', '#b37a33', '#e2b86c'], 260, 1.1, 15);
   },
+  // brodo: clear golden meat broth, a few drops of fat shining on top
+  broth() {
+    const g = bowlOf('#c98a2a', ['#f2c766'], { roughness: 0.04, count: 26, size: 0.9, seed0: 31 });
+    // clear broth: the white of the bowl shows through
+    Object.assign(g.children[1].material, { transparent: true, opacity: 0.62 });
+    g.children[1].scale.y = 0.1;
+    g.children[1].position.y = 10.8;
+    g.children.slice(2).forEach((b) => (b.position.y = 11.1));
+    return g;
+  },
+  // besciamella: thick white sauce with a grating of nutmeg
+  bechamel() {
+    return bowlOf('#f3ead6', ['#9b6a3c'], { roughness: 0.42, count: 40, size: 0.25, seed0: 41 });
+  },
   pesto() {
     return bowlOf('#4f7d2a', ['#3d6b20', '#6d9a3a', '#e9dfb0'], { roughness: 0.4, count: 140, size: 0.45, seed0: 21 });
   },

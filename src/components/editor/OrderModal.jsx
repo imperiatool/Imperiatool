@@ -1,4 +1,6 @@
-import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import Safe3D from '../three/Safe3D.jsx';
+import { lazyRetry } from '../../lib/lazyRetry.js';
 import Modal from '../ui/Modal.jsx';
 import Button from '../ui/Button.jsx';
 import Icon from '../ui/Icon.jsx';
@@ -11,7 +13,7 @@ import { buildStickerSvg, svgToPngBlob, blobToDataUrl } from '../../lib/exportIm
 import { useI18n } from '../../i18n/index.js';
 
 // Three.js is only downloaded when a 3D view opens.
-const Viewer3D = lazy(() => import('../three/Viewer3D.jsx'));
+const Viewer3D = lazyRetry(() => import('../three/Viewer3D.jsx'), 'viewer3d');
 
 function AttachmentIcon({ id }) {
   const s = { fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round' };
@@ -108,7 +110,7 @@ export default function OrderModal({ open, onClose, items, library }) {
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
         <aside className="space-y-4">
           <div className="relative aspect-square overflow-hidden rounded-3xl border border-line bg-studio">
-            <Suspense fallback={<div className="grid h-full place-items-center text-sm text-muted">{t('order.loading3d')}</div>}>
+            <Safe3D fallback={<div className="grid h-full place-items-center text-sm text-muted">{t('order.loading3d')}</div>}>
               {open && (
                 <Viewer3D
                   kind="charm"
@@ -121,7 +123,7 @@ export default function OrderModal({ open, onClose, items, library }) {
                   className="h-full w-full"
                 />
               )}
-            </Suspense>
+            </Safe3D>
           </div>
           <PreviewHint className="-mt-2">{t('viewer.hint3d')}</PreviewHint>
           <div>

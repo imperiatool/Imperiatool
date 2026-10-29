@@ -1,4 +1,6 @@
-import { Suspense, lazy, useState } from 'react';
+import { useState } from 'react';
+import Safe3D from '../three/Safe3D.jsx';
+import { lazyRetry } from '../../lib/lazyRetry.js';
 import { Link, Navigate, useLocation, useParams } from 'react-router-dom';
 import Button from '../ui/Button.jsx';
 import Icon from '../ui/Icon.jsx';
@@ -7,9 +9,10 @@ import RecipeBuilder from './RecipeBuilder.jsx';
 import PreviewHint from '../ui/PreviewHint.jsx';
 import { eventById, EVENTS } from '../../data/events.js';
 import { useI18n } from '../../i18n/index.js';
+import { useMeta } from '../../lib/useMeta.js';
 import { useEventFormat } from './useEventFormat.js';
 
-const Viewer3D = lazy(() => import('../three/Viewer3D.jsx'));
+const Viewer3D = lazyRetry(() => import('../three/Viewer3D.jsx'), 'viewer3d');
 
 function Fact({ label, children, note }) {
   return (
@@ -31,6 +34,7 @@ export default function EventDetailPage() {
   const f = useEventFormat();
   const [booking, setBooking] = useState(false);
   const e = eventById(id);
+  useMeta({ title: e ? `${f.text(e.title)} · Imperia® ${t('nav.events')}` : `Imperia® ${t('nav.events')}`, description: e ? f.text(e.short) : t('meta.events.desc') });
   if (!e) return <Navigate to="/events" replace />;
   const back = `/events${state?.from || ''}`;
   // online, self-paced: nothing to book, the button goes straight to the recipes
@@ -49,11 +53,11 @@ export default function EventDetailPage() {
           {/* the shape, live in 3D (picture while it loads) */}
           <div className="min-w-0 lg:sticky lg:top-6 lg:self-start">
             <div className={`relative aspect-square overflow-hidden rounded-3xl ${e.visual.bg === '#ffffff' ? 'border border-line' : ''}`} style={{ background: e.visual.bg, color: e.visual.ink }}>
-              <Suspense fallback={<img src={e.visual.img} alt="" className="absolute inset-0 h-full w-full object-contain p-[14%]" />}>
+              <Safe3D fallback={<img src={e.visual.img} alt="" className="absolute inset-0 h-full w-full object-contain p-[14%]" />}>
                 <div className="absolute inset-0">
                   <Viewer3D kind="pasta" pasta={{ shape: e.visual.shape, color: e.visual.color, finish: e.visual.finish }} transparent hint={false} className="h-full w-full" />
                 </div>
-              </Suspense>
+              </Safe3D>
               <span className="pointer-events-none absolute left-5 top-4 text-[11px] font-semibold uppercase tracking-[0.12em] tabular-nums">{e.number}</span>
               <span className="pointer-events-none absolute bottom-4 left-5 text-[11px] font-semibold uppercase tracking-[0.12em] opacity-75">
                 {t(`events.shape.${e.visual.shape}`)} · {t(`order.materials.${e.visual.finish}.name`)}
@@ -102,6 +106,34 @@ export default function EventDetailPage() {
             <section className="mt-10">
               <h2 className="text-xs font-semibold uppercase tracking-wider text-muted">{t('events.about')}</h2>
               <p className="mt-3 text-sm leading-relaxed">{f.text(e.description)}</p>
+            </section>
+
+            {/* the experience described with the same words as the products
+                (pasta shape, finish = level…), as plain text people, search
+                engines and assistants can read */}
+            <section className="mt-8" aria-labelledby="event-glance" data-testid="event-glance">
+              <h2 id="event-glance" className="text-xs font-semibold uppercase tracking-wider text-muted">
+                {t('events.glance')}
+              </h2>
+              <dl className="mt-3 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
+                {[
+                  [t('events.attr.type'), f.kind(e)],
+                  [t('events.attr.formats'), e.formats.map((x) => t(`events.format.${x}`)).join(', ')],
+                  [t('events.attr.shapes'), f.text(e.shapes)],
+                  [t('events.attr.level'), `${f.level(e)} · ${t(`events.levelDesc.${e.level}`)}`],
+                  [t('events.attr.mode'), e.online ? t('events.mode.online') : t('events.mode.inperson')],
+                  [t('events.location'), f.place(e)],
+                  [t('events.duration'), f.duration(e.minutes)],
+                  [t('events.attr.booking'), e.online ? t('events.booking.none') : t('events.booking.demo')],
+                ]
+                  .filter(([, v]) => v)
+                  .map(([k, v]) => (
+                    <div key={k} className="min-w-0">
+                      <dt className="text-xs text-muted">{k}</dt>
+                      <dd className="font-medium">{v}</dd>
+                    </div>
+                  ))}
+              </dl>
             </section>
             <div className="mt-8 grid gap-8 sm:grid-cols-2">
               <section>

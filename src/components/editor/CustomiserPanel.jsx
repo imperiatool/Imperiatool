@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useState } from 'react';
+import { forwardRef, useEffect, useRef, useState } from 'react';
 import Slider from '../ui/Slider.jsx';
 import Swatches from '../ui/Swatches.jsx';
 import Button from '../ui/Button.jsx';
@@ -11,14 +11,16 @@ import { useI18n } from '../../i18n/index.js';
 const pct = (v) => `${Math.round(v * 100)}%`;
 const deg = (v) => `${Math.round(v)}°`;
 
-// Mirror is only useful where the pupils sit off-centre (Square Ravioli eyes)
+// Mirror is only useful where the pupils sit off-centre (the square Raviolo eyes)
 const MIRRORABLE = new Set(['Ravioli quadrati']);
 
 /**
- * Accordion: one section per part of the character (Body, Eyes, Mouth). The
- * three headers are always visible with their state; one section is open at a
- * time. Inside: the shapes, then the chosen one with a large preview on the
- * left and its colours on the right. Choices are kept when switching section.
+ * One part of the character at a time (Body, Eyes, Mouth). The three
+ * selectors sit side by side in a compact bar that stays at the top while
+ * scrolling; only the active part's panel is shown (the others are not kept
+ * hidden in the page). Inside: the shapes, then the chosen one with a large
+ * preview on the left and its colours on the right. Choices live in the editor
+ * store, so they are kept when switching part.
  */
 const CustomiserPanel = forwardRef(function CustomiserPanel({ library }, ref) {
   const { t, label, slotLabel } = useI18n();
@@ -26,9 +28,16 @@ const CustomiserPanel = forwardRef(function CustomiserPanel({ library }, ref) {
   const items = useEditorStore((s) => s.items);
   const selectedId = useEditorStore((s) => s.selectedId);
   const st = useEditorStore.getState;
-  const [openId, setOpenId] = useState(null); // all closed at first
-
   const sections = categories.filter((c) => assets.some((a) => a.categoryId === c.id));
+  const [picked, setPicked] = useState(null);
+  // the active part: the one picked, otherwise the first (Body)
+  const openId = sections.some((c) => c.id === picked) ? picked : sections[0]?.id ?? null;
+  const panelRef = useRef(null);
+  const switched = useRef(false);
+  const setOpenId = (id) => {
+    switched.current = true;
+    setPicked(id);
+  };
   const required = sections.filter((c) => c.required);
   const done = (c) => items.some((i) => i.categoryId === c.id && assetsById[i.assetId]);
   const doneCount = required.filter(done).length;
@@ -41,7 +50,14 @@ const CustomiserPanel = forwardRef(function CustomiserPanel({ library }, ref) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedId]);
 
-  const toggle = (id) => setOpenId((cur) => (cur === id ? null : id));
+  // after switching part, if the panel's top had scrolled away, bring it
+  // just under the bar (the new panel can be shorter: no sudden jump)
+  useEffect(() => {
+    if (!switched.current) return;
+    switched.current = false;
+    const el = panelRef.current;
+    if (el && el.getBoundingClientRect().top < 0) el.scrollIntoView({ block: 'start' });
+  }, [openId]);
   const nextOf = (cat) => {
     const i = sections.indexOf(cat);
     return sections.slice(i + 1).find((c) => c.required && !done(c)) || sections.find((c) => c !== cat && c.required && !done(c));
@@ -49,8 +65,8 @@ const CustomiserPanel = forwardRef(function CustomiserPanel({ library }, ref) {
 
   return (
     <div ref={ref} className="scroll-thin space-y-3 p-4 lg:h-full lg:overflow-y-auto" data-testid="customiser">
-      {/* tabs: one per part, all needed; the open one stands out */}
-      <div>
+      {/* Body | Eyes | Mouth: always at hand at the top; the active one stands out */}
+      <div className="sticky top-0 z-10 -mx-4 -mt-4 bg-cream px-4 pb-2 pt-4">
         <div
           role="tablist"
           aria-label={t('picker.progress', { done: doneCount, total: required.length })}
@@ -64,6 +80,7 @@ const CustomiserPanel = forwardRef(function CustomiserPanel({ library }, ref) {
                 key={c.id}
                 type="button"
                 role="tab"
+                id={`step-${c.id}`}
                 aria-selected={on}
                 aria-controls={`panel-${c.id}`}
                 onClick={() => setOpenId(c.id)}
@@ -85,23 +102,17 @@ const CustomiserPanel = forwardRef(function CustomiserPanel({ library }, ref) {
         </p>
       </div>
 
-      {sections.map((cat, n) => {
+      {sections.filter((cat) => cat.id === openId).map((cat) => {
+        const n = sections.indexOf(cat);
         const list = assets.filter((a) => a.categoryId === cat.id);
         const parts = items.filter((i) => i.categoryId === cat.id && assetsById[i.assetId]);
         const open = openId === cat.id;
         const chosen = parts.map((p) => label(assetsById[p.assetId])).join(', ');
         const next = open && parts.length ? nextOf(cat) : null;
         return (
-          <section key={cat.id} className={`overflow-hidden rounded-2xl border bg-white transition ${open ? 'border-brand' : 'border-line'}`} data-testid={`section-${cat.id}`}>
+          <section key={cat.id} ref={panelRef} role="tabpanel" aria-labelledby={`step-${cat.id}`} className="scroll-mt-24 overflow-hidden rounded-2xl border border-brand bg-white" data-testid={`section-${cat.id}`}>
             <h3>
-              <button
-                type="button"
-                onClick={() => toggle(cat.id)}
-                aria-expanded={open}
-                aria-controls={`panel-${cat.id}`}
-                className="flex w-full items-center gap-3 px-3 py-3 text-left"
-                data-testid={`toggle-${cat.id}`}
-              >
+              <div className="flex w-full items-center gap-3 px-3 py-3 text-left" data-testid={`toggle-${cat.id}`}>
                 <span className={`grid h-6 w-6 shrink-0 place-items-center rounded-full text-xs font-semibold ${done(cat) ? 'bg-brand text-white' : 'border border-ink/30 text-ink/60'}`}>
                   {done(cat) ? <Icon name="check" className="h-3.5 w-3.5" strokeWidth={3} /> : n + 1}
                 </span>
@@ -110,8 +121,7 @@ const CustomiserPanel = forwardRef(function CustomiserPanel({ library }, ref) {
                   <span className={`block truncate text-xs ${parts.length ? 'text-ink/70' : 'text-muted'}`}>{parts.length ? chosen : t('picker.choose')}</span>
                 </span>
                 {parts[0] && <AssetThumb asset={assetsById[parts[0].assetId]} colors={parts[0].colors} className="h-9 w-9 shrink-0" idPrefix={`hd-${parts[0].uid}`} />}
-                <Icon name="down" className={`h-4 w-4 shrink-0 text-muted transition ${open ? 'rotate-180' : ''}`} />
-              </button>
+              </div>
             </h3>
 
             {open && (

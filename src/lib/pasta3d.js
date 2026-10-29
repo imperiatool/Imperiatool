@@ -5,7 +5,7 @@ import * as THREE from 'three';
 import { makeMaterial } from './three/materials.js';
 import { boxUV, smoothstep } from './three/geometry.js';
 
-export const PASTA_SHAPES = ['reginette', 'sculpture', 'spaghetti', 'tagliatelle', 'gnocchi', 'fusilli', 'ravioli', 'penne', 'maccheroni', 'rigatoni', 'bucatini', 'orecchiette', 'farfalle', 'trofie'];
+export const PASTA_SHAPES = ['reginette', 'sculpture', 'spaghetti', 'tagliatelle', 'gnocchi', 'fusilli', 'ravioli', 'penne', 'maccheroni', 'rigatoni', 'bucatini', 'orecchiette', 'farfalle', 'trofie', 'tortellini', 'conchiglie', 'anelli', 'cavatappi', 'lasagne'];
 const UV = 1 / 9;
 const TAU = Math.PI * 2;
 
@@ -511,7 +511,153 @@ function trofie() {
   });
 }
 
-const BUILDERS = { reginette, sculpture, spaghetti, tagliatelle, gnocchi, fusilli, ravioli, penne, maccheroni, rigatoni, bucatini, orecchiette, farfalle, trofie };
+// Tortellini: a little filled ring of egg pasta, plump in the middle, the two
+// tips pressed together at the back, with the folded edge standing up like a hat brim
+function tortellini() {
+  const one = () => {
+    const R = 4.4;
+    return sweep(
+      (u, v) => {
+        const a = (u - 0.5) * TAU * 1.04; // the tips overlap a little
+        const phi = v * TAU;
+        const belly = 1.55 + 1.35 * Math.cos((u - 0.5) * Math.PI) ** 1.4;
+        // round section, with the folded edge (brim) rising on top-outside
+        const brim = 1 + 0.75 * Math.max(0, Math.cos(phi - 0.9)) ** 8;
+        const rr = belly * brim;
+        const out = new THREE.Vector3(Math.cos(a), 0, Math.sin(a));
+        return new THREE.Vector3(Math.cos(a) * R, 0, Math.sin(a) * R).addScaledVector(out, Math.cos(phi) * rr).add(new THREE.Vector3(0, Math.sin(phi) * rr, 0));
+      },
+      140,
+      48,
+    );
+  };
+  const place = [
+    [-8, 0, 5, 0.3, 0.35],
+    [8, 0, -4, -1.2, 0.3],
+    [-1, 0, -14, 2.2, 0.4],
+    [12, 0, 11, 0.9, 0.3],
+    [-12, 0, -9, -2.4, 0.35],
+    [2, 0, 14, 1.6, 0.3],
+  ];
+  return place.map(([x, y, z, ry, rx]) => {
+    const g = one();
+    g.rotateX(rx);
+    g.rotateY(ry);
+    g.translate(x, y + 3.6, z);
+    return g;
+  });
+}
+
+// Conchiglie: ridged shells, curled with a wide opening on one side
+function conchiglie() {
+  const one = (S) => {
+    const p = (u, v) => {
+      // u along the shell (tip to tip), v across the curl
+      const t = (u - 0.5) * 2;
+      const r = S * 0.34 * Math.sqrt(Math.max(0, 1 - t * t)) ** 0.8 + 0.4;
+      const a = 0.55 * Math.PI + v * Math.PI * 1.25; // a third of the round stays open
+      return new THREE.Vector3(t * S * 0.55, Math.sin(a) * r, Math.cos(a) * r);
+    };
+    const thick = (u, v) => {
+      const ridge = 1 + 0.5 * Math.max(0, Math.cos(v * Math.PI * 1.25 * 9)) ** 2;
+      return [0.45 * ridge, 0.4];
+    };
+    return solidSheet(p, thick, 90, 90);
+  };
+  const place = [
+    [-9, 0, 4, 0.4, 14],
+    [10, 0, -4, -1.1, 13],
+    [0, 0, -16, 2.1, 13.5],
+    [13, 0, 12, 0.8, 12],
+  ];
+  return place.map(([x, y, z, ry, S]) => {
+    const g = one(S);
+    // the opening faces up and a little towards the viewer
+    g.rotateX(-0.2);
+    g.rotateY(ry);
+    g.translate(x, y + S * 0.36, z);
+    return g;
+  });
+}
+
+// Anelli: small rings of pasta, scattered
+function anelli() {
+  const out = [];
+  const rand = rng(23);
+  for (let k = 0; k < 16; k++) {
+    const g = new THREE.TorusGeometry(3.2, 1.05, 16, 40);
+    g.scale(1, 1, 1.25);
+    g.rotateX(Math.PI / 2 + (rand() - 0.5) * 0.5);
+    g.rotateZ((rand() - 0.5) * 0.4);
+    const a = rand() * TAU;
+    const r = Math.sqrt(rand()) * 18;
+    g.translate(Math.cos(a) * r, 1.4 + rand() * 1.5, Math.sin(a) * r);
+    boxUV(g);
+    out.push(g);
+  }
+  return out;
+}
+
+// Cavatappi: ridged hollow corkscrews
+function cavatappi() {
+  const make = (L, seed) => {
+    const R = 3.4; // helix radius
+    const r = 1.9; // tube radius
+    const turns = 2.2;
+    return sweep(
+      (u, v) => {
+        const a = u * turns * TAU + seed;
+        const c = new THREE.Vector3((u - 0.5) * L, Math.cos(a) * R, Math.sin(a) * R);
+        const phi = v * TAU;
+        const ridge = 1 + 0.08 * Math.cos(phi * 10);
+        const ends = Math.min(1, Math.min(u, 1 - u) * 30);
+        const rr = r * ridge * (0.85 + 0.15 * ends);
+        const n1 = new THREE.Vector3(0, Math.cos(a), Math.sin(a));
+        const n2 = new THREE.Vector3(1, 0, 0);
+        return c.addScaledVector(n1, Math.cos(phi) * rr).addScaledVector(n2, Math.sin(phi) * rr * 0.9);
+      },
+      260,
+      40,
+    );
+  };
+  const place = [
+    [-6, 0, 6, 0.3, 30],
+    [8, 0, -8, -0.8, 28],
+    [-4, 0, -20, 1.4, 26],
+  ];
+  return place.map(([x, y, z, ry, L], i) => {
+    const g = make(L, i * 1.7);
+    g.rotateY(ry);
+    g.translate(x, y + 5.6, z);
+    return g;
+  });
+}
+
+// Lasagne: wide sheets, two stacked and one with ruffled long edges
+function lasagne() {
+  const sheet = (W, H, ruffle) =>
+    solidSheet(
+      (u, v) => {
+        const x = (u - 0.5) * W;
+        const z = (v - 0.5) * H;
+        const edge = smoothstep(0.82, 1, Math.abs(v - 0.5) * 2);
+        const y = ruffle ? edge * 1.6 * Math.sin((u * W * TAU) / 6) : 0.4 * Math.sin(u * 3.1) * Math.sin(v * 2.3);
+        return new THREE.Vector3(x, y, z);
+      },
+      () => [0.5, 0.5],
+      120,
+      50,
+    );
+  const a = sheet(70, 36, false);
+  a.rotateY(0.15);
+  a.translate(-4, 1, 4);
+  const b = sheet(66, 34, true);
+  b.rotateY(-0.35);
+  b.translate(6, 3.2, -6);
+  return [a, b];
+}
+
+const BUILDERS = { reginette, sculpture, spaghetti, tagliatelle, gnocchi, fusilli, ravioli, penne, maccheroni, rigatoni, bucatini, orecchiette, farfalle, trofie, tortellini, conchiglie, anelli, cavatappi, lasagne };
 
 /**
  * @param shape  one of PASTA_SHAPES

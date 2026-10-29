@@ -5,10 +5,10 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { uid } from '../lib/id.js';
 import { buildSeedLibrary } from '../data/seedLibrary.js';
-import { withLabels, snapAssetColors } from '../data/labels.js';
+import { withLabels, snapAssetColors, ASSET_LABELS } from '../data/labels.js';
 
 export const LIBRARY_STORAGE_KEY = 'sticker-builder:library';
-export const LIBRARY_VERSION = 6;
+export const LIBRARY_VERSION = 7;
 
 export const useLibraryStore = create(
   persist(
@@ -139,7 +139,13 @@ export const useLibraryStore = create(
           s = { ...s, categories: s.categories.map((c) => (c.outlineFill?.toLowerCase() === '#e3201b' ? { ...c, outlineFill: '#e1201b' } : c)) };
         }
         // v6: Tagliatella body → Reginetta
-        if (version < 6) return { ...s, ...withLabels(s, { force: version < 4 }) };
+        if (version < 6) s = { ...s, ...withLabels(s, { force: version < 4 }) };
+        // v7: Reginette (plural) and eyes named like the bodies: Classic
+        // Tortellino, Raviolo, Giant Raviolo; the body Classic Raviolo → Raviolo
+        if (version < 7) {
+          const renamed = ['Tortellino classico', 'Raviolo classico', 'Raviolo gigante', 'Reginetta', 'Reginette', 'Ravioli quadrati', 'Ravioli triangolari', 'Ravioli tondi'];
+          s = { ...s, assets: s.assets.map((a) => (renamed.includes(a.name) && ASSET_LABELS[a.name] ? { ...a, labels: ASSET_LABELS[a.name] } : a)) };
+        }
         return s;
       },
     },

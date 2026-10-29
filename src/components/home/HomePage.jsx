@@ -3,7 +3,10 @@ import caseImg from '../../assets/previews/case.png';
 import charmImg from '../../assets/previews/charm.png';
 import stickerImg from '../../assets/previews/sticker.png';
 import eventsImg from '../../assets/previews/events.png';
+import heroImg from '../../assets/home/hero.webp';
+import heroSmImg from '../../assets/home/hero-sm.webp';
 import { useI18n } from '../../i18n/index.js';
+import { useMeta } from '../../lib/useMeta.js';
 import SpaghettiTwirl from './SpaghettiTwirl.jsx';
 import StickerPeel from './StickerPeel.jsx';
 
@@ -23,10 +26,43 @@ const CARDS = [
  */
 export default function HomePage() {
   const { t } = useI18n();
+  useMeta({
+    title: t('meta.home.title'),
+    description: t('meta.home.desc'),
+    jsonld: {
+      '@context': 'https://schema.org',
+      '@type': 'WebPage',
+      name: t('meta.home.title'),
+      description: t('meta.home.desc'),
+      hasPart: CARDS.map((c) => ({ '@type': 'WebPage', name: `Imperia® ${t(`home.${c.key}.title`)}`, description: t(`home.${c.key}.text`), url: `#${c.to}` })),
+    },
+  });
   return (
     <div className="min-h-full bg-cream">
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-10">
-        <h1 className="sr-only">Imperia®</h1>
+        {/* hero, like the banners of imperia.com: a pasta close-up (Reginette
+            in 3D) with the message on the left, on a warm shade for contrast */}
+        <section
+          className="relative mb-8 flex min-h-[420px] items-end overflow-hidden rounded-[22px] rounded-br-[96px] sm:mb-10 sm:min-h-[380px] sm:items-center sm:rounded-br-[140px] lg:min-h-[440px]"
+          data-testid="home-hero"
+        >
+          <img
+            src={heroImg}
+            srcSet={`${heroSmImg} 1200w, ${heroImg} 2400w`}
+            sizes="(min-width: 1280px) 1232px, 100vw"
+            alt=""
+            fetchPriority="high"
+            className="absolute inset-0 h-full w-full object-cover object-[60%_50%]"
+          />
+          <div className="absolute inset-0 bg-[linear-gradient(0deg,rgba(58,24,6,0.82)_0%,rgba(58,24,6,0.55)_45%,rgba(58,24,6,0.12)_100%)] sm:bg-[linear-gradient(90deg,rgba(58,24,6,0.78)_0%,rgba(58,24,6,0.5)_45%,rgba(58,24,6,0.05)_80%)]" />
+          <div className="relative max-w-[46rem] px-6 pb-10 pt-24 sm:px-12 sm:py-14 lg:px-16">
+            <h1 className="text-[26px] font-bold leading-[1.15] tracking-[-0.01em] text-white sm:text-[32px] lg:text-[38px]" data-testid="home-hero-title">
+              {t('home.bottom.title')}
+            </h1>
+            <p className="mt-3 text-[17px] leading-snug text-white sm:mt-4 sm:text-[20px] lg:text-[23px]">{t('home.bottom.text')}</p>
+          </div>
+        </section>
+
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">
           {CARDS.map((c) => (
             <Link key={c.key} to={c.to} className="home-card group flex flex-col rounded-[20px] px-7 pb-8 pt-8" data-testid={`home-${c.key}`}>

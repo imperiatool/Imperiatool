@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Button from '../ui/Button.jsx';
 import Icon from '../ui/Icon.jsx';
 import { useI18n } from '../../i18n/index.js';
@@ -6,30 +6,38 @@ import { useEditorStore } from '../../store/useEditorStore.js';
 import { useStickerCollection, sameDesign, copyItems, MAX_STICKERS } from '../../store/useStickerCollection.js';
 import { renderStickerCanvas } from '../../lib/exportImage.js';
 
-const thumbOf = async (items, assetsById) => (await renderStickerCanvas(items, assetsById, { border: { width: 30, color: '#ffffff' }, maxSide: 220 })).toDataURL('image/png');
+const thumbOf = async (items, assetsById) => (items.length ? (await renderStickerCanvas(items, assetsById, { border: { width: 30, color: '#ffffff' }, maxSide: 220 })).toDataURL('image/png') : null);
 
-/** Puts a saved design back in the editor (its own copy: editing never touches the saved one until saved). */
+/** Puts a saved design back in the editor (its own copy). */
 export function loadInEditor(items) {
   useEditorStore.setState({ items: copyItems(items), selectedId: null, past: [], future: [] });
 }
 
 /**
- * Under the sticker canvas: the collection of designs. Save the sticker on
- * the canvas, start a new one, reopen any saved one (the design on the canvas
- * is kept in the collection first, so nothing is lost when moving between
- * stickers) and go to the review to order them.
+ * Under the sticker canvas: the collection of designs.
+ *   - the first sticker goes in with "Add to collection";
+ *   - after that, + adds the next one (a new sticker, or the design on the
+ *     canvas if it is not in the collection yet);
+ *   - the sticker being edited is kept up to date in the collection by
+ *     itself, so moving between stickers never loses a design;
+ *   - tapping a sticker reopens it; "Review and order" opens the review.
+ * Repeated taps cannot add duplicates: + does nothing while the current
+ * sticker is still empty or while the previous tap is being handled.
  */
 export default function StickerCollection({ library, onReview }) {
   const { t } = useI18n();
   const items = useEditorStore((s) => s.items);
-  const { stickers, editingId, add, update, setEditing } = useStickerCollection();
+  const { stickers, editingId, add, update, remove, setEditing } = useStickerCollection();
   const [note, setNote] = useState('');
+  const busy = useRef(false);
   const editing = stickers.find((s) => s.id === editingId);
-  const saved = editing && sameDesign(editing.items, items);
-  const full = !editing && stickers.length >= MAX_STICKERS;
+  const full = stickers.length >= MAX_STICKERS;
 
-  // a fresh visit starts from a new design (the editor itself is not kept)
+  // a fresh visit starts from a new design (the editor itself is not kept);
+  // an empty sticker left from last time is dropped
   useEffect(() => {
+    const st = useStickerCollection.getState();
+    st.stickers.filter((s) => !s.items.length).forEach((s) => st.remove(s.id));
     setEditing(null);
   }, [setEditing]);
   useEffect(() => {
@@ -38,42 +46,84 @@ export default function StickerCollection({ library, onReview }) {
     return () => clearTimeout(id);
   }, [note]);
 
-  /** Keeps the design on the canvas in the collection; returns false if it could not. */
-  const keep = async () => {
-    if (!items.length || saved) return true;
-    const thumb = await thumbOf(items, library.assetsById);
-    if (editing) {
-      update(editing.id, items, thumb);
-      return true;
+  // the sticker being edited follows the canvas (a moment after the last change)
+  useEffect(() => {
+    if (!editing || sameDesign(editing.items, items)) return undefined;
+    const id = setTimeout(async () => {
+      const thumb = await thumbOf(items, library.assetsById);
+      const cur = useStickerCollection.getState();
+      if (cur.editingId === editing.id) cur.update(editing.id, items, thumb);
+    }, 500);
+    return () => clearTimeout(id);
+  }, [items, editing, library.assetsById]);
+
+  /** Saves the canvas into the sticker being edited right away (before switching). */
+  const flush = async () => {
+    const cur = useStickerCollection.getState();
+    const ed = cur.stickers.find((s) => s.id === cur.editingId);
+    const now = useEditorStore.getState().items;
+    if (ed && !sameDesign(ed.items, now)) update(ed.id, now, await thumbOf(now, library.assetsById));
+  };
+  const run = async (fn) => {
+    if (busy.current) return;
+    busy.current = true;
+    try {
+      await fn();
+    } finally {
+      busy.current = false;
     }
-    return add(items, thumb) != null;
   };
-  const save = async () => {
-    if (await keep()) setNote(t('editor.coll.savedNote'));
-    else setNote(t('editor.coll.full', { max: MAX_STICKERS }));
-  };
-  const switchTo = async (id) => {
-    const hadUnsaved = items.length && !saved;
-    const ok = await keep();
-    const target = useStickerCollection.getState().stickers.find((s) => s.id === id);
-    if (id && !target) return;
-    if (id) loadInEditor(target.items);
-    else useEditorStore.setState({ items: [], selectedId: null, past: [], future: [] });
-    useStickerCollection.getState().setEditing(id);
-    if (hadUnsaved) setNote(ok ? t('editor.coll.kept') : t('editor.coll.full', { max: MAX_STICKERS }));
-  };
+
+  // the first sticker
+  const addFirst = () =>
+    run(async () => {
+      if (!items.length) return;
+      add(items, await thumbOf(items, library.assetsById));
+      setNote(t('editor.coll.savedNote'));
+    });
+  // + : the next sticker
+  const addNext = () =>
+    run(async () => {
+      if (full) return setNote(t('editor.coll.full', { max: MAX_STICKERS }));
+      if (!editing) {
+        // the design on the canvas is not in the collection yet: add it
+        if (!items.length) return;
+        add(items, await thumbOf(items, library.assetsById));
+        return setNote(t('editor.coll.added'));
+      }
+      if (!items.length) return; // the current sticker is still empty
+      await flush();
+      useEditorStore.setState({ items: [], selectedId: null, past: [], future: [] });
+      add([], null);
+      setNote(t('editor.coll.newNote'));
+    });
+  const open = (id) =>
+    run(async () => {
+      await flush();
+      const cur = useStickerCollection.getState();
+      const leaving = cur.stickers.find((s) => s.id === cur.editingId);
+      if (leaving && !leaving.items.length) remove(leaving.id); // an empty sticker is not kept
+      const target = useStickerCollection.getState().stickers.find((s) => s.id === id);
+      if (!target) return;
+      loadInEditor(target.items);
+      setEditing(id);
+    });
+
+  const plusDisabled = full || (editing ? !items.length : !items.length);
 
   return (
     <div className="mx-auto w-full max-w-xl rounded-2xl border border-line bg-white px-3 py-2.5" data-testid="sticker-collection">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-[13px] font-bold uppercase tracking-[-0.01em] text-brand">
-          {t('editor.coll.title')} <span className="font-semibold tabular-nums text-ink">{t('editor.coll.count', { n: stickers.length, max: MAX_STICKERS })}</span>
+          {t('editor.coll.title')} <span className="font-semibold tabular-nums text-ink">{t('editor.coll.count', { n: stickers.filter((s) => s.items.length).length, max: MAX_STICKERS })}</span>
         </p>
         <div className="flex flex-wrap gap-1.5">
-          <Button size="sm" variant="secondary" onClick={save} disabled={!items.length || saved || full} data-testid="collection-save">
-            <Icon name={saved ? 'check' : 'plus'} /> {saved ? t('editor.coll.saved') : editing ? t('editor.coll.update') : t('editor.coll.save')}
-          </Button>
-          <Button size="sm" variant="primary" onClick={async () => (await keep(), onReview())} disabled={!stickers.length && !items.length} data-testid="collection-review">
+          {!stickers.length && (
+            <Button size="sm" variant="secondary" onClick={addFirst} disabled={!items.length} data-testid="collection-save">
+              <Icon name="plus" /> {t('editor.coll.save')}
+            </Button>
+          )}
+          <Button size="sm" variant="primary" onClick={() => run(async () => (await flush(), onReview()))} disabled={!stickers.some((s) => s.items.length)} data-testid="collection-review">
             <Icon name="cart" /> {t('editor.coll.review')}
           </Button>
         </div>
@@ -84,27 +134,29 @@ export default function StickerCollection({ library, onReview }) {
             key={s.id}
             type="button"
             role="listitem"
-            onClick={() => s.id !== editingId && switchTo(s.id)}
+            onClick={() => s.id !== editingId && open(s.id)}
             aria-current={s.id === editingId ? 'true' : undefined}
             aria-label={t('editor.coll.open', { n: n + 1 })}
             title={t('editor.coll.open', { n: n + 1 })}
             className={`checker grid h-12 w-12 place-items-center rounded-xl border-2 p-0.5 transition ${s.id === editingId ? 'border-brand' : 'border-line hover:border-ink/40'}`}
             data-testid={`collection-item-${n}`}
           >
-            <img src={s.thumb} alt="" className="h-full w-full object-contain" />
+            {s.thumb ? <img src={s.thumb} alt="" className="h-full w-full object-contain" /> : <span className="text-xs font-semibold tabular-nums text-ink/50">{n + 1}</span>}
           </button>
         ))}
-        <button
-          type="button"
-          onClick={() => switchTo(null)}
-          disabled={!items.length && !editingId}
-          className="grid h-12 w-12 place-items-center rounded-xl border-2 border-dashed border-line text-ink transition hover:border-ink/40 disabled:opacity-40"
-          aria-label={t('editor.coll.new')}
-          title={t('editor.coll.new')}
-          data-testid="collection-new"
-        >
-          <Icon name="plus" />
-        </button>
+        {stickers.length > 0 && (
+          <button
+            type="button"
+            onClick={addNext}
+            disabled={plusDisabled}
+            className="grid h-12 w-12 place-items-center rounded-xl border-2 border-dashed border-brand/60 text-brand transition hover:border-brand hover:bg-brand/5 disabled:border-line disabled:text-ink/30 disabled:hover:bg-transparent"
+            aria-label={t('editor.coll.addNext')}
+            title={t('editor.coll.addNext')}
+            data-testid="collection-new"
+          >
+            <Icon name="plus" className="h-5 w-5" />
+          </button>
+        )}
         {!stickers.length && <span className="ml-1 text-xs text-ink/70">{t('editor.coll.empty')}</span>}
       </div>
       {note && (
