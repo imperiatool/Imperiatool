@@ -150,8 +150,29 @@ export default function StickerCanvas({ assetsById, svgRef: externalRef, label, 
     svgRef.current.setPointerCapture?.(e.pointerId);
   };
 
+  // a finger on the empty canvas: it scrolls the page (the canvas never traps
+  // the scroll) and only a light tap clears the selection, so trying to scroll
+  // never deselects by accident. With a mouse a press on the background clears
+  // the selection at once, as before.
+  const bg = useRef(null);
+  const onBackgroundDown = (e) => {
+    if (pointers.current.size >= 2) return;
+    if (e.pointerType === 'mouse') {
+      useEditorStore.getState().select(null);
+      return;
+    }
+    bg.current = { id: e.pointerId, y0: e.clientY, x0: e.clientX, y: e.clientY, moved: false, scroller: svgRef.current?.closest('main') };
+  };
+
   const onPointerMove = (e) => {
     if (pointers.current.has(e.pointerId)) pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    const g = bg.current;
+    if (g && g.id === e.pointerId && !pinch.current) {
+      if (Math.hypot(e.clientX - g.x0, e.clientY - g.y0) > 8) g.moved = true;
+      if (g.moved && g.scroller) g.scroller.scrollTop -= e.clientY - g.y;
+      g.y = e.clientY;
+      return;
+    }
     const pz = pinch.current;
     if (pz && pointers.current.size >= 2) {
       const [a, b] = [...pointers.current.values()];
@@ -207,6 +228,12 @@ export default function StickerCanvas({ assetsById, svgRef: externalRef, label, 
   };
 
   const endDrag = (e) => {
+    const g = bg.current;
+    if (g && e && g.id === e.pointerId) {
+      bg.current = null;
+      if (!g.moved && e.type === 'pointerup' && !pinch.current) useEditorStore.getState().select(null);
+    }
+    if (pinch.current) bg.current = null;
     if (e) untrackPointer(e);
     if (drag.current) svgRef.current?.releasePointerCapture?.(drag.current.pointerId);
     drag.current = null;
@@ -225,7 +252,7 @@ export default function StickerCanvas({ assetsById, svgRef: externalRef, label, 
       onPointerUp={endDrag}
       onPointerCancel={endDrag}
       onPointerDownCapture={trackPointer}
-      onPointerDown={() => pointers.current.size < 2 && useEditorStore.getState().select(null)}
+      onPointerDown={onBackgroundDown}
       role="application"
       aria-label={label}
     >

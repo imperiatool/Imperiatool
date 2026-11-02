@@ -10,9 +10,10 @@ const MAX_PER_BOOKING = 6;
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 /**
- * Demo booking for the concept events: participants, name and email, summary,
- * confirmation. Front-end only: nothing is reserved, sent or charged, and no
- * payment details are ever asked for.
+ * Booking form of an experience: participants, name and email, summary. No
+ * booking or payment service is connected yet, so the last step says plainly
+ * that nothing has been reserved or charged (no confirmation or reference is
+ * made up), and no payment details are ever asked for.
  */
 export default function BookingModal({ open, onClose, event: e, back = '/events' }) {
   const { t } = useI18n();
@@ -23,7 +24,6 @@ export default function BookingModal({ open, onClose, event: e, back = '/events'
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [touched, setTouched] = useState({});
-  const [ref, setRef] = useState('');
 
   // every opening starts a fresh booking for this event
   useEffect(() => {
@@ -48,7 +48,6 @@ export default function BookingModal({ open, onClose, event: e, back = '/events'
       document.getElementById(errors.name ? 'book-name' : 'book-email')?.focus();
       return;
     }
-    setRef(`DEMO-${e.number}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`);
     setStep('done');
   };
 
@@ -87,7 +86,7 @@ export default function BookingModal({ open, onClose, event: e, back = '/events'
         <p className="font-bold leading-tight" data-testid="book-event">{f.text(e.title)}</p>
         <p className="mt-1 text-muted">{f.place(e)}</p>
         <p className="text-muted">
-          {f.when(e)} {e.start && <span className="text-[11px]">({t('events.illustrative').toLowerCase()})</span>}
+          {f.when(e)}
         </p>
       </div>
     </div>
@@ -95,10 +94,6 @@ export default function BookingModal({ open, onClose, event: e, back = '/events'
 
   return (
     <Modal open={open} onClose={onClose} title={step === 'done' ? t('book.doneTitle') : t('book.title')} size="md">
-      <p className="-mt-1 mb-4 inline-flex items-center gap-1.5 rounded-full bg-brand/10 px-3 py-1 text-xs font-semibold text-brand-dark" data-testid="book-demo-label">
-        <Icon name="sparkle" className="h-3.5 w-3.5" /> {t('book.demo')}
-      </p>
-
       {step === 'form' ? (
         <form onSubmit={submit} noValidate className="space-y-5" data-testid="book-form">
           {summary}
@@ -135,7 +130,6 @@ export default function BookingModal({ open, onClose, event: e, back = '/events'
           {field('book-name', t('book.name'), name, setName, 'text', errors.name, 'name')}
           {field('book-email', t('book.email'), email, setEmail, 'email', errors.email, 'email')}
 
-          <p className="text-xs leading-relaxed text-muted">{t('book.note')}</p>
           <Button type="submit" variant="primary" size="lg" className="w-full justify-center" data-testid="book-submit">
             {t('book.submit')}
           </Button>
@@ -151,10 +145,6 @@ export default function BookingModal({ open, onClose, event: e, back = '/events'
           {summary}
           <dl className="space-y-1.5 border-y border-line py-3 text-sm">
             <div className="flex justify-between">
-              <dt className="text-muted">{t('book.ref')}</dt>
-              <dd className="font-mono font-semibold" data-testid="book-ref">{ref}</dd>
-            </div>
-            <div className="flex justify-between">
               <dt className="text-muted">{t('book.guests')}</dt>
               <dd>{guests}</dd>
             </div>
@@ -163,7 +153,6 @@ export default function BookingModal({ open, onClose, event: e, back = '/events'
               <dd>{f.price(total)}</dd>
             </div>
           </dl>
-          <p className="text-xs leading-relaxed text-muted">{t('book.note')}</p>
           <div className="grid gap-2 sm:grid-cols-2">
             <Button variant="primary" size="lg" className="justify-center" onClick={() => navigate(back)} data-testid="book-back">
               {t('book.backToEvents')}

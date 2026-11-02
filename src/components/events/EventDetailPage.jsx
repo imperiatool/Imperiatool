@@ -41,7 +41,7 @@ export default function EventDetailPage() {
   // leads to the recipe builder; sold out: nothing can be booked
   const cta = () => (e.soldOut ? null : e.online ? document.getElementById('recipe-builder')?.scrollIntoView({ behavior: 'smooth', block: 'start' }) : setBooking(true));
   const ctaLabel = e.soldOut ? t('events.soldOut') : e.online ? t('events.join') : `${t('events.book')} · ${f.price(e.price)}`;
-  const ctaNote = e.soldOut ? t('events.soldOutNote') : e.online ? t('events.matchNote', { price: f.price(e.price), n: e.accessWeeks }) : t('book.demo');
+  const ctaNote = e.soldOut ? t('events.soldOutNote') : e.online ? t('events.matchNote', { price: f.price(e.price), n: e.accessWeeks }) : '';
   const others = EVENTS.filter((x) => x.id !== e.id && (x.type === e.type || x.country === e.country)).slice(0, 2);
 
   return (
@@ -89,7 +89,7 @@ export default function EventDetailPage() {
                 {e.venue && !e.venueFirst && <span className="block text-xs font-normal text-muted">{t('events.venue', { venue: e.venue })}</span>}
               </Fact>
               {f.when(e) && (
-                <Fact label={t('events.date')} note={e.start ? t('events.illustrative') : null}>
+                <Fact label={t('events.date')}>
                   {f.when(e)}
                 </Fact>
               )}
@@ -105,15 +105,14 @@ export default function EventDetailPage() {
                 </Fact>
               )}
               {f.places(e) && (
-                <Fact label={t('events.placesLabel')} note={e.places ? t('events.illustrative') : null}>
+                <Fact label={t('events.placesLabel')}>
                   {f.places(e)}
                 </Fact>
               )}
               <Fact label={t('events.level')}>
                 <span data-testid="event-level">
-                  {f.levelParts(e.level)[0]} <span className="font-normal">({f.levelParts(e.level)[1]})</span>
-                </span>{' '}
-                <span className="font-normal text-muted">· {t(`events.levelDesc.${e.level}`)}</span>
+                  {f.levelParts(e.level)[0]} <span className="font-normal">— {f.levelParts(e.level)[1]}</span>
+                </span>
               </Fact>
             </dl>
 
@@ -121,7 +120,11 @@ export default function EventDetailPage() {
               <Button variant="primary" size="lg" className="w-full justify-center" onClick={cta} disabled={e.soldOut} data-testid="book-open">
                 {ctaLabel}
               </Button>
-              <p className="mt-2 text-center text-xs text-muted" data-testid="book-note">{ctaNote}</p>
+              {ctaNote && (
+                <p className="mt-2 text-center text-xs text-muted" data-testid="book-note">
+                  {ctaNote}
+                </p>
+              )}
             </div>
 
             <section className="mt-10">
@@ -141,7 +144,7 @@ export default function EventDetailPage() {
                   [t('events.attr.type'), f.kind(e)],
                   [t('events.attr.formats'), e.formats.map((x) => t(`events.format.${x}`)).join(', ')],
                   [t('events.attr.shapes'), f.text(e.shapes)],
-                  [t('events.attr.level'), `${f.level(e)} · ${t(`events.levelDesc.${e.level}`)}`],
+                  [t('events.attr.level'), f.level(e)],
                   [t('events.attr.mode'), e.online ? t('events.mode.online') : t('events.mode.inperson')],
                   [t('events.location'), f.place(e)],
                   [t('events.duration'), f.length(e)],
@@ -181,10 +184,6 @@ export default function EventDetailPage() {
               </section>
             </div>
             {e.recipes && <RecipeBuilder />}
-            <p className="mt-10 flex items-start gap-2 text-xs leading-relaxed text-muted">
-              <span className="mt-[5px] h-1.5 w-1.5 shrink-0 rounded-full bg-brand" aria-hidden="true" />
-              {t('events.concept')}
-            </p>
           </div>
         </div>
 

@@ -11,9 +11,9 @@ import logoUrl from '../assets/imperia-logo.svg?url';
 
 // canvas units per mm: a 1000-unit body ≈ 40 mm charm → grain tile of ~8 mm
 const UV_REPEAT = 1 / 200;
-// Eyes and mouths: the same relief of about 3 mm on every eye, every mouth,
+// Eyes and mouths: the same relief of 2 mm on every eye, every mouth,
 // every body and every finish (measured on the charm's real size). Pupils are flat.
-export const FEATURE_MM = 3;
+export const FEATURE_MM = 2;
 const FEATURE_CATS = new Set(['cat-occhi', 'cat-bocche']);
 
 function itemScale(item) {

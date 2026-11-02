@@ -29,11 +29,11 @@ export function useEventFormat() {
     const places = (e) => (e.places ? t('events.places', { n: e.places }) : e.online ? t('events.unlimited') : null);
     const kind = (e) => t(`events.kind.${e.kindKey || e.type}`);
     // experience levels: the Imperia term first, its plain equivalent after it,
-    // e.g. "Raw (Beginner)"; levelParts keeps the two apart for display
+    // e.g. "Raw — Beginner"; levelParts keeps the two apart for display
     const levelParts = (lv) => [t(`events.lvl.${lv}`), t(`events.lvlSub.${lv}`)];
     const level = (e) => {
       const [main, sub] = levelParts(e.level);
-      return `${main} (${sub})`;
+      return `${main} — ${sub}`;
     };
     return { date, time, when, duration, length, price, per, place, places, kind, level, levelParts, text: (f) => tx(f, lang), lang };
   }, [t, lang, locale]);

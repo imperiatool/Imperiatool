@@ -153,7 +153,7 @@ const CustomiserPanel = forwardRef(function CustomiserPanel({ library }, ref) {
                   const asset = assetsById[item.assetId];
                   const active = item.uid === selectedId;
                   return (
-                    <div key={item.uid} className="mt-3 border-t border-line pt-3" onPointerDown={() => !active && st().select(item.uid)} data-testid={`part-${cat.id}`}>
+                    <div key={item.uid} className="mt-3 border-t border-line pt-3" onClick={() => !active && st().select(item.uid)} data-testid={`part-${cat.id}`}>
                       <div className="grid grid-cols-[96px_minmax(0,1fr)] gap-3">
                         <div>
                           <AssetThumb asset={asset} colors={item.colors} className="h-24 w-24 rounded-xl border border-line bg-cream p-1.5" idPrefix={`cp-${item.uid}`} />

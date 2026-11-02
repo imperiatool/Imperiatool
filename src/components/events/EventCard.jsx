@@ -24,10 +24,10 @@ export default function EventCard({ event: e, search = '', onOpen }) {
       <div className="flex flex-1 flex-col pt-3">
         <div className="flex items-center justify-between gap-2">
           <p className="truncate text-[15px] font-bold uppercase leading-tight tracking-[-0.01em] text-brand">{f.kind(e)}</p>
-          <span className="shrink-0 rounded-full bg-cream px-2 py-0.5 text-[11px] font-medium text-ink/75" title={t(`events.levelDesc.${e.level}`)}>
+          <span className="shrink-0 rounded-full bg-cream px-2 py-0.5 text-[11px] font-medium text-ink/75" >
             {t('events.level')}:{' '}
             <span className="text-ink" data-testid="event-card-level">
-              <span className="font-semibold">{f.levelParts(e.level)[0]}</span> ({f.levelParts(e.level)[1]})
+              <span className="font-semibold">{f.levelParts(e.level)[0]}</span> — {f.levelParts(e.level)[1]}
             </span>
           </span>
         </div>
@@ -53,8 +53,10 @@ export default function EventCard({ event: e, search = '', onOpen }) {
               </span>
             )}
           </span>
-          <span className="inline-flex items-center gap-1 text-[15px] font-medium underline underline-offset-4 group-hover:text-brand">
-            {t('events.view')} <Icon name="arrowRight" className="h-4 w-4 transition group-hover:translate-x-0.5" />
+          {/* like the home cards: on hover it grows a little and a line draws
+              itself under the words; the colour never changes */}
+          <span className="event-cta inline-flex items-center gap-1 text-[15px] font-medium" data-testid="event-view">
+            <span className="home-link">{t('events.view')}</span> <Icon name="arrowRight" className="h-4 w-4" />
           </span>
         </div>
       </div>

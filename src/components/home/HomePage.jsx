@@ -45,7 +45,7 @@ export default function HomePage() {
           data-testid="home-hero"
         >
           <div className="relative max-w-[46rem] px-6 py-10 sm:px-12 sm:py-14 lg:px-16 lg:py-16">
-            <h1 className="text-[26px] font-bold leading-[1.15] tracking-[-0.01em] text-brand sm:text-[32px] lg:text-[38px]" data-testid="home-hero-title">
+            <h1 className="whitespace-pre-line text-[26px] font-bold leading-[1.15] tracking-[-0.01em] text-brand sm:text-[32px] lg:text-[38px]" data-testid="home-hero-title">
               {t('home.bottom.title')}
             </h1>
             <p className="mt-3 text-[17px] leading-snug text-black sm:mt-4 sm:text-[20px] lg:text-[23px]">{t('home.bottom.text')}</p>

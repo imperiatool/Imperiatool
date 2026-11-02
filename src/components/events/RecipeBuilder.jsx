@@ -2,7 +2,8 @@ import { useMemo, useState } from 'react';
 import Icon from '../ui/Icon.jsx';
 import Button from '../ui/Button.jsx';
 import { useI18n } from '../../i18n/index.js';
-import { INGREDIENTS, INGREDIENT_GROUPS, RECIPE_PASTAS, matchRecipe, suggestRecipe, recipesFor, regionOf, hashtagsFor } from '../../data/recipes.js';
+import { INGREDIENTS, INGREDIENT_GROUPS, RECIPES, RECIPE_PASTAS, matchRecipe, suggestRecipe, regionOf, hashtagsFor } from '../../data/recipes.js';
+import { creativeRecipe, ideaFor } from '../../data/creativeRecipes.js';
 import { tx } from '../../data/events.js';
 import DishPhoto from './DishPhoto.jsx';
 import RecipeCard from './RecipeCard.jsx';
@@ -50,6 +51,10 @@ export default function RecipeBuilder() {
   const dish = (r) => tx(r.title, lang) || r.name;
   const pastaName = (id) => tx(RECIPE_PASTAS.find((p) => p.id === id)?.name, lang);
   const shown = exact || (chosen.length ? suggestion?.recipe : null);
+  // any combination that is not a traditional dish becomes a creative recipe
+  const creative = !exact && pasta && chosen.length ? creativeRecipe(pasta, chosen) : null;
+  // what a pasta can make: its traditional dishes and a creative idea
+  const forPasta = (p) => [...RECIPES.filter((r) => r.pasta === p), ideaFor(p)].filter(Boolean);
   // the three selection sections, in order: pasta, then the sauce and main
   // ingredients, then cheese and finishing touches
   const STEPS = [
@@ -66,7 +71,7 @@ export default function RecipeBuilder() {
   const cardRecipe = exact || (suggestion && !suggestion.missing.length && suggestion.samePasta ? suggestion.recipe : null);
   // a simple home recipe is never called traditional
   const kindOf = (r) => (r?.simple ? t('recipe.simple') : t('recipe.traditional'));
-  const cardKind = exact && !extras.length ? kindOf(exact) : t('recipe.variation');
+  const cardKind = exact && !extras.length ? kindOf(exact) : creative ? t('recipe.creative') : t('recipe.variation');
   // the dish's own name only when it is exactly the traditional recipe
   const cardName = exact ? exact.name : pasta ? t('recipe.card.ownName', { pasta: pastaName(pasta) }) : '';
   const card = useMemo(
@@ -87,12 +92,12 @@ export default function RecipeBuilder() {
             // the recipe card: the method only when the plate is exactly that dish
             recipeLabel: t('recipe.card.recipeKind'),
             methodLabel: t('recipe.method'),
-            steps: exact && !extras.length ? exact.steps.map((st) => tx(st, lang)) : [],
+            steps: exact && !extras.length ? exact.steps.map((st) => tx(st, lang)) : creative ? creative.steps.map((st) => tx(st, lang)) : [],
             pastaImg: pastaInfo?.img,
             ingredientImgs: chosen.map((id) => ING_IMG[id]),
           }
         : null,
-    [pasta, chosen, lang, cardRecipe, cardKind, exact, extras.length], // eslint-disable-line react-hooks/exhaustive-deps
+    [pasta, chosen, lang, cardRecipe, cardKind, exact, extras.length, creative?.id], // eslint-disable-line react-hooks/exhaustive-deps
   );
   const caption = (title) =>
     `${t(exact && !extras.length ? 'recipe.card.captionDish' : 'recipe.card.captionOwn', { dish: title, pasta: lang === 'de' ? pastaName(pasta) : pastaName(pasta).toLocaleLowerCase(lang), list: list(chosen) })}\n\n${(card?.hashtags || []).join(' ')}`;
@@ -280,50 +285,58 @@ export default function RecipeBuilder() {
           ) : !chosen.length ? (
             // just a pasta: the recipes to learn with it
             <>
-              <p className="text-sm text-muted">{recipesFor(pasta)[0].pasta === pasta ? t('recipe.withPasta', { pasta: pastaName(pasta) }) : t('recipe.otherPasta', { pasta: pastaName(pasta) })}</p>
+              <p className="text-sm text-muted">{t('recipe.withPasta', { pasta: pastaName(pasta) })}</p>
               <div className="mt-2 flex flex-wrap gap-1.5">
-                {recipesFor(pasta).map((r) => (
+                {forPasta(pasta).map((r) => (
                   <button key={r.id} type="button" onClick={() => use(r)} className="rounded-full border border-line px-3 py-1.5 text-[13px] font-semibold hover:border-brand hover:text-brand" data-testid={`recipe-try-${r.id}`}>
                     {dish(r)}
                   </button>
                 ))}
               </div>
             </>
-          ) : shown ? (
+          ) : exact ? (
             <>
-              <span
-                className={`inline-block rounded-full px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider ${exact && !extras.length ? 'bg-brand text-white' : 'bg-cream text-ink/70'}`}
-                data-testid="recipe-kind"
-              >
-                {exact ? kindOf(exact) : !suggestion.missing.length && extras.length ? t('recipe.variation') : t('recipe.suggested')}
+              <span className="inline-block rounded-full bg-brand px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-white" data-testid="recipe-kind">
+                {kindOf(exact)}
               </span>
               <h3 className="mt-2 text-lg font-bold leading-tight" data-testid="recipe-name">
-                {shown.name}
+                {exact.name}
               </h3>
-              {lang !== 'it' && <p className="text-sm text-ink/80" data-testid="recipe-title">{dish(shown)}</p>}
-              {!exact && (
-                <div className="mt-1 text-sm text-muted">
-                  {suggestion.missing.length > 0 && <p>{t('recipe.missing', { list: list(suggestion.missing) })}</p>}
-                  {!suggestion.samePasta && <p>{t('recipe.usesPasta', { pasta: pastaName(shown.pasta) })}</p>}
-                  {extras.length > 0 && <p>{t('recipe.extras', { list: list(extras) })}</p>}
-                  <Button size="sm" variant="secondary" className="mt-2" onClick={() => use(shown)} data-testid="recipe-complete">
+              {lang !== 'it' && <p className="text-sm text-ink/80" data-testid="recipe-title">{dish(exact)}</p>}
+              {method(exact)}
+              {cardButton}
+              <DishPhoto dish={dish(exact)} onPhoto={setPlatePhoto} />
+            </>
+          ) : creative ? (
+            // any other combination: a creative recipe of its own, with the
+            // closest traditional dish offered alongside
+            <>
+              <span className="inline-block rounded-full bg-cream px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-ink/70" data-testid="recipe-kind">
+                {t('recipe.creative')}
+              </span>
+              <h3 className="mt-2 text-lg font-bold leading-tight" data-testid="recipe-name">
+                {dish(creative)}
+              </h3>
+              {method(creative)}
+              {suggestion && (
+                <div className="mt-4 rounded-xl bg-cream p-3 text-sm" data-testid="recipe-closest">
+                  <p>
+                    {t('recipe.closest')} <span className="font-semibold">{dish(suggestion.recipe)}</span>
+                  </p>
+                  <div className="mt-0.5 text-muted">
+                    {suggestion.missing.length > 0 && <p>{t('recipe.missing', { list: list(suggestion.missing) })}</p>}
+                    {!suggestion.samePasta && <p>{t('recipe.usesPasta', { pasta: pastaName(suggestion.recipe.pasta) })}</p>}
+                    {extras.length > 0 && <p>{t('recipe.extras', { list: list(extras) })}</p>}
+                  </div>
+                  <Button size="sm" variant="secondary" className="mt-2" onClick={() => use(suggestion.recipe)} data-testid="recipe-complete">
                     <Icon name="check" /> {t('recipe.complete')}
                   </Button>
                 </div>
               )}
-              {method(shown)}
               {cardButton}
-              <DishPhoto dish={dish(shown)} onPhoto={setPlatePhoto} />
+              <DishPhoto dish={dish(creative)} onPhoto={setPlatePhoto} />
             </>
-          ) : (
-            <>
-              <span className="inline-block rounded-full bg-cream px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-ink/70" data-testid="recipe-kind">
-                {t('recipe.variation')}
-              </span>
-              <p className="mt-2 text-sm text-muted">{t('recipe.variationText')}</p>
-              {cardButton}
-            </>
-          )}
+          ) : null}
         </div>
       </div>
       {card && (

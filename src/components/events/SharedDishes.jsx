@@ -4,6 +4,9 @@ import { RECIPES, RECIPE_PASTAS, SAMPLE_POSTS, hashtagsFor } from '../../data/re
 import { tx } from '../../data/events.js';
 import { SPOTS } from '../../lib/recipeCard.js';
 
+// the Imperia colours, in turn from card to card: Tomato, Basil, Flour, Ragù, Egg
+export const DISH_COLOURS = ['#e1201b', '#1a5632', '#f8eabe', '#6a3933', '#ffb548'];
+
 /** The dish as on the builder's plate: the pasta and its ingredients in 3D. */
 function MiniPlate({ recipe, ingImg }) {
   const pasta = RECIPE_PASTAS.find((p) => p.id === recipe.pasta);
@@ -36,7 +39,7 @@ export default function SharedDishes({ ingImg, onView }) {
       </div>
       <p className="mt-1 max-w-2xl text-sm text-ink/80">{t('recipe.shared.intro')}</p>
       <div className="mt-4 grid grid-cols-[repeat(auto-fill,minmax(210px,1fr))] gap-4">
-        {SAMPLE_POSTS.map((post) => {
+        {SAMPLE_POSTS.map((post, n) => {
           const r = RECIPES.find((x) => x.id === post.recipe);
           if (!r) return null;
           return (
@@ -44,7 +47,7 @@ export default function SharedDishes({ ingImg, onView }) {
               <header className="flex items-center justify-end gap-2">
                 <span className="shrink-0 rounded-full border border-line px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-ink/70">{t('recipe.shared.sample')}</span>
               </header>
-              <div className="mt-3 rounded-xl bg-brand p-4">
+              <div className="mt-3 rounded-xl p-4" style={{ background: DISH_COLOURS[n % DISH_COLOURS.length] }} data-testid="shared-colour">
                 <MiniPlate recipe={r} ingImg={ingImg} />
               </div>
               <h4 className="mt-3 text-[15px] font-bold leading-tight">{r.name}</h4>

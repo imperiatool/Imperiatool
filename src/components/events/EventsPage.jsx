@@ -30,7 +30,7 @@ export default function EventsPage() {
       label: t('events.filter.level'),
       options: [
         { value: 'all', label: t('events.level.all') },
-        ...EVENT_LEVELS.map((o) => ({ value: o, label: t(`events.lvl.${o}`), sub: t(`events.lvlSub.${o}`), desc: t(`events.levelDesc.${o}`) })),
+        ...EVENT_LEVELS.map((o) => ({ value: o, label: t(`events.lvl.${o}`), sub: t(`events.lvlSub.${o}`) })),
       ],
     },
   ];
@@ -91,7 +91,7 @@ export default function EventsPage() {
         data-testid={`filter-${g.key}-${o.value}`}
       >
         <span className="font-semibold">{o.label}</span>
-        {o.sub && <span className="font-normal"> ({o.sub})</span>}
+        {o.sub && <span className="font-normal"> — {o.sub}</span>}
         {o.desc && <span className={`block text-[11px] ${on ? 'text-white/75' : 'text-muted'}`}>{o.desc}</span>}
       </button>
     );
