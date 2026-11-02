@@ -26,7 +26,7 @@ describe('admin password hashing', () => {
 
 describe('i18n', () => {
   // de / zh / hi translate every public page; the Admin area falls back to English
-  const PUBLIC = /^(lang|common|editor|picker|props|slot|export|order|cover|viewer|guide|cart|account|home|spec|events|book|search|recipe)\.|^nav\.(language|case|charm|sticker|home|events)$/;
+  const PUBLIC = /^(lang|common|editor|picker|props|slot|export|order|cover|viewer|guide|cart|account|home|spec|events|book|search|recipe|meta)\.|^nav\.(language|case|charm|sticker|home|events)$/;
   const publicKeys = Object.keys(en).filter((k) => PUBLIC.test(k)).sort();
   it('every language has exactly the English keys', () => {
     const keys = Object.keys(en).sort();
@@ -159,7 +159,7 @@ describe('pasta names', () => {
     expect(lib.assets.map((a) => a.name)).toEqual(['Cavatappi', 'Raviolo classico', 'Ravioli tondi']);
     expect(lib.assets[0].labels.es).toBe('Sacacorchos');
     const bodies = withLabels({ categories: [], palette: [], assets: ['Raviolo triangolare', 'Raviolo quadrato', 'Raviolo tondo'].map((name, i) => ({ id: `b${i}`, name })) });
-    expect(bodies.assets.map((a) => a.labels.en)).toEqual(['Classic tortellino', 'Classic raviolo', 'Giant raviolo']);
+    expect(bodies.assets.map((a) => a.labels.en)).toEqual(['Classic Tortellino', 'Raviolo', 'Giant Raviolo']);
   });
   it('has a translation in every language for every sample element', () => {
     for (const [name, l] of Object.entries(ASSET_LABELS)) for (const c of LANGUAGES.map((x) => x.code)) expect(l[c], `${name}/${c}`).toBeTruthy();
@@ -229,14 +229,16 @@ describe('3D packaging', () => {
     expect(svg).toContain('Google Pixel 10');
     expect(svg).toContain('cy="533"'); // ring around the basil circle
     expect(svg).toContain('Pattern:');
-    expect(svg).toContain('cx="1004.65" cy="395.5" r="22"'); // ring around the tagliatelle pattern
+    expect(svg).toContain('cx="1004.65" cy="400" r="22"'); // ring around the tagliatelle pattern
     // every pattern has its name on the top flap (with "phone case") and in the side list
-    for (const p of ['spaghetti', 'tagliatelle', 'reginette', 'sfoglia', 'raviolo', 'maccheroni', 'penne']) {
+    for (const p of ['spaghetti', 'tagliatelle', 'ravioli', 'reginette', 'sfoglia', 'raviolo']) {
       const s = packagingOverlay({ pattern: p, finish: 'raw', modelLabel: 'x', colorName: 'Egg' });
       expect(s, p).toContain('phone case');
       expect(s, p).toContain(`clip-path="url(#pd-${p})"`);
     }
-    expect(svg).not.toContain('>Ravioli<');
+    expect(svg).toContain('>Ravioli<');
+    expect(svg).not.toContain('Macaroni');
+    expect(svg).not.toContain('>Penne<');
     // the material stays on one line
     expect(svg.match(/Material:/g)).toHaveLength(1);
   });
