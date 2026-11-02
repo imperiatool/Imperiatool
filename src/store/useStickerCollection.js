@@ -34,8 +34,11 @@ export const useStickerCollection = create(
       remove(id) {
         set({ stickers: get().stickers.filter((s) => s.id !== id), editingId: get().editingId === id ? null : get().editingId });
       },
+      /** Quantity of a design; 0 (or less) takes it out of the collection. */
       setQty(id, qty) {
-        const q = Math.max(1, Math.min(MAX_QTY, Math.round(Number(qty) || 1)));
+        const n = Math.round(Number(qty));
+        if (n <= 0) return get().remove(id);
+        const q = Math.max(1, Math.min(MAX_QTY, n || 1));
         set({ stickers: get().stickers.map((s) => (s.id === id ? { ...s, qty: q } : s)) });
       },
       setEditing(id) {

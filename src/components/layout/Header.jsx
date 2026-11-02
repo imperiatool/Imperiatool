@@ -4,7 +4,7 @@ import Icon from '../ui/Icon.jsx';
 import Flag from '../ui/Flag.jsx';
 import Drawer from '../ui/Drawer.jsx';
 import logoUrl from '../../assets/imperia-logo.svg';
-import { EVENTS, tx } from '../../data/events.js';
+import { EVENTS, PASTA_MATCH, tx } from '../../data/events.js';
 import { useI18n, LANGUAGES } from '../../i18n/index.js';
 import { useCartStore, cartCount } from '../../store/useCartStore.js';
 
@@ -64,7 +64,7 @@ function SearchDrawer({ open, onClose }) {
     { to: '/charm', title: `Imperia® ${t('home.charm.title')}`, text: t('home.charm.text') },
     { to: '/sticker', title: `Imperia® ${t('home.sticker.title')}`, text: t('home.sticker.text') },
   ];
-  const events = EVENTS.map((e) => ({ to: `/events/${e.id}`, title: tx(e.title, lang), text: `${tx(e.city, lang)} · ${t(`events.kind.${e.kindKey || e.type}`)}` }));
+  const events = [...EVENTS, PASTA_MATCH].map((e) => ({ to: `/events/${e.id}`, title: tx(e.title, lang), text: `${tx(e.city, lang)} · ${t(`events.kind.${e.kindKey || e.type}`)}` }));
   const norm = (x) => x.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   const words = norm(q.trim()).split(/\s+/).filter(Boolean);
   const hit = (r) => words.every((w) => norm(`${r.title} ${r.text}`).includes(w));

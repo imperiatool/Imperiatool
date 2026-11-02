@@ -3,7 +3,7 @@ import { Link, useSearchParams, useLocation } from 'react-router-dom';
 import Icon from '../ui/Icon.jsx';
 import PageHeader from '../layout/PageHeader.jsx';
 import EventCard from './EventCard.jsx';
-import { EVENTS, EVENT_TYPES, EVENT_COUNTRIES, EVENT_FORMATS, EVENT_LEVELS, EVENT_SORTS, filterEvents, sortEvents } from '../../data/events.js';
+import { EVENTS, PASTA_MATCH, EVENT_TYPES, EVENT_COUNTRIES, EVENT_FORMATS, EVENT_LEVELS, EVENT_SORTS, filterEvents, sortEvents } from '../../data/events.js';
 import { useI18n } from '../../i18n/index.js';
 import { useMeta } from '../../lib/useMeta.js';
 import caseImg from '../../assets/previews/case.png';
@@ -30,12 +30,12 @@ export default function EventsPage() {
       label: t('events.filter.level'),
       options: [
         { value: 'all', label: t('events.level.all') },
-        ...EVENT_LEVELS.map((o) => ({ value: o, label: t(`order.materials.${o}.name`), desc: t(`events.levelDesc.${o}`) })),
+        ...EVENT_LEVELS.map((o) => ({ value: o, label: t(`events.lvl.${o}`), desc: t(`events.levelDesc.${o}`) })),
       ],
     },
   ];
   const filters = Object.fromEntries(groups.map((g) => [g.key, params.get(g.key) || 'all']));
-  const sort = EVENT_SORTS.includes(params.get('sort')) ? params.get('sort') : 'date';
+  const sort = EVENT_SORTS.includes(params.get('sort')) ? params.get('sort') : 'featured';
   const active = groups.filter((g) => filters[g.key] !== 'all').length;
   const list = useMemo(
     () => sortEvents(filterEvents(EVENTS, filters), sort),
@@ -44,13 +44,13 @@ export default function EventsPage() {
 
   const set = (key, value) => {
     const next = new URLSearchParams(params);
-    if (value === 'all' || (key === 'sort' && value === 'date')) next.delete(key);
+    if (value === 'all' || (key === 'sort' && value === 'featured')) next.delete(key);
     else next.set(key, value);
     setParams(next, { replace: true });
   };
   const clear = () => {
     const next = new URLSearchParams();
-    if (sort !== 'date') next.set('sort', sort);
+    if (sort !== 'featured') next.set('sort', sort);
     setParams(next, { replace: true });
   };
 
@@ -185,6 +185,17 @@ export default function EventsPage() {
             </button>
           </div>
         )}
+      </section>
+
+      {/* The Pasta Match: the online recipe club, a digital product kept apart
+          from the six in-person experiences (not counted or filtered with them) */}
+      <section className="mx-auto max-w-7xl px-4 pb-14 sm:px-6" aria-labelledby="events-online" data-testid="events-online">
+        <h2 id="events-online" className="border-t border-line pt-8 text-[15px] font-bold uppercase leading-tight tracking-[-0.01em] text-brand">
+          {t('events.onlineTitle')}
+        </h2>
+        <div className="mt-5 grid gap-x-5 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
+          <EventCard event={PASTA_MATCH} search={search} onOpen={remember} />
+        </div>
       </section>
 
       {/* back to the products: white, like the rest of the section */}

@@ -138,10 +138,11 @@ export default function StickerCollection({ library, onReview }) {
             aria-current={s.id === editingId ? 'true' : undefined}
             aria-label={t('editor.coll.open', { n: n + 1 })}
             title={t('editor.coll.open', { n: n + 1 })}
-            className={`checker grid h-12 w-12 place-items-center rounded-xl border-2 p-0.5 transition ${s.id === editingId ? 'border-brand' : 'border-line hover:border-ink/40'}`}
+            className={`checker relative grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-xl border-2 p-0.5 transition ${s.id === editingId ? 'border-brand' : 'border-line hover:border-ink/40'}`}
             data-testid={`collection-item-${n}`}
           >
-            {s.thumb ? <img src={s.thumb} alt="" className="h-full w-full object-contain" /> : <span className="text-xs font-semibold tabular-nums text-ink/50">{n + 1}</span>}
+            {/* any shape (even a long Reginette) is scaled down to fit its box, never cropped or stretched */}
+            {s.thumb ? <img src={s.thumb} alt="" className="absolute inset-0.5 h-[calc(100%-4px)] w-[calc(100%-4px)] object-contain" /> : <span className="text-xs font-semibold tabular-nums text-ink/50">{n + 1}</span>}
           </button>
         ))}
         {stickers.length > 0 && (

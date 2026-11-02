@@ -112,8 +112,8 @@ export default function StickerOrderModal({ open, onClose, library }) {
             <ul className="space-y-2">
               {ready.map((s, n) => (
                 <li key={s.id} className="flex items-center gap-3 rounded-2xl border border-line bg-white p-2.5" data-testid={`sticker-order-row-${n}`}>
-                  <div className="checker grid h-14 w-14 shrink-0 place-items-center rounded-xl p-1">
-                    <img src={s.thumb} alt={t('order.stk.sticker', { n: n + 1 })} className="h-full w-full object-contain" />
+                  <div className="checker relative h-14 w-14 shrink-0 overflow-hidden rounded-xl">
+                    <img src={s.thumb} alt={t('order.stk.sticker', { n: n + 1 })} className="absolute inset-1 h-[calc(100%-8px)] w-[calc(100%-8px)] object-contain" />
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-bold">{t('order.stk.sticker', { n: n + 1 })}</p>
@@ -127,7 +127,7 @@ export default function StickerOrderModal({ open, onClose, library }) {
                     </div>
                   </div>
                   <div className="flex items-center rounded-full border border-line" role="group" aria-label={t('order.stk.qty')}>
-                    <button type="button" onClick={() => setQty(s.id, s.qty - 1)} disabled={s.qty <= 1} className="grid h-9 w-9 place-items-center rounded-full disabled:opacity-30" aria-label={t('order.stk.less')} data-testid={`sticker-order-less-${n}`}>
+                    <button type="button" onClick={() => setQty(s.id, s.qty - 1)} className="grid h-9 w-9 place-items-center rounded-full disabled:opacity-30" aria-label={t('order.stk.less')} data-testid={`sticker-order-less-${n}`}>
                       <Icon name="minus" className="h-4 w-4" />
                     </button>
                     <span className="w-7 text-center text-sm font-semibold tabular-nums" data-testid={`sticker-order-qty-${n}`}>
@@ -188,8 +188,9 @@ export default function StickerOrderModal({ open, onClose, library }) {
                 {Array.from({ length: PER_SHEET }, (_, i) => {
                   const s = sheet[i];
                   return s ? (
-                    <div key={i} className="grid min-h-0 place-items-center" data-testid="sheet-slot-filled">
-                      <img src={s.thumb} alt="" className="max-h-full max-w-full object-contain" style={{ filter: style.sticker }} />
+                    // one position per sticker: the artwork is scaled down to fit it (never cropped or stretched)
+                    <div key={i} className="relative min-h-0 min-w-0" data-testid="sheet-slot-filled">
+                      <img src={s.thumb} alt="" className="absolute inset-0 h-full w-full object-contain" style={{ filter: style.sticker }} />
                     </div>
                   ) : (
                     <div key={i} className="grid min-h-0 place-items-center rounded-lg border-2 border-dashed border-ink/15 text-ink/30" data-testid="sheet-slot-empty">

@@ -37,9 +37,11 @@ export default function EventDetailPage() {
   useMeta({ title: e ? `${f.text(e.title)} · Imperia® ${t('nav.events')}` : `Imperia® ${t('nav.events')}`, description: e ? f.text(e.short) : t('meta.events.desc') });
   if (!e) return <Navigate to="/events" replace />;
   const back = `/events${state?.from || ''}`;
-  // online, self-paced: nothing to book, the button goes straight to the recipes
-  const cta = () => (e.online ? document.getElementById('recipe-builder')?.scrollIntoView({ behavior: 'smooth', block: 'start' }) : setBooking(true));
-  const ctaLabel = e.online ? t('events.join') : `${t('events.book')} · ${f.price(e.price, e.country)}`;
+  // The Pasta Match: no payment is taken in this prototype, so the button only
+  // leads to the recipe builder; sold out: nothing can be booked
+  const cta = () => (e.soldOut ? null : e.online ? document.getElementById('recipe-builder')?.scrollIntoView({ behavior: 'smooth', block: 'start' }) : setBooking(true));
+  const ctaLabel = e.soldOut ? t('events.soldOut') : e.online ? t('events.join') : `${t('events.book')} · ${f.price(e.price)}`;
+  const ctaNote = e.soldOut ? t('events.soldOutNote') : e.online ? t('events.matchNote', { price: f.price(e.price), n: e.accessWeeks }) : t('book.demo');
   const others = EVENTS.filter((x) => x.id !== e.id && (x.type === e.type || x.country === e.country)).slice(0, 2);
 
   return (
@@ -74,38 +76,54 @@ export default function EventDetailPage() {
             <h1 className="mt-1.5 text-2xl font-bold leading-tight tracking-tight sm:text-[28px]" data-testid="event-title">
               {f.text(e.title)}
             </h1>
+            {e.subtitle && (
+              <p className="mt-1 text-base font-medium text-ink" data-testid="event-subtitle">
+                {f.text(e.subtitle)}
+              </p>
+            )}
             <p className="mt-2 text-sm leading-relaxed text-muted">{f.text(e.short)}</p>
 
             <dl className="mt-6 border-b border-line">
               <Fact label={t('events.location')}>
                 {f.place(e)}
-                {e.venue && <span className="block text-xs font-normal text-muted">{t('events.venue', { venue: e.venue })}</span>}
+                {e.venue && !e.venueFirst && <span className="block text-xs font-normal text-muted">{t('events.venue', { venue: e.venue })}</span>}
               </Fact>
-              <Fact label={t('events.date')} note={e.start ? t('events.illustrative') : null}>
-                {f.when(e)}
-              </Fact>
-              <Fact label={t('events.duration')}>{f.duration(e.minutes)}</Fact>
+              {f.when(e) && (
+                <Fact label={t('events.date')} note={e.start ? t('events.illustrative') : null}>
+                  {f.when(e)}
+                </Fact>
+              )}
+              {f.length(e) && <Fact label={t('events.duration')}>{f.length(e)}</Fact>}
               <Fact label={t('events.price')}>
-                {f.price(e.price, e.country)} {e.price > 0 && <span className="font-normal text-muted">{t('events.perPerson')}</span>}
+                <span data-testid="event-price">{f.price(e.price)}</span> <span className="font-normal text-muted">{f.per(e)}</span>
               </Fact>
-              <Fact label={t('events.placesLabel')} note={e.places ? t('events.illustrative') : null}>
-                {f.places(e)}
-              </Fact>
+              {e.soldOut && (
+                <Fact label={t('events.status')}>
+                  <span className="font-semibold uppercase tracking-wide text-brand" data-testid="event-status">
+                    {t('events.soldOut')}
+                  </span>
+                </Fact>
+              )}
+              {f.places(e) && (
+                <Fact label={t('events.placesLabel')} note={e.places ? t('events.illustrative') : null}>
+                  {f.places(e)}
+                </Fact>
+              )}
               <Fact label={t('events.level')}>
                 {f.level(e)} <span className="font-normal text-muted">· {t(`events.levelDesc.${e.level}`)}</span>
               </Fact>
             </dl>
 
             <div className="mt-6 hidden lg:block">
-              <Button variant="primary" size="lg" className="w-full justify-center" onClick={cta} data-testid="book-open">
+              <Button variant="primary" size="lg" className="w-full justify-center" onClick={cta} disabled={e.soldOut} data-testid="book-open">
                 {ctaLabel}
               </Button>
-              {!e.online && <p className="mt-2 text-center text-xs text-muted">{t('book.demo')}</p>}
+              <p className="mt-2 text-center text-xs text-muted" data-testid="book-note">{ctaNote}</p>
             </div>
 
             <section className="mt-10">
               <h2 className="text-xs font-semibold uppercase tracking-wider text-muted">{t('events.about')}</h2>
-              <p className="mt-3 text-sm leading-relaxed">{f.text(e.description)}</p>
+              <p className="mt-3 whitespace-pre-line text-sm leading-relaxed">{f.text(e.description)}</p>
             </section>
 
             {/* the experience described with the same words as the products
@@ -123,8 +141,8 @@ export default function EventDetailPage() {
                   [t('events.attr.level'), `${f.level(e)} · ${t(`events.levelDesc.${e.level}`)}`],
                   [t('events.attr.mode'), e.online ? t('events.mode.online') : t('events.mode.inperson')],
                   [t('events.location'), f.place(e)],
-                  [t('events.duration'), f.duration(e.minutes)],
-                  [t('events.attr.booking'), e.online ? t('events.booking.none') : t('events.booking.demo')],
+                  [t('events.duration'), f.length(e)],
+                  [t('events.attr.booking'), e.soldOut ? t('events.soldOut') : e.online ? t('events.booking.match', { price: f.price(e.price), n: e.accessWeeks }) : t('events.booking.demo')],
                 ]
                   .filter(([, v]) => v)
                   .map(([k, v]) => (
@@ -179,7 +197,7 @@ export default function EventDetailPage() {
                   <span className="min-w-0">
                     <span className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-brand">{f.kind(o)}</span>
                     <span className="block truncate text-lg font-bold tracking-tight group-hover:text-brand">{f.text(o.title)}</span>
-                    <span className="block text-sm text-muted">{f.place(o)} · {f.price(o.price, o.country)}</span>
+                    <span className="block text-sm text-muted">{f.place(o)} · {f.price(o.price)}</span>
                   </span>
                 </Link>
               ))}
@@ -190,12 +208,12 @@ export default function EventDetailPage() {
 
       {/* phones: booking bar at the bottom, like the product pages */}
       <div className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-white/95 p-3 backdrop-blur lg:hidden">
-        <Button variant="primary" size="lg" className="w-full justify-center" onClick={cta} data-testid="book-open-mobile">
+        <Button variant="primary" size="lg" className="w-full justify-center" onClick={cta} disabled={e.soldOut} data-testid="book-open-mobile">
           {ctaLabel}
         </Button>
       </div>
 
-      <BookingModal open={booking} onClose={() => setBooking(false)} event={e} back={back} />
+      {!e.soldOut && !e.online && <BookingModal open={booking} onClose={() => setBooking(false)} event={e} back={back} />}
     </div>
   );
 }

@@ -11,6 +11,10 @@ import logoUrl from '../assets/imperia-logo.svg?url';
 
 // canvas units per mm: a 1000-unit body ≈ 40 mm charm → grain tile of ~8 mm
 const UV_REPEAT = 1 / 200;
+// Eyes and mouths: one subtle relief for every eye, every mouth, every body and
+// every finish (the thinnest thickness of the approved charms). Pupils are flat.
+export const FEATURE_DEPTH = 18;
+const FEATURE_CATS = new Set(['cat-occhi', 'cat-bocche']);
 
 function itemScale(item) {
   return item.scale * (Math.abs(item.stretchX) + Math.abs(item.stretchY)) / 2;
@@ -52,7 +56,7 @@ export function buildCharm(items, assetsById, materialId = 'aldente', { attachme
         if (raw.length) {
           if (fill !== prevFill) {
             level += 1;
-            pieces.push({ item: index, level, isFirstItem: index === 0, color: fill, shapes: [] });
+            pieces.push({ item: index, level, isFirstItem: index === 0, cat: asset.categoryId, color: fill, shapes: [] });
             prevFill = fill;
           }
           pieces[pieces.length - 1].shapes.push(...raw);
@@ -79,8 +83,12 @@ export function buildCharm(items, assetsById, materialId = 'aldente', { attachme
     const shapes = piece.shapes.map((s) => resampleShape(s, step)).filter((s) => s.getPoints().length > 2);
     if (!shapes.length) continue;
 
-    const baseDepth = piece.isFirstItem && piece.level === 0 ? 110 : piece.level === 0 ? 40 : 18;
-    const depth = baseDepth * shapeHints.depth;
+    const isBody = piece.isFirstItem && piece.level === 0;
+    const isFeature = !isBody && FEATURE_CATS.has(piece.cat);
+    // pupils (the second colour of an eye) are printed flat on the eye
+    const flat = isFeature && piece.cat === 'cat-occhi' && piece.level > 0;
+    const baseDepth = isBody ? 110 : piece.level === 0 ? 40 : 18;
+    const depth = isFeature ? FEATURE_DEPTH : baseDepth * shapeHints.depth;
     // the rounded edge never takes more than 80% of the thickness, so the
     // real height of the piece is exactly `depth` (outlines sit on it, not above)
     const bt = Math.max(0.6, Math.min(Math.min(depth * 0.42, piece.level === 0 ? 26 : 10) * shapeHints.bevel, depth * 0.4));
@@ -88,8 +96,29 @@ export function buildCharm(items, assetsById, materialId = 'aldente', { attachme
     // RIPRISTINATO E STABILIZZATO: bevelSize controllato e bevelOffset a 0 per evitare i buchi e le auto-intersezioni
     const bs = Math.max(0.2, Math.min(bt * 0.5, minDim * 0.05, 4));
 
+    // rests on what is really underneath it (not on everything its bounding box
+    // touches): a mouth below the eyes sits on the body, not on the eyes
+    const polys = shapes.map((sh) => ({ outer: sh.getPoints(), holes: sh.holes.map((h) => h.getPoints()) }));
+    const samples = polySamples(polys);
     let z0 = 0;
-    for (const p of placed) if (p.box.intersectsBox(box)) z0 = Math.max(z0, p.top - 2);
+    for (const p of placed) if (p.box.intersectsBox(box) && overlaps(samples, polys, p)) z0 = Math.max(z0, p.top - (flat ? 0 : 2));
+
+    if (flat) {
+      // a flat print on the surface below (no thickness, no bevel)
+      const mesh = new THREE.Mesh(new THREE.ShapeGeometry(shapes), makeMaterial(piece.color, materialId, UV_REPEAT));
+      mesh.material.polygonOffset = true;
+      mesh.material.polygonOffsetFactor = -2;
+      mesh.material.polygonOffsetUnits = -2;
+      mesh.position.z = z0 + 0.15;
+      mesh.userData.flat = true;
+      root.add(mesh);
+      const top = z0 + 0.15;
+      Object.assign(piece, { bevel: 0, bevelSize: 0, top, polys });
+      piece.contours = piece.polys.flatMap((q) => [q.outer, ...q.holes]);
+      placed.push({ box, top, polys: piece.polys, samples });
+      itemTop.set(piece.item, Math.max(itemTop.get(piece.item) ?? 0, top));
+      continue;
+    }
 
     let geometry = new THREE.ExtrudeGeometry(shapes, {
       depth: Math.max(1, depth - bt * 2),
@@ -107,14 +136,16 @@ export function buildCharm(items, assetsById, materialId = 'aldente', { attachme
       : makeMaterial(piece.color, materialId, UV_REPEAT);
     const mesh = new THREE.Mesh(geometry, material);
     mesh.position.z = z0 + bt;
+    mesh.userData.body = isBody;
+    mesh.userData.feature = isFeature;
     root.add(mesh);
     const top = z0 + Math.max(1, depth - bt * 2) + bt * 2;
     piece.bevel = bt;
     piece.bevelSize = bs;
-    piece.polys = shapes.map((sh) => ({ outer: sh.getPoints(), holes: sh.holes.map((h) => h.getPoints()) }));
+    piece.polys = polys;
     piece.contours = piece.polys.flatMap((q) => [q.outer, ...q.holes]);
     piece.top = top;
-    placed.push({ box, top });
+    placed.push({ box, top, polys: piece.polys, samples });
     itemTop.set(piece.item, Math.max(itemTop.get(piece.item) ?? 0, top));
   }
 
@@ -178,9 +209,30 @@ export function buildCharm(items, assetsById, materialId = 'aldente', { attachme
     const mm = Math.max(size.x, size.y) / sizeMm; // SVG units per millimetre
     // hang point: top of the body, in the middle of its thickness
     const top = new THREE.Vector3((box.min.x + box.max.x) / 2, box.max.y, (box.min.z + box.max.z) / 2);
-    wrapper.add(buildAttachment(attachment, top, mm));
+    wrapper.add(buildAttachment(attachment, top, mm, { wMm: size.x / mm, hMm: size.y / mm }));
   }
   return wrapper;
+}
+
+/** Points inside the shapes (their outline only for very thin ones), to test real overlaps between pieces. */
+function polySamples(polys) {
+  const out = [];
+  for (const { outer, holes } of polys) {
+    const b = new THREE.Box2().setFromPoints(outer);
+    const n = 16;
+    const before = out.length;
+    for (let i = 1; i < n; i++)
+      for (let j = 1; j < n; j++) {
+        const p = { x: b.min.x + ((b.max.x - b.min.x) * i) / n, y: b.min.y + ((b.max.y - b.min.y) * j) / n };
+        if (inPoly(p, outer) && !holes.some((h) => inPoly(p, h))) out.push(p);
+      }
+    if (out.length === before) out.push(...outer);
+  }
+  return out;
+}
+/** Do two pieces really overlap (a point of one inside the other, either way)? */
+function overlaps(samples, polys, placed) {
+  return samples.some((p) => insidePolys(p, placed.polys)) || placed.samples.some((p) => insidePolys(p, polys));
 }
 
 function inPoly(p, poly) {
@@ -226,16 +278,27 @@ function addBackLogo(wrapper) {
     logoTexture.colorSpace = THREE.SRGBColorSpace;
     logoTexture.anisotropy = 8;
   }
-  // about 45% of the width: readable but discreet, like on Imperia products
-  const w = Math.min(size.x, size.y * 1.6) * 0.45;
+  // the body alone tells whether the pasta is a long, upright shape (Reginetta)
+  const bodyBox = new THREE.Box3();
+  wrapper.traverse((o) => o.isMesh && o.userData.body && bodyBox.expandByObject(o));
+  const body = bodyBox.isEmpty() ? size : bodyBox.getSize(new THREE.Vector3());
+  const long = body.y > body.x * 1.6;
+  const ratio = 388 / 1800; // logo height / width
+  // about 45% of the width: readable but discreet, like on Imperia products;
+  // on a long body it turns 90° and runs along the length, same proportions
+  const w = long ? Math.min(body.y * 0.5, (body.x * 0.62) / ratio) : Math.min(size.x, size.y * 1.6) * 0.45;
   const decal = new THREE.Mesh(
-    new THREE.PlaneGeometry(w, (w * 388) / 1800),
+    new THREE.PlaneGeometry(w, w * ratio),
     new THREE.MeshPhysicalMaterial({ map: logoTexture, transparent: true, alphaTest: 0.05, roughness: 0.45, polygonOffset: true, polygonOffsetFactor: -2 }),
   );
   decal.rotation.y = Math.PI; // faces the back
-  decal.position.set((box.min.x + box.max.x) / 2, box.min.y + size.y * 0.45, box.min.z - 0.4);
+  if (long) decal.rotation.z = Math.PI / 2; // reads bottom to top along the pasta
+  const c = long ? bodyBox.getCenter(new THREE.Vector3()) : null;
+  if (long) decal.position.set(c.x, c.y, box.min.z - 0.4);
+  else decal.position.set((box.min.x + box.max.x) / 2, box.min.y + size.y * 0.45, box.min.z - 0.4);
   decal.userData.keepTexture = true;
   decal.userData.noShadow = true;
+  decal.userData.logo = { long };
   wrapper.add(decal);
 }
 
@@ -254,30 +317,39 @@ function tubeAlong(points, radius, material, closed = true) {
  *   keyring – split key ring
  *   chain   – ball chain loop
  */
-export function buildAttachment(id, top, mm) {
+export function buildAttachment(id, top, mm, { wMm = 40, hMm = 40 } = {}) {
   const g = new THREE.Group();
-  const v = (x, y, z = 0) => new THREE.Vector3(top.x + x * mm, top.y + y * mm, top.z + z * mm);
+  // in proportion with the charm: real-size hardware, slightly smaller on slim
+  // shapes; loops no longer than the charm itself, so they never dominate it
+  const long = Math.max(wMm, hMm);
+  const k = Math.max(0.75, Math.min(1, Math.sqrt(Math.min(wMm, hMm) / long) * 1.2));
+  const u = mm * k; // one (scaled) millimetre of hardware
+  const v = (x, y, z = 0) => new THREE.Vector3(top.x + x * u, top.y + y * u, top.z + z * u);
 
   // jump ring, perpendicular to the charm, half inside the top edge
-  const ring = new THREE.Mesh(new THREE.TorusGeometry(2.8 * mm, 0.5 * mm, 12, 48), metal());
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(2.8 * u, 0.5 * u, 12, 48), metal());
   ring.rotation.y = Math.PI / 2;
   ring.position.copy(v(0, 0.9));
   g.add(ring);
   const y0 = 0.9 + 2.8; // top of the jump ring (mm above the charm)
 
   if (id === 'keyring') {
-    const R = 11;
-    for (const k of [-1, 1]) {
-      const coil = new THREE.Mesh(new THREE.TorusGeometry(R * mm, 0.75 * mm, 14, 96), metal());
-      coil.position.copy(v(0, y0 + R - 0.9, k * 0.8));
-      coil.rotation.x = k * 0.03;
+    // split ring: about a quarter of the charm's length across (7 to 11 mm radius)
+    const R = Math.max(7, Math.min(11, long * 0.24)) / k;
+    for (const s of [-1, 1]) {
+      const coil = new THREE.Mesh(new THREE.TorusGeometry(R * u, 0.75 * u, 14, 96), metal());
+      coil.position.copy(v(0, y0 + R - 0.9, s * 0.8));
+      coil.rotation.x = s * 0.03;
       g.add(coil);
     }
   } else if (id === 'chain') {
-    const loop = [v(0, y0 - 0.6), v(-5, y0 + 6), v(-8, y0 + 20), v(-5, y0 + 33), v(0, y0 + 36), v(5, y0 + 33), v(8, y0 + 20), v(5, y0 + 6)];
+    // ball chain loop: as tall as most of the charm (18 to 28 mm)
+    const L = Math.max(18, Math.min(28, hMm * 0.7)) / k;
+    const W = L * 0.22;
+    const loop = [v(0, y0 - 0.6), v(-W * 0.62, y0 + L * 0.17), v(-W, y0 + L * 0.55), v(-W * 0.62, y0 + L * 0.92), v(0, y0 + L), v(W * 0.62, y0 + L * 0.92), v(W, y0 + L * 0.55), v(W * 0.62, y0 + L * 0.17)];
     const curve = new THREE.CatmullRomCurve3(loop, true, 'centripetal');
-    const n = Math.round(curve.getLength() / (2.5 * mm));
-    const ballGeo = new THREE.SphereGeometry(1.05 * mm, 14, 10);
+    const n = Math.round(curve.getLength() / (2.5 * u));
+    const ballGeo = new THREE.SphereGeometry(1.05 * u, 14, 10);
     const mat = metal();
     for (let i = 0; i < n; i++) {
       const b = new THREE.Mesh(ballGeo.clone(), mat.clone());
@@ -288,25 +360,27 @@ export function buildAttachment(id, top, mm) {
     mat.dispose();
   } else {
     // lobster clasp hanging from the jump ring
-    const clasp = new THREE.Mesh(new THREE.TorusGeometry(2.4 * mm, 0.85 * mm, 14, 40), metal());
+    const clasp = new THREE.Mesh(new THREE.TorusGeometry(2.4 * u, 0.85 * u, 14, 40), metal());
     clasp.scale.set(1, 1.75, 1);
     clasp.position.copy(v(0, y0 + 3.6));
     g.add(clasp);
-    const lever = new THREE.Mesh(new THREE.CapsuleGeometry(0.45 * mm, 3.4 * mm, 6, 12), metal());
+    const lever = new THREE.Mesh(new THREE.CapsuleGeometry(0.45 * u, 3.4 * u, 6, 12), metal());
     lever.position.copy(v(1.9, y0 + 3.2));
     lever.rotation.z = 0.25;
     g.add(lever);
-    const eye = new THREE.Mesh(new THREE.TorusGeometry(1.3 * mm, 0.45 * mm, 10, 28), metal());
+    const eye = new THREE.Mesh(new THREE.TorusGeometry(1.3 * u, 0.45 * u, 10, 28), metal());
     eye.rotation.y = Math.PI / 2;
     eye.position.copy(v(0, y0 + 9));
     g.add(eye);
-    // crimp end + soft cord loop
-    const crimp = new THREE.Mesh(new THREE.CylinderGeometry(1.25 * mm, 1.25 * mm, 4.2 * mm, 20), metal());
+    // crimp end + soft cord loop (as tall as most of the charm: 18 to 28 mm)
+    const crimp = new THREE.Mesh(new THREE.CylinderGeometry(1.25 * u, 1.25 * u, 4.2 * u, 20), metal());
     crimp.position.copy(v(0, y0 + 12.4));
     g.add(crimp);
     const cordMat = new THREE.MeshPhysicalMaterial({ color: CORD, roughness: 0.85, sheen: 0.6, sheenRoughness: 0.5, sheenColor: new THREE.Color('#c79a8f') });
     const c0 = y0 + 14;
-    g.add(tubeAlong([v(-0.6, c0), v(-5, c0 + 8), v(-6.5, c0 + 22), v(-3, c0 + 34), v(0, c0 + 36), v(3, c0 + 34), v(6.5, c0 + 22), v(5, c0 + 8), v(0.6, c0)], 1 * mm, cordMat));
+    const L = Math.max(18, Math.min(28, hMm * 0.7)) / k;
+    const W = L * 0.18;
+    g.add(tubeAlong([v(-0.6, c0), v(-W * 0.77, c0 + L * 0.22), v(-W, c0 + L * 0.61), v(-W * 0.46, c0 + L * 0.94), v(0, c0 + L), v(W * 0.46, c0 + L * 0.94), v(W, c0 + L * 0.61), v(W * 0.77, c0 + L * 0.22), v(0.6, c0)], 1 * u, cordMat));
   }
   return g;
 }

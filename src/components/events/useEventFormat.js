@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useI18n } from '../../i18n/index.js';
-import { CURRENCY_OF, tx } from '../../data/events.js';
+import { formatExperiencePrice, tx } from '../../data/events.js';
 
 /** Dates, durations and prices of an event, in the visitor's language. */
 export function useEventFormat() {
@@ -8,8 +8,8 @@ export function useEventFormat() {
   return useMemo(() => {
     const date = (iso) => new Date(iso).toLocaleDateString(locale, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
     const time = (iso) => new Date(iso).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
-    // when: date and time, or "available now" for online, self-paced ones
-    const when = (e) => (e.start ? `${date(e.start)} · ${time(e.start)}` : t('events.anytime'));
+    // when: date and time, "start anytime" for the online club, nothing when no date was published
+    const when = (e) => (e.start ? `${date(e.start)} · ${time(e.start)}` : e.online ? t('events.anytime') : null);
     const duration = (min) => {
       if (!min) return t('events.ownPace');
       const h = Math.floor(min / 60);
@@ -17,14 +17,19 @@ export function useEventFormat() {
       if (!h) return t('events.minutes', { m });
       return m ? t('events.hoursMin', { h, m }) : t('events.hours', { h });
     };
-    // in the event's own currency (no conversion): £ in England, € in Italy
-    const price = (amount, country) =>
-      !amount ? t('events.free') : Number(amount).toLocaleString(locale, { style: 'currency', currency: CURRENCY_OF[country], minimumFractionDigits: Number.isInteger(amount) ? 0 : 2, maximumFractionDigits: 2 });
-    const place = (e) => (e.online ? t('events.online') : `${tx(e.city, lang)}, ${t(`events.loc.${e.country}`)}`);
-    const places = (e) => (e.places ? t('events.places', { n: e.places }) : t('events.unlimited'));
+    // the same amount in £ (English) or € (Italian…): shared by cards, detail
+    // pages, booking buttons and summaries, so they always agree
+    const price = (amount) => formatExperiencePrice(amount, lang, locale);
+    // what the price covers: one person, or the whole access period (The Pasta Match)
+    const per = (e) => (e.accessWeeks ? t('events.forWeeks', { n: e.accessWeeks }) : t('events.perPerson'));
+    // length: the access period, the session's duration, or nothing when it was never published
+    const length = (e) => (e.accessWeeks ? t('events.accessWeeks', { n: e.accessWeeks }) : e.minutes || e.online ? duration(e.minutes) : null);
+    // (a venue that is the point of the experience is named first: "Cecconi’s, London")
+    const place = (e) => (e.online ? t('events.online') : e.venueFirst ? `${e.venue}, ${tx(e.city, lang)}` : `${tx(e.city, lang)}, ${t(`events.loc.${e.country}`)}`);
+    const places = (e) => (e.places ? t('events.places', { n: e.places }) : e.online ? t('events.unlimited') : null);
     const kind = (e) => t(`events.kind.${e.kindKey || e.type}`);
-    // experience levels have the names of the finishes (Raw, Al Dente, Overcooked)
-    const level = (e) => t(`order.materials.${e.level}.name`);
-    return { date, time, when, duration, price, place, places, kind, level, text: (f) => tx(f, lang), lang };
+    // experience levels: Beginner, Intermediate, Advanced
+    const level = (e) => t(`events.lvl.${e.level}`);
+    return { date, time, when, duration, length, price, per, place, places, kind, level, text: (f) => tx(f, lang), lang };
   }, [t, lang, locale]);
 }

@@ -124,11 +124,11 @@ export default function BookingModal({ open, onClose, event: e, back = '/events'
           <dl className="space-y-1.5 border-y border-line py-3 text-sm">
             <div className="flex justify-between">
               <dt className="text-muted">{t('book.pricePer')}</dt>
-              <dd>{f.price(e.price, e.country)}</dd>
+              <dd>{f.price(e.price)}</dd>
             </div>
             <div className="flex justify-between text-base font-bold">
               <dt>{t('book.total')}</dt>
-              <dd data-testid="book-total">{f.price(total, e.country)}</dd>
+              <dd data-testid="book-total">{f.price(total)}</dd>
             </div>
           </dl>
 
@@ -160,7 +160,7 @@ export default function BookingModal({ open, onClose, event: e, back = '/events'
             </div>
             <div className="flex justify-between font-bold">
               <dt>{t('book.total')}</dt>
-              <dd>{f.price(total, e.country)}</dd>
+              <dd>{f.price(total)}</dd>
             </div>
           </dl>
           <p className="text-xs leading-relaxed text-muted">{t('book.note')}</p>
