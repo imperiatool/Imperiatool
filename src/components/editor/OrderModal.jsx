@@ -1,15 +1,19 @@
-import { Suspense, lazy, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import Safe3D from '../three/Safe3D.jsx';
+import { lazyRetry } from '../../lib/lazyRetry.js';
 import Modal from '../ui/Modal.jsx';
 import Button from '../ui/Button.jsx';
 import Icon from '../ui/Icon.jsx';
 import { useCartStore } from '../../store/useCartStore.js';
 import MaterialPicker from '../order/MaterialPicker.jsx';
+import SpecList from '../order/SpecList.jsx';
+import PreviewHint from '../ui/PreviewHint.jsx';
 import { CHARM_OPTIONS } from '../../data/defaults.js';
 import { buildStickerSvg, svgToPngBlob, blobToDataUrl } from '../../lib/exportImage.js';
 import { useI18n } from '../../i18n/index.js';
 
 // Three.js is only downloaded when a 3D view opens.
-const Viewer3D = lazy(() => import('../three/Viewer3D.jsx'));
+const Viewer3D = lazyRetry(() => import('../three/Viewer3D.jsx'), 'viewer3d');
 
 function AttachmentIcon({ id }) {
   const s = { fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round' };
@@ -50,6 +54,11 @@ export default function OrderModal({ open, onClose, items, library }) {
   const [material, setMaterial] = useState('aldente');
   const [size, setSize] = useState('4cm');
   const [attachment, setAttachment] = useState('none');
+  // every time the 3D preview opens it shows the charm alone: an attachment
+  // appears only after the customer picks one
+  useEffect(() => {
+    if (open) setAttachment('none');
+  }, [open]);
   const addToCart = useCartStore((s) => s.add);
   const viewer = useRef(null);
 
@@ -101,7 +110,7 @@ export default function OrderModal({ open, onClose, items, library }) {
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
         <aside className="space-y-4">
           <div className="relative aspect-square overflow-hidden rounded-3xl border border-line bg-studio">
-            <Suspense fallback={<div className="grid h-full place-items-center text-sm text-muted">{t('order.loading3d')}</div>}>
+            <Safe3D fallback={<div className="grid h-full place-items-center text-sm text-muted">{t('order.loading3d')}</div>}>
               {open && (
                 <Viewer3D
                   kind="charm"
@@ -114,8 +123,9 @@ export default function OrderModal({ open, onClose, items, library }) {
                   className="h-full w-full"
                 />
               )}
-            </Suspense>
+            </Safe3D>
           </div>
+          <PreviewHint className="-mt-2">{t('viewer.hint3d')}</PreviewHint>
           <div>
             <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">{t('order.finish')}</h3>
             <MaterialPicker options={CHARM_OPTIONS.materials} value={material} onChange={setMaterial} />
@@ -171,6 +181,15 @@ export default function OrderModal({ open, onClose, items, library }) {
               ))}
             </div>
           </fieldset>
+          {/* no verified charm material yet: that row is left out (see README) */}
+          <SpecList
+            testid="charm-specs"
+            rows={[
+              ['spec.pattern', design[0]?.assetName],
+              ['spec.colour', design[0]?.colors[0]?.name],
+              ['spec.finish', t(`order.materials.${material}.name`)],
+            ]}
+          />
           <div className="mt-auto flex items-center justify-between gap-3 border-t border-line pt-4">
             <span className="text-2xl font-semibold">{money(unitPrice)}</span>
             <Button variant="primary" size="lg" onClick={add} disabled={!visibleItems.length} data-testid="charm-add">

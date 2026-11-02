@@ -234,13 +234,27 @@ export async function renderStickerCanvas(items, assetsById, { border = { width:
     const n = parseInt((border.color || '#ffffff').slice(1), 16);
     const layer = ctx.createImageData(w, h);
     const px = layer.data;
+    // white border + a soft grey rim just outside it, so the border stays
+    // visible on white backgrounds too (and on dark ones it is simply white)
+    const rim = Math.max(1.2, r * 0.09);
     for (let i = 0; i < w * h; i++) {
-      const a = Math.max(0, Math.min(1, r + 0.5 - dist[i]));
-      if (!a) continue;
-      px[i * 4] = (n >> 16) & 255;
-      px[i * 4 + 1] = (n >> 8) & 255;
-      px[i * 4 + 2] = n & 255;
-      px[i * 4 + 3] = Math.round(a * 255);
+      const d = dist[i];
+      const a = Math.max(0, Math.min(1, r + 0.5 - d));
+      if (a >= 1) {
+        px[i * 4] = (n >> 16) & 255;
+        px[i * 4 + 1] = (n >> 8) & 255;
+        px[i * 4 + 2] = n & 255;
+        px[i * 4 + 3] = 255;
+        continue;
+      }
+      const g = Math.max(0, Math.min(1, (r + rim - d) / rim)) * 0.28; // grey rim alpha
+      const outA = a + g * (1 - a);
+      if (outA <= 0) continue;
+      const mix = (c) => Math.round((c * a + 120 * g * (1 - a)) / outA);
+      px[i * 4] = mix((n >> 16) & 255);
+      px[i * 4 + 1] = mix((n >> 8) & 255);
+      px[i * 4 + 2] = mix(n & 255);
+      px[i * 4 + 3] = Math.round(outA * 255);
     }
     ctx.putImageData(layer, 0, 0);
   }
@@ -250,10 +264,19 @@ export async function renderStickerCanvas(items, assetsById, { border = { width:
 
 export const canvasToBlob = (canvas, type = 'image/png', quality) => new Promise((resolve) => canvas.toBlob(resolve, type, quality));
 
-/** Copies a PNG to the clipboard (desktop: then paste it in any chat). */
+/**
+ * Copies the sticker to the clipboard as a transparent PNG (the only image
+ * type browsers can write). Nothing else goes with it: an extra HTML copy made
+ * some web editors paste the HTML/data-URL version instead of the image.
+ * Whether the transparency survives after pasting depends on the destination:
+ * chats keep it (WhatsApp, Telegram…), while feed posts on Instagram and
+ * LinkedIn are re-encoded as JPEG by those platforms, which fills it with white.
+ */
 export async function copyImage(blob) {
   if (!navigator.clipboard?.write || typeof ClipboardItem === 'undefined') throw new Error('no-clipboard');
-  await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+  if (blob?.type !== 'image/png') throw new Error('not-png');
+  // a promise keeps the user gesture valid in Safari while the PNG is ready
+  await navigator.clipboard.write([new ClipboardItem({ 'image/png': Promise.resolve(blob) })]);
 }
 export const canCopyImage = () => typeof navigator !== 'undefined' && !!navigator.clipboard?.write && typeof ClipboardItem !== 'undefined';
 

@@ -1,33 +1,56 @@
 import { useEffect, useRef, useState } from 'react';
-import AssetPicker from './AssetPicker.jsx';
 import StickerCanvas from './StickerCanvas.jsx';
-import PropertiesPanel from './PropertiesPanel.jsx';
+import CustomiserPanel from './CustomiserPanel.jsx';
 import ExportModal from './ExportModal.jsx';
 import OrderModal from './OrderModal.jsx';
+import StickerCollection from './StickerCollection.jsx';
+import StickerOrderModal from './StickerOrderModal.jsx';
 import Button from '../ui/Button.jsx';
 import Icon from '../ui/Icon.jsx';
 import { useLibrary } from '../../hooks/useLibrary.js';
 import { useEditorStore } from '../../store/useEditorStore.js';
 import { useI18n } from '../../i18n/index.js';
+import { useMeta } from '../../lib/useMeta.js';
 import PageHeader from '../layout/PageHeader.jsx';
+import PreviewHint from '../ui/PreviewHint.jsx';
 
 /**
  * Character editor shared by the Charm and Sticker products.
  * The design is the same: only the final action changes.
  */
 export default function EditorPage({ mode = 'charm' }) {
-  const { t } = useI18n();
+  const { t, label } = useI18n();
   const library = useLibrary();
+  // what the page offers, also for search engines and assistants: the parts
+  // (bodies, eyes, mouths) with their pasta names, colours and finishes
+  const title = mode === 'charm' ? t('editor.charmTitle') : t('editor.stickerTitle');
+  useMeta({
+    title,
+    description: t(mode === 'charm' ? 'meta.charm.desc' : 'meta.sticker.desc'),
+    jsonld: {
+      '@context': 'https://schema.org',
+      '@type': 'Product',
+      name: title,
+      brand: { '@type': 'Brand', name: 'Imperia' },
+      description: t(mode === 'charm' ? 'meta.charm.desc' : 'meta.sticker.desc'),
+      color: library.palette.map((c) => label(c)),
+      ...(mode === 'charm' ? { material: ['raw', 'aldente', 'overcooked'].map((m) => t(`order.materials.${m}.name`)) } : {}),
+      additionalProperty: library.categories.flatMap((c) =>
+        library.assets.filter((a) => a.categoryId === c.id).map((a) => ({ '@type': 'PropertyValue', name: label(c), value: label(a) })),
+      ),
+    },
+  });
   const items = useEditorStore((s) => s.items);
   const canUndo = useEditorStore((s) => s.past.length > 0);
   const canRedo = useEditorStore((s) => s.future.length > 0);
-  const [modal, setModal] = useState(null); // 'export' | 'order' | null
-  const [pickerStep, setPickerStep] = useState(0);
-  const pickerRef = useRef(null);
+  const [modal, setModal] = useState(null); // 'export' | 'order' | 'collection' | null
+  const panelRef = useRef(null);
+  // Start: puts the first body on the canvas, then shows its section
   const start = () => {
-    setPickerStep(0);
-    // on phones the picker sits under the canvas: bring it into view
-    if (window.matchMedia('(max-width: 1023px)').matches) pickerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const firstBase = library.categories.find((c) => c.isBase && library.assets.some((a) => a.categoryId === c.id));
+    const body = firstBase && library.assets.find((a) => a.categoryId === firstBase.id);
+    // the new body is selected, so its section opens in the panel
+    if (body) useEditorStore.getState().addAsset(body, library);
   };
   const s = useEditorStore.getState;
 
@@ -101,20 +124,12 @@ export default function EditorPage({ mode = 'charm' }) {
       >
         <div className="hidden lg:block">{cta}</div>
       </PageHeader>
-      <div className="grid flex-1 grid-cols-1 lg:min-h-0 lg:grid-cols-[300px_minmax(0,1fr)_320px]">
-        {/* 1. pick the pieces */}
-        <aside
-          ref={pickerRef}
-          className="order-2 h-[26rem] scroll-mt-2 border-y border-line bg-white lg:order-1 lg:h-auto lg:min-h-0 lg:border-y-0 lg:border-r"
-        >
-          <AssetPicker library={library} step={pickerStep} onStepChange={setPickerStep} />
-        </aside>
-
-        {/* canvas */}
-        <section className="order-1 flex flex-col gap-2 bg-studio p-3 sm:p-5 lg:order-2 lg:min-h-0">
+      {/* preview on the left, parts and colours on the right */}
+      <div className="grid flex-1 grid-cols-1 lg:min-h-0 lg:grid-cols-[minmax(0,1fr)_minmax(400px,480px)]">
+        <section className={`flex flex-col gap-2 p-3 sm:p-5 lg:min-h-0 ${mode === 'sticker' ? 'bg-white' : 'bg-studio'}`}>
           <div className="flex justify-center">{tools}</div>
           <div className="relative grid place-items-center lg:min-h-0 lg:flex-1">
-            <div className={`relative aspect-square w-full max-w-[min(100%,calc(100vh-21rem))] overflow-hidden rounded-[28px] ${mode === 'sticker' ? 'bg-[#ececea]' : 'bg-white'} [background-image:radial-gradient(#1d1d1b10_1px,transparent_1px)] [background-size:22px_22px]`}>
+            <div className={`relative aspect-square w-full ${mode === 'sticker' ? 'max-w-[min(100%,calc(100vh-27rem))] [transform:translateZ(0)]' : 'max-w-[min(100%,calc(100vh-21rem))]'} overflow-hidden rounded-[28px] bg-white [background-image:radial-gradient(#1d1d1b10_1px,transparent_1px)] [background-size:22px_22px]`}>
               <StickerCanvas assetsById={library.assetsById} label={t('editor.canvasLabel')} outline={mode === 'sticker'} />
               {!items.length && (
                 <div className="absolute inset-0 grid place-items-center p-6 text-center">
@@ -133,12 +148,13 @@ export default function EditorPage({ mode = 'charm' }) {
               )}
             </div>
           </div>
-          {items.length > 0 && <p className="text-center text-xs text-muted">{t('editor.canvasHint')}</p>}
+          {items.length > 0 && <PreviewHint className="pt-0">{t('editor.canvasHint')}</PreviewHint>}
+          {/* stickers: a collection of designs to review and order */}
+          {mode === 'sticker' && <StickerCollection library={library} onReview={() => setModal('collection')} />}
         </section>
 
-        {/* 2. colours & adjustments: every part stays open */}
-        <aside className="order-3 border-line bg-white lg:min-h-0 lg:border-l">
-          <PropertiesPanel library={library} />
+        <aside className="border-t border-line bg-cream lg:min-h-0 lg:border-l lg:border-t-0">
+          <CustomiserPanel ref={panelRef} library={library} />
         </aside>
       </div>
 
@@ -148,6 +164,7 @@ export default function EditorPage({ mode = 'charm' }) {
       </div>
 
       {mode === 'sticker' && <ExportModal open={modal === 'export'} onClose={() => setModal(null)} items={items} library={library} />}
+      {mode === 'sticker' && <StickerOrderModal open={modal === 'collection'} onClose={() => setModal(null)} library={library} />}
       {mode === 'charm' && <OrderModal open={modal === 'order'} onClose={() => setModal(null)} items={items} library={library} />}
     </div>
   );

@@ -3,6 +3,7 @@ import { Studio } from '../../lib/three/studio.js';
 import { buildCharm } from '../../lib/charm3d.js';
 import { buildCover } from '../../lib/cover3d.js';
 import { buildPackaging } from '../../lib/packaging3d.js';
+import { buildPasta } from '../../lib/pasta3d.js';
 import Icon from '../ui/Icon.jsx';
 import { useI18n } from '../../i18n/index.js';
 
@@ -11,18 +12,22 @@ import { useI18n } from '../../i18n/index.js';
  *   kind="charm"     → items + assetsById + material (+ attachment, sizeMm)
  *   kind="cover"     → cover = { pattern, color, material, model }
  *   kind="packaging" → cover + { colorId, colorName, modelLabel }: the retail box
+ *   kind="pasta"     → pasta = { shape, color, finish }: Events visuals (`transparent` shows the page behind)
  * `onReady(api)` receives { snapshot() }.
  */
-export default function Viewer3D({ kind, items, assetsById, material, attachment, sizeMm, cover, onReady, className = '', hint = true }) {
+export default function Viewer3D({ kind, items, assetsById, material, attachment, sizeMm, cover, pasta, transparent = false, onReady, className = '', hint = false }) {
   const { t } = useI18n();
   const hostRef = useRef(null);
   const studioRef = useRef(null);
   const [error, setError] = useState(false);
   const [spin, setSpin] = useState(true);
+  const [gen, setGen] = useState(0); // a new 3D view after the GPU context was lost
 
   useEffect(() => {
     try {
-      studioRef.current = new Studio(hostRef.current);
+      studioRef.current = new Studio(hostRef.current, { transparent });
+      studioRef.current.onLost = () => setError('lost');
+      studioRef.current.onRestored = () => setError(false);
       studioRef.current.setAutoRotate(true);
       onReady?.({ snapshot: (q, max) => studioRef.current?.snapshot(q, max) });
     } catch (e) {
@@ -35,10 +40,11 @@ export default function Viewer3D({ kind, items, assetsById, material, attachment
       onReady?.(null);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [gen]);
 
-  const coverKey = cover ? JSON.stringify(cover) : '';
+  const coverKey = cover ? JSON.stringify(cover) : pasta ? JSON.stringify(pasta) : '';
   const lastKind = useRef(kind);
+  const lastMat = useRef(null);
   const [busy, setBusy] = useState(false);
   useEffect(() => {
     const studio = studioRef.current;
@@ -47,26 +53,43 @@ export default function Viewer3D({ kind, items, assetsById, material, attachment
     if (lastKind.current !== kind) studio.reframe = true;
     lastKind.current = kind;
     let cancelled = false;
-    try {
-      if (kind === 'packaging') {
-        setBusy(true);
-        buildPackaging(cover)
-          .then((obj) => {
-            if (cancelled) return;
-            studio.setObject(obj, { height: 2.3 });
-          })
-          .catch((e) => console.error(e))
-          .finally(() => !cancelled && setBusy(false));
-      } else if (kind === 'cover') studio.setObject(buildCover(cover), { height: 2.2 });
-      else studio.setObject(buildCharm(items || [], assetsById || {}, material, { attachment, sizeMm }), { height: 2 });
-    } catch (e) {
-      console.error(e);
-    }
+    // build after the click has been painted: the option highlights at once,
+    // the 3D follows a moment later (no frozen page while it rebuilds)
+    const timer = setTimeout(() => {
+      if (cancelled) return;
+      try {
+        if (kind === 'packaging') {
+          setBusy(true);
+          buildPackaging(cover)
+            .then((obj) => {
+              if (cancelled) return;
+              studio.setObject(obj, { height: 2.3 });
+            })
+            .catch((e) => console.error(e))
+            .finally(() => !cancelled && setBusy(false));
+        } else if (kind === 'cover') studio.setObject(buildCover(cover), { height: 2.2 });
+        else if (kind === 'pasta') studio.setObject(buildPasta(pasta), { height: 1.3 });
+        else studio.setObject(buildCharm(items || [], assetsById || {}, material, { attachment, sizeMm }), { height: 2 });
+        // charms swing gently, like a charm hanging from a phone or a bag
+        studio.setSwing(kind === 'charm');
+        // "jelly" bounce when the finish changes, once the new model is shown:
+        // you can see how soft it is (same strengths as before)
+        const mat = kind === 'charm' ? material : cover?.material;
+        if (kind !== 'packaging' && lastMat.current && lastMat.current !== mat) {
+          const strength = { overcooked: 0.11, aldente: 0.035, raw: 0 }[mat] ?? 0;
+          if (strength) studio.wobble(strength);
+        }
+        if (kind !== 'packaging') lastMat.current = mat;
+      } catch (e) {
+        console.error(e);
+      }
+    }, 40);
     return () => {
       cancelled = true;
+      clearTimeout(timer);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [kind, items, assetsById, material, coverKey, attachment, sizeMm]);
+  }, [kind, items, assetsById, material, coverKey, attachment, sizeMm, gen]);
 
   useEffect(() => studioRef.current?.setAutoRotate(spin), [spin]);
   const move = (dir) => {
@@ -74,25 +97,23 @@ export default function Viewer3D({ kind, items, assetsById, material, attachment
     studioRef.current?.pan(dir);
   };
 
-  // "jelly" bounce when the material changes: you can see how soft it is
-  const mat = kind === 'charm' ? material : cover?.material;
-  const firstMat = useRef(true);
-  useEffect(() => {
-    if (firstMat.current) {
-      firstMat.current = false;
-      return;
-    }
-    const strength = { overcooked: 0.11, aldente: 0.035, raw: 0 }[mat] ?? 0;
-    if (strength && kind !== 'packaging') studioRef.current?.wobble(strength);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mat]);
+
 
   const btn = 'grid h-10 w-10 place-items-center rounded-full bg-white text-ink shadow-sm ring-1 ring-ink/10 transition hover:text-brand active:scale-95';
   return (
     <div className={`relative overflow-hidden ${className}`}>
       <div ref={hostRef} className="absolute inset-0" data-testid="viewer-3d" onPointerDown={() => setSpin(false)} />
       {error ? (
-        <div className="absolute inset-0 grid place-items-center p-6 text-center text-sm text-muted">{t('order.webglError')}</div>
+        <div className="absolute inset-0 grid place-items-center bg-white/80 p-6 text-center text-sm text-muted" data-testid="viewer-lost">
+          <div>
+            <p>{t('order.webglError')}</p>
+            {error === 'lost' && (
+              <button type="button" onClick={() => (setError(false), (lastMat.current = null), setGen((g) => g + 1))} className="mt-2 font-semibold text-brand underline underline-offset-4">
+                {t('viewer.retry')}
+              </button>
+            )}
+          </div>
+        </div>
       ) : (
         <>
           <div className="absolute right-3 top-3 flex flex-col gap-2">

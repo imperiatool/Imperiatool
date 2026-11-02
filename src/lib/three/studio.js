@@ -8,22 +8,27 @@ import { disposeMaterial } from './materials.js';
 export const STUDIO_BG = '#f2f2f0';
 
 export class Studio {
-  constructor(container) {
+  /** `transparent`: no background colour (the page shows through, shadow kept). */
+  constructor(container, { transparent = false } = {}) {
     this.container = container;
-    this.renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: transparent, preserveDrawingBuffer: true, precision: 'highp', powerPreference: 'high-performance' });
+    const coarse = window.matchMedia?.('(pointer: coarse)').matches;
+    // phones: lighter rendering so scrolling stays smooth (no blank areas)
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, coarse ? 1.5 : 2));
     this.renderer.toneMapping = THREE.NeutralToneMapping;
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     const el = this.renderer.domElement;
     el.style.display = 'block';
-    el.style.touchAction = 'none';
+    // phones: one finger up/down scrolls the page, sideways turns the product;
+    // two fingers turn, move and zoom freely
+    el.style.touchAction = window.matchMedia?.('(pointer: coarse)').matches ? 'pan-y' : 'none';
     el.style.cursor = 'grab';
     container.appendChild(el);
 
     this.scene = new THREE.Scene();
     const white = typeof location !== 'undefined' && /[?&]bg=white/.test(location.hash + location.search);
-    this.scene.background = new THREE.Color(white ? '#ffffff' : STUDIO_BG);
+    this.scene.background = transparent ? null : new THREE.Color(white ? '#ffffff' : STUDIO_BG);
     const pmrem = new THREE.PMREMGenerator(this.renderer);
     this.env = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
     pmrem.dispose();
@@ -34,7 +39,7 @@ export class Studio {
     const key = new THREE.DirectionalLight(0xfffaf2, 1.35);
     key.position.set(1.8, 3.4, 2.8);
     key.castShadow = true;
-    key.shadow.mapSize.set(2048, 2048);
+    key.shadow.mapSize.set(coarse ? 1024 : 2048, coarse ? 1024 : 2048);
     key.shadow.radius = 9;
     key.shadow.bias = -0.0003;
     key.shadow.normalBias = 0.01;
@@ -66,6 +71,18 @@ export class Studio {
     // mouse: left = rotate, wheel-button held = move up/down, right = move
     this.controls.mouseButtons = { LEFT: THREE.MOUSE.ROTATE, MIDDLE: THREE.MOUSE.PAN, RIGHT: THREE.MOUSE.PAN };
     this.controls.autoRotateSpeed = 1.4;
+    // phones can drop the GPU context (memory pressure, too many 3D views):
+    // keep the page alive, stop drawing, and let three.js restore it
+    this.lost = false;
+    el.addEventListener('webglcontextlost', (e) => {
+      e.preventDefault();
+      this.lost = true;
+      this.onLost?.();
+    });
+    el.addEventListener('webglcontextrestored', () => {
+      this.lost = false;
+      this.onRestored?.();
+    });
     el.addEventListener('pointerdown', () => (el.style.cursor = 'grabbing'));
     el.addEventListener('pointerup', () => (el.style.cursor = 'grab'));
 
@@ -73,10 +90,22 @@ export class Studio {
     this.running = true;
     this.ro = new ResizeObserver(() => this.resize());
     this.ro.observe(container);
+    // stop drawing while the preview is scrolled out of view: scrolling the
+    // options underneath stays smooth on phones
+    this.visible = true;
+    if (typeof IntersectionObserver !== 'undefined') {
+      this.io = new IntersectionObserver(([e]) => (this.visible = e.isIntersecting), { threshold: 0.01 });
+      this.io.observe(container);
+    }
     this.resize();
     this.wobbleUntil = 0;
+    this.reducedMotion = !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
     const loop = () => {
       if (!this.running) return;
+      if (!this.visible || document.hidden || this.lost) {
+        this.raf = requestAnimationFrame(loop);
+        return;
+      }
       this.applyWobble();
       this.controls.update();
       // looking from below: hide the floor shadow
@@ -137,9 +166,14 @@ export class Studio {
     const fitH = fs.y / 2 / Math.tan(fov / 2);
     const fitW = fs.x / 2 / Math.tan(fov / 2) / Math.max(this.camera.aspect, 0.4);
     this.fitDistance = Math.max(fitH, fitW) * (this.margin || 1.3);
+    // tight near/far planes: phones often have a 16-bit depth buffer and with a
+    // wide range far surfaces show through near ones (dark or "see-through" parts)
+    this.camera.near = this.fitDistance * 0.03;
+    this.camera.far = this.fitDistance * 12;
+    this.camera.updateProjectionMatrix();
     this.homeTarget = target.clone();
     this.controls.target.copy(target);
-    this.controls.minDistance = this.fitDistance * 0.25;
+    this.controls.minDistance = this.fitDistance * 0.3;
     this.controls.maxDistance = this.fitDistance * 2.5;
     if (!this.framed || this.reframe) this.resetView();
     this.framed = true;
@@ -157,7 +191,18 @@ export class Studio {
     this.wobbleStrength = strength;
   }
 
+  /** Gentle, natural swing (charms): a slow rock around the base, a few degrees. */
+  setSwing(on) {
+    this.swing = on;
+    if (!on && this.object) this.object.rotation.set(0, 0, 0);
+  }
+
   applyWobble() {
+    if (this.object && this.swing && !this.reducedMotion) {
+      const t = performance.now() / 1000;
+      this.object.rotation.z = 0.05 * Math.sin(t * 1.25);
+      this.object.rotation.x = 0.018 * Math.sin(t * 0.8 + 1);
+    }
     if (!this.object || !this.wobbleUntil) return;
     const now = performance.now();
     const s = this.baseScale;
@@ -237,10 +282,14 @@ export class Studio {
     this.running = false;
     cancelAnimationFrame(this.raf);
     this.ro.disconnect();
+    this.io?.disconnect();
     this.clear();
     this.controls.dispose();
     this.env.dispose();
     this.renderer.dispose();
+    // give the GPU context back at once (browsers allow only a few at a time;
+    // waiting for garbage collection made later 3D views lose theirs)
+    this.renderer.forceContextLoss();
     this.renderer.domElement.remove();
   }
 }

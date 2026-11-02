@@ -8,10 +8,12 @@ import packagingSvg from '../assets/packaging/case-packaging.svg?raw';
 import pastaNames from '../assets/packaging/pastaNames.json';
 import windowShape from '../assets/packaging/window.json';
 import { buildCover, coverSize } from './cover3d.js';
+import { patternMarkup } from './patternArt.js';
 
 const PT = 72 / 25.4; // dieline units (pt) per mm
 const VB = { x: 320, y: 125, w: 762, h: 770 }; // dieline viewBox
-const PX = 2.6; // texture pixels per pt (≈ 2000 px square)
+// texture pixels per pt (≈ 2000 px square; lighter on phones)
+const PX = typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)').matches ? 1.9 : 2.6;
 
 // panels of the dieline (pt)
 const P = {
@@ -29,10 +31,10 @@ const BOX = { w: 100, h: 190, d: 25, tab: 25 };
 export const PACK_NAMES = {
   spaghetti: 'Spaghetto',
   tagliatelle: 'Tagliatelle',
-  ravioli: 'Ravioli',
   reginette: 'Reginette',
   sfoglia: 'Pasta Cuts',
   raviolo: 'Raviolo',
+  ravioli: 'Ravioli',
 };
 // title artwork from "Pasta Names for Phone Cases.svg" (already includes "phone case")
 const TITLE_ART = { ravioli: 'ravioli', reginette: 'reginette', sfoglia: 'pastacuts', spaghetti: 'spaghetto', tagliatelle: 'tagliatelle', raviolo: 'raviolo' };
@@ -45,14 +47,33 @@ const COLOUR_DOTS = {
   'c-marrone': { name: 'Ragù', y: 603 },
 };
 // pattern circles printed on the right side ("Patterns available")
-const PATTERN_DOTS = { spaghetti: 323.5, tagliatelle: 393.5, ravioli: 463, reginette: 533, sfoglia: 603 };
+// "Patterns available" on the right side: the list is redrawn over the
+// artwork so it always matches the patterns on sale, same order as the app
+const SIDE_PATTERNS = ['spaghetti', 'tagliatelle', 'ravioli', 'reginette', 'sfoglia', 'raviolo'];
+const SIDE = { x: 1004.65, y0: 330, step: 70, r: 17.5 };
+const PATTERN_DOTS = Object.fromEntries(SIDE_PATTERNS.map((p, i) => [p, SIDE.y0 + i * SIDE.step]));
 export const PACK_FINISH = {
-  raw: { name: 'Raw', material: 'Polycarbonate (PC) · Matte finish', protection: 'Non-slip grip' },
-  aldente: { name: 'Al Dente', material: 'Polycarbonate (PC) · Satin finish', protection: 'Scratch-resistant' },
-  overcooked: { name: 'Overcooked', material: 'Liquid silicone · Soft-touch finish', protection: 'Shock-absorbing' },
+  // protection: the same for every finish
+  raw: { name: 'Raw', material: 'Polycarbonate (PC) · Matte finish', protection: 'Shock absorbing' },
+  aldente: { name: 'Al Dente', material: 'Polycarbonate (PC) · Satin finish', protection: 'Shock absorbing' },
+  overcooked: { name: 'Overcooked', material: 'Liquid silicone · Soft-touch finish', protection: 'Shock absorbing' },
 };
 
 const RED = '#e1201b';
+// red panel on the back: from the right-most point of the wavy edge to the fold
+const BACK_RED = { left: 406.8, right: 607.77 };
+const HEADING = 'IMPERIA® PASTA PHONE CASE';
+const HEADING_SIZE = 11.2;
+const TAGLINE = 'Inspired by traditional pasta shapes.';
+let measureCtx;
+/** Text width in dieline pt (canvas when available, estimate in tests). */
+function measure(text, size, bold = false) {
+  const str = String(text ?? '');
+  if (measureCtx === undefined) measureCtx = typeof document !== 'undefined' ? document.createElement('canvas').getContext('2d') : null;
+  if (!measureCtx) return str.length * size * (bold ? 0.56 : 0.5);
+  measureCtx.font = `${bold ? '700 ' : ''}${size}px 'Helvetica Neue', Helvetica, Arimo, Arial, sans-serif`;
+  return measureCtx.measureText(str).width - 0.25 * str.length;
+}
 const YELLOW = '#fdb448';
 const FONT = `font-family="'Helvetica Neue', Helvetica, Arimo, Arial, sans-serif"`;
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
@@ -77,26 +98,51 @@ export function packagingOverlay({ pattern, colorId, colorName, finish, modelLab
     parts.push(`<text x="824.1" y="220" text-anchor="middle" ${FONT} font-weight="700" font-size="6" fill="${RED}">phone case</text>`);
   }
 
-  // back: product details, one line each (long values are condensed to fit)
-  parts.push(`<rect x="418" y="313" width="188" height="78" fill="${RED}"/>`);
+  // back: heading, tagline and product details as one left-aligned block,
+  // centred in the red panel so the left and right margins are equal
+  // (measured on the longest line)
+  const SIZE = 9.4;
   const rows = [
     ['Pattern', name],
     ['Colour', colorName],
     ['Finish', f.name],
     ['Material', f.material],
     ['Compatibility', modelLabel],
-    ['Everyday protection', f.protection],
+    ['Protection', f.protection],
   ];
+  const MAXW = BACK_RED.right - BACK_RED.left - 12;
+  const rowW = rows.map(([k, v]) => Math.min(MAXW, measure(`${k}: `, SIZE, true) + measure(v, SIZE)));
+  const headW = measure(HEADING, HEADING_SIZE, true);
+  const tagW = measure(TAGLINE, SIZE);
+  const blockW = Math.max(headW, tagW, ...rowW);
+  const x = +((BACK_RED.left + BACK_RED.right - blockW) / 2).toFixed(2);
+  // the artwork's own heading/tagline are replaced (cover + redraw at x)
+  parts.push(`<rect x="413" y="262" width="194" height="129" fill="${RED}"/>`);
+  parts.push(`<text x="${x}" y="279.6" ${FONT} font-weight="700" font-size="${HEADING_SIZE}" letter-spacing="-0.25" fill="#fff">${esc(HEADING)}</text>`);
+  parts.push(`<text x="${x}" y="303.8" ${FONT} font-size="${SIZE}" letter-spacing="-0.25" fill="#fff">${esc(TAGLINE)}</text>`);
   rows.forEach(([k, v], i) => {
     const y = 326.8 + i * 12;
-    const fit = `${k}: ${v}`.length * 4.75 > 184 ? ' textLength="184" lengthAdjust="spacingAndGlyphs"' : '';
-    parts.push(`<text x="419.5" y="${y}" ${FONT} font-size="9.4" letter-spacing="-0.25" fill="#fff"${fit}><tspan font-weight="700">${esc(k)}:</tspan> ${esc(v)}</text>`);
+    const fit = rowW[i] >= MAXW ? ` textLength="${MAXW}" lengthAdjust="spacingAndGlyphs"` : '';
+    parts.push(`<text x="${x}" y="${y}" ${FONT} font-size="${SIZE}" letter-spacing="-0.25" fill="#fff"${fit}><tspan font-weight="700">${esc(k)}:</tspan> ${esc(v)}</text>`);
   });
   // ring around the chosen colour
   const dot = COLOUR_DOTS[colorId];
   if (dot) parts.push(`<circle cx="362.6" cy="${dot.y}" r="25.5" fill="none" stroke="#fff" stroke-width="2.4"/>`);
+  // patterns available: egg-yellow discs with the pattern in white, name underneath
+  parts.push(`<rect x="972.5" y="303" width="64" height="474" fill="${RED}"/>`);
+  SIDE_PATTERNS.forEach((p, i) => {
+    const cy = SIDE.y0 + i * SIDE.step;
+    const k = SIDE.r / 19.86;
+    parts.push(
+      `<clipPath id="pd-${p}"><circle cx="${SIDE.x}" cy="${cy}" r="${SIDE.r}"/></clipPath>` +
+        `<g clip-path="url(#pd-${p})"><rect x="${SIDE.x - SIDE.r}" y="${cy - SIDE.r}" width="${SIDE.r * 2}" height="${SIDE.r * 2}" fill="${YELLOW}"/>` +
+        `<g transform="translate(${SIDE.x} ${cy}) scale(${k.toFixed(4)})">${patternMarkup(p, YELLOW)}</g></g>` +
+        `<circle cx="${SIDE.x}" cy="${cy}" r="${SIDE.r}" fill="none" stroke="#fff" stroke-width="1.2"/>` +
+        `<text x="${SIDE.x}" y="${(cy + SIDE.r + 12.5).toFixed(1)}" text-anchor="middle" ${FONT} font-size="9.6" letter-spacing="-0.25" fill="#fff">${esc(PACK_NAMES[p])}</text>`,
+    );
+  });
   // …and around the chosen pattern
-  if (PATTERN_DOTS[pattern]) parts.push(`<circle cx="1004.65" cy="${PATTERN_DOTS[pattern]}" r="25.5" fill="none" stroke="#fff" stroke-width="2.4"/>`);
+  if (PATTERN_DOTS[pattern]) parts.push(`<circle cx="${SIDE.x}" cy="${PATTERN_DOTS[pattern]}" r="${SIDE.r + 4.5}" fill="none" stroke="#fff" stroke-width="2"/>`);
 
   // spine (next to the "garanzia 2 anni" seal): product name
   parts.push(`<rect x="611" y="436" width="69.5" height="58" fill="${RED}"/>`);
