@@ -11,9 +11,9 @@ import logoUrl from '../assets/imperia-logo.svg?url';
 
 // canvas units per mm: a 1000-unit body ≈ 40 mm charm → grain tile of ~8 mm
 const UV_REPEAT = 1 / 200;
-// Eyes and mouths: one subtle relief for every eye, every mouth, every body and
-// every finish (the thinnest thickness of the approved charms). Pupils are flat.
-export const FEATURE_DEPTH = 18;
+// Eyes and mouths: the same relief of about 3 mm on every eye, every mouth,
+// every body and every finish (measured on the charm's real size). Pupils are flat.
+export const FEATURE_MM = 3;
 const FEATURE_CATS = new Set(['cat-occhi', 'cat-bocche']);
 
 function itemScale(item) {
@@ -72,6 +72,12 @@ export function buildCharm(items, assetsById, materialId = 'aldente', { attachme
   });
 
   /* ---- extruded pieces ------------------------------------------------- */
+  // SVG units per millimetre: the longest side of the composition is `sizeMm`
+  const all = new THREE.Box2();
+  for (const piece of pieces) piece.shapes.forEach((s) => s.getPoints(6).forEach((p) => all.expandByPoint(p)));
+  const allSize = all.getSize(new THREE.Vector2());
+  const unitsPerMm = Math.max(allSize.x, allSize.y, 1) / sizeMm;
+  const featureDepth = FEATURE_MM * unitsPerMm;
   const placed = [];
   const itemTop = new Map();
   for (const piece of pieces) {
@@ -88,7 +94,7 @@ export function buildCharm(items, assetsById, materialId = 'aldente', { attachme
     // pupils (the second colour of an eye) are printed flat on the eye
     const flat = isFeature && piece.cat === 'cat-occhi' && piece.level > 0;
     const baseDepth = isBody ? 110 : piece.level === 0 ? 40 : 18;
-    const depth = isFeature ? FEATURE_DEPTH : baseDepth * shapeHints.depth;
+    const depth = isFeature ? featureDepth : baseDepth * shapeHints.depth;
     // the rounded edge never takes more than 80% of the thickness, so the
     // real height of the piece is exactly `depth` (outlines sit on it, not above)
     const bt = Math.max(0.6, Math.min(Math.min(depth * 0.42, piece.level === 0 ? 26 : 10) * shapeHints.bevel, depth * 0.4));
@@ -286,7 +292,9 @@ function addBackLogo(wrapper) {
   const ratio = 388 / 1800; // logo height / width
   // about 45% of the width: readable but discreet, like on Imperia products;
   // on a long body it turns 90° and runs along the length, same proportions
-  const w = long ? Math.min(body.y * 0.5, (body.x * 0.62) / ratio) : Math.min(size.x, size.y * 1.6) * 0.45;
+  // (on a long body it is kept well inside the pasta: about a third of its
+  // length and under a third of its width, with room all around)
+  const w = long ? Math.min(body.y * 0.34, (body.x * 0.3) / ratio) : Math.min(size.x, size.y * 1.6) * 0.45;
   const decal = new THREE.Mesh(
     new THREE.PlaneGeometry(w, w * ratio),
     new THREE.MeshPhysicalMaterial({ map: logoTexture, transparent: true, alphaTest: 0.05, roughness: 0.45, polygonOffset: true, polygonOffsetFactor: -2 }),
