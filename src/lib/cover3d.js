@@ -7,7 +7,7 @@ import { makeMaterial, MATERIAL_SHAPE } from './three/materials.js';
 import { roundedRect, sdRoundRect, roundRectArc, roundRectPerimeter, smoothstep, smoothGeometry } from './three/geometry.js';
 import logoUrl from '../assets/imperia-logo.svg?url';
 
-export const COVER_PATTERNS = ['raviolo', 'ravioli', 'sfoglia', 'tagliatelle', 'spaghetti', 'reginette'];
+export const COVER_PATTERNS = ['raviolo', 'sfoglia', 'tagliatelle', 'spaghetti', 'reginette', 'maccheroni', 'penne'];
 
 /*
  * Phone models: case outer size (mm), corner radius, camera openings and
@@ -135,30 +135,35 @@ function dottedLine(dist, along, { pitch = 1.25, radius = 0.42 } = {}) {
   return r2 < 1 ? Math.sqrt(1 - r2) : 0;
 }
 
+/**
+ * Height of a field of short tubes (maccheroni, penne): capsules of length
+ * `len` and radius `r`, laid every `sx` mm in rows `sy` mm apart (odd rows
+ * shifted by half), turned by `angle`. Penne get lengthwise ridges and ends
+ * cut on the slant.
+ */
+function tubes(x, y, { angle = 0, len, r, sx, sy, ridges = 0, slant = 0 }) {
+  const c = Math.cos(angle);
+  const s = Math.sin(angle);
+  const u = x * c + y * s; // along the tubes
+  const v = -x * s + y * c; // across
+  const row = Math.round(v / sy);
+  const dv = v - row * sy;
+  const shift = (row & 1) * sx * 0.5;
+  const cell = Math.round((u - shift) / sx);
+  let du = u - shift - cell * sx;
+  // slanted cut: the ends move with the position across the tube
+  const half = len / 2 - slant * (dv / r) * 0.5 * Math.sign(du || 1);
+  const along = Math.max(0, Math.abs(du) - (half - r));
+  const d2 = (along * along + dv * dv) / (r * r);
+  if (d2 >= 1 || Math.abs(du) > half) return 0;
+  let h = Math.sqrt(1 - d2);
+  if (ridges) h *= 1 - 0.14 * (0.5 + 0.5 * Math.cos((dv / r) * Math.PI * ridges));
+  return 2.5 * h;
+}
+
 const PATTERNS = {
   // raviolo: crimped raviolo border all around + around the camera, plain inside
   raviolo: { mask: false, h: (x, y) => Math.max(edgeBumps(x, y), camBumps(x, y)) },
-
-  // ravioli: quilted pillows separated by crimped seams
-  ravioli: {
-    mask: true,
-    h: (x, y) => {
-      const { u, v, fu, fv } = gridCoords(x, y);
-      const seam = 2.6 / GRID.c; // seam width in cell units
-      const a = Math.max(0, (Math.abs(fu - 0.5) * 2 - (1 - seam * 2)) / (seam * 2));
-      const b = Math.max(0, (Math.abs(fv - 0.5) * 2 - (1 - seam * 2)) / (seam * 2));
-      const px = 1 - Math.min(1, (Math.abs(fu - 0.5) * 2) ** 6 / (1 - seam) ** 6);
-      const py = 1 - Math.min(1, (Math.abs(fv - 0.5) * 2) ** 6 / (1 - seam) ** 6);
-      const pillow = Math.max(0, px * py) ** 0.55;
-      let h = 0.55 + 2.4 * pillow;
-      // crimp dots on both sides of every seam
-      const dx = (Math.min(fu, 1 - fu)) * GRID.c; // mm to vertical seam
-      const dy = (Math.min(fv, 1 - fv)) * GRID.c;
-      const dots = Math.max(dottedLine(Math.abs(dx - 0.9), v * GRID.c), dottedLine(Math.abs(dy - 0.9), u * GRID.c));
-      if (Math.max(a, b) > 0 || dots) h -= 0.35 * dots;
-      return h;
-    },
-  },
 
   // sfoglia: a flat pasta sheet with perforated (dotted) cutting lines
   sfoglia: {
@@ -183,6 +188,12 @@ const PATTERNS = {
       return 3.1 * Math.pow(Math.max(0, 1 - q * q), 0.55);
     },
   },
+
+  // maccheroni: short smooth tubes in staggered rows
+  maccheroni: { mask: true, h: (x, y) => tubes(x, y, { angle: 0, len: 10.5, r: 2.15, sx: 13, sy: 5.6 }) },
+
+  // penne: ridged tubes on the diagonal, ends cut on the slant
+  penne: { mask: true, h: (x, y) => tubes(x, y, { angle: Math.PI / 4, len: 15, r: 2.3, sx: 18.5, sy: 6.2, ridges: 4, slant: 1.6 }) },
 
   // spaghetti: thin round strands side by side
   spaghetti: {
