@@ -10,7 +10,7 @@ import { canShareFiles, downloadBlob } from '../../lib/exportImage.js';
  * share menu, where they choose the app). Nothing is uploaded by Imperia.
  * Without file sharing (most computers) the photo can be saved instead.
  */
-export default function DishPhoto({ dish }) {
+export default function DishPhoto({ dish, onPhoto }) {
   const { t } = useI18n();
   const input = useRef(null);
   const [file, setFile] = useState(null);
@@ -18,6 +18,8 @@ export default function DishPhoto({ dish }) {
   const [status, setStatus] = useState(''); // '' | 'shared' | 'saved' | 'failed'
 
   useEffect(() => () => url && URL.revokeObjectURL(url), [url]);
+  // the recipe card can offer the same photo (still only if the person includes it)
+  useEffect(() => onPhoto?.(url), [url]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const pick = (e) => {
     const f = e.target.files?.[0];

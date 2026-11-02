@@ -21,10 +21,13 @@ export default function Viewer3D({ kind, items, assetsById, material, attachment
   const studioRef = useRef(null);
   const [error, setError] = useState(false);
   const [spin, setSpin] = useState(true);
+  const [gen, setGen] = useState(0); // a new 3D view after the GPU context was lost
 
   useEffect(() => {
     try {
       studioRef.current = new Studio(hostRef.current, { transparent });
+      studioRef.current.onLost = () => setError('lost');
+      studioRef.current.onRestored = () => setError(false);
       studioRef.current.setAutoRotate(true);
       onReady?.({ snapshot: (q, max) => studioRef.current?.snapshot(q, max) });
     } catch (e) {
@@ -37,7 +40,7 @@ export default function Viewer3D({ kind, items, assetsById, material, attachment
       onReady?.(null);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [gen]);
 
   const coverKey = cover ? JSON.stringify(cover) : pasta ? JSON.stringify(pasta) : '';
   const lastKind = useRef(kind);
@@ -86,7 +89,7 @@ export default function Viewer3D({ kind, items, assetsById, material, attachment
       clearTimeout(timer);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [kind, items, assetsById, material, coverKey, attachment, sizeMm]);
+  }, [kind, items, assetsById, material, coverKey, attachment, sizeMm, gen]);
 
   useEffect(() => studioRef.current?.setAutoRotate(spin), [spin]);
   const move = (dir) => {
@@ -101,7 +104,16 @@ export default function Viewer3D({ kind, items, assetsById, material, attachment
     <div className={`relative overflow-hidden ${className}`}>
       <div ref={hostRef} className="absolute inset-0" data-testid="viewer-3d" onPointerDown={() => setSpin(false)} />
       {error ? (
-        <div className="absolute inset-0 grid place-items-center p-6 text-center text-sm text-muted">{t('order.webglError')}</div>
+        <div className="absolute inset-0 grid place-items-center bg-white/80 p-6 text-center text-sm text-muted" data-testid="viewer-lost">
+          <div>
+            <p>{t('order.webglError')}</p>
+            {error === 'lost' && (
+              <button type="button" onClick={() => (setError(false), (lastMat.current = null), setGen((g) => g + 1))} className="mt-2 font-semibold text-brand underline underline-offset-4">
+                {t('viewer.retry')}
+              </button>
+            )}
+          </div>
+        </div>
       ) : (
         <>
           <div className="absolute right-3 top-3 flex flex-col gap-2">
