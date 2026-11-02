@@ -2,9 +2,11 @@ import { Link } from 'react-router-dom';
 import caseImg from '../../assets/previews/case.png';
 import charmImg from '../../assets/previews/charm.png';
 import stickerImg from '../../assets/previews/sticker.png';
+import eventsImg from '../../assets/previews/events.png';
 import { useI18n } from '../../i18n/index.js';
 
 const CARDS = [
+  { to: '/events', img: eventsImg, key: 'events' },
   { to: '/case', img: caseImg, key: 'case' },
   { to: '/charm', img: charmImg, key: 'charm' },
   { to: '/sticker', img: stickerImg, key: 'sticker' },
@@ -18,7 +20,7 @@ export default function HomePage() {
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12">
         <h1 className="text-center text-2xl font-bold tracking-tight text-brand sm:text-[28px]">{t('home.title')}</h1>
         <p className="mt-1 text-center text-sm text-muted">{t('home.subtitle')}</p>
-        <div className="mt-8 grid gap-6 sm:mt-10 md:grid-cols-3 md:gap-8">
+        <div className="mt-8 grid gap-6 sm:mt-10 md:grid-cols-2 lg:grid-cols-4 md:gap-8">
           {CARDS.map((c) => (
             <Link
               key={c.key}
