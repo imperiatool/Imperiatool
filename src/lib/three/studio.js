@@ -17,9 +17,7 @@ export class Studio {
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     const el = this.renderer.domElement;
     el.style.display = 'block';
-    // phones: one finger up/down scrolls the page, sideways turns the product;
-    // two fingers turn, move and zoom freely
-    el.style.touchAction = window.matchMedia?.('(pointer: coarse)').matches ? 'pan-y' : 'none';
+    el.style.touchAction = 'none';
     el.style.cursor = 'grab';
     container.appendChild(el);
 
@@ -75,21 +73,10 @@ export class Studio {
     this.running = true;
     this.ro = new ResizeObserver(() => this.resize());
     this.ro.observe(container);
-    // stop drawing while the preview is scrolled out of view: scrolling the
-    // options underneath stays smooth on phones
-    this.visible = true;
-    if (typeof IntersectionObserver !== 'undefined') {
-      this.io = new IntersectionObserver(([e]) => (this.visible = e.isIntersecting), { threshold: 0.01 });
-      this.io.observe(container);
-    }
     this.resize();
     this.wobbleUntil = 0;
     const loop = () => {
       if (!this.running) return;
-      if (!this.visible || document.hidden) {
-        this.raf = requestAnimationFrame(loop);
-        return;
-      }
       this.applyWobble();
       this.controls.update();
       // looking from below: hide the floor shadow
@@ -250,7 +237,6 @@ export class Studio {
     this.running = false;
     cancelAnimationFrame(this.raf);
     this.ro.disconnect();
-    this.io?.disconnect();
     this.clear();
     this.controls.dispose();
     this.env.dispose();
