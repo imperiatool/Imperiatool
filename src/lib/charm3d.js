@@ -84,8 +84,9 @@ export function buildCharm(items, assetsById, materialId = 'aldente', { attachme
     // the rounded edge never takes more than 80% of the thickness, so the
     // real height of the piece is exactly `depth` (outlines sit on it, not above)
     const bt = Math.max(0.6, Math.min(Math.min(depth * 0.42, piece.level === 0 ? 26 : 10) * shapeHints.bevel, depth * 0.4));
-    // a wide inward bevel self-intersects on tight waves (raviolo edges)
-    const bs = Math.max(0.4, Math.min(bt * 0.9, minDim * 0.07, 9));
+    
+    // CORRETTO: bs e bevelOffset ridotti per evitare auto-intersezioni e sbavature sulle curve strette
+    const bs = Math.max(0.3, Math.min(bt * 0.6, minDim * 0.04, 5));
 
     let z0 = 0;
     for (const p of placed) if (p.box.intersectsBox(box)) z0 = Math.max(z0, p.top - 2);
@@ -95,8 +96,8 @@ export function buildCharm(items, assetsById, materialId = 'aldente', { attachme
       bevelEnabled: true,
       bevelThickness: bt,
       bevelSize: bs,
-      bevelOffset: -bs,
-      bevelSegments: materialId === 'overcooked' ? 10 : 7,
+      bevelOffset: -bs * 0.4, // Ridotto l'offset negativo per prevenire il collasso dei vertici
+      bevelSegments: materialId === 'overcooked' ? 8 : 6,
       curveSegments: 1, // already sampled by length
     });
     geometry = smoothGeometry(geometry);
@@ -303,7 +304,7 @@ export function buildAttachment(id, top, mm) {
     const crimp = new THREE.Mesh(new THREE.CylinderGeometry(1.25 * mm, 1.25 * mm, 4.2 * mm, 20), metal());
     crimp.position.copy(v(0, y0 + 12.4));
     g.add(crimp);
-    const cordMat = new THREE.MeshPhysicalMaterial({ color: CORD, roughness: 0.85, sheen: 0.6, sheenRoughness: 0.5, sheenColor: new THREE.Color('#c79a8f') });
+    const cordMat = new THREE.MeshPhysicalMaterial({ color: CORD, roughness: 0.85, sheen: 0.6, sheenRoughness: 0.5, sheenColor: new THREE.Color('#c79a8f')});
     const c0 = y0 + 14;
     g.add(tubeAlong([v(-0.6, c0), v(-5, c0 + 8), v(-6.5, c0 + 22), v(-3, c0 + 34), v(0, c0 + 36), v(3, c0 + 34), v(6.5, c0 + 22), v(5, c0 + 8), v(0.6, c0)], 1 * mm, cordMat));
   }
