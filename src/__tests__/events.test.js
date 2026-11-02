@@ -1,42 +1,59 @@
 import { describe, it, expect } from 'vitest';
-import { EVENTS, filterEvents, sortEvents, EVENT_TYPES, EVENT_COUNTRIES, EVENT_FORMATS, EVENT_LEVELS, CURRENCY_OF } from '../data/events.js';
+import { EVENTS, PASTA_MATCH, eventById, experienceCurrency, formatExperiencePrice, filterEvents, sortEvents, EVENT_TYPES, EVENT_COUNTRIES, EVENT_FORMATS, EVENT_LEVELS } from '../data/events.js';
 import { matchRecipe, suggestRecipe, recipesFor, RECIPES, INGREDIENTS, RECIPE_PASTAS, INGREDIENT_GROUPS, regionOf, hashtagsFor } from '../data/recipes.js';
 
 const LANGS = ['en', 'it', 'es', 'fr', 'de', 'zh', 'hi'];
 
 describe('events programme', () => {
-  it('has six distinct experiences (online, Italy, England), fully translated, Recipe Club first', () => {
-    expect(EVENTS).toHaveLength(6);
-    expect(new Set(EVENTS.map((e) => e.title.en)).size).toBe(6);
-    expect(EVENTS.filter((e) => e.country === 'it').length).toBe(2);
-    expect(EVENTS.filter((e) => e.country === 'uk').length).toBe(3);
-    const club = EVENTS[0];
-    expect(club.id).toBe('recipe-club');
-    expect([club.number, club.online, club.price, club.places, club.minutes]).toEqual(['01', true, 0, null, null]);
-    expect(sortEvents(EVENTS, 'date')[0].id).toBe('recipe-club');
-    // no em dashes in the copy
+  it('has exactly the six in-person experiences, in order, fully translated', () => {
+    expect(EVENTS.map((e) => e.title.en)).toEqual(['Cecconi’s × Imperia', 'Pasta Atelier', 'Pasta Shoot', 'Imperia Aperitivo', 'Pasta After Hours', 'Shape of Pasta']);
+    expect(EVENTS.map((e) => e.number)).toEqual(['01', '02', '03', '04', '05', '06']);
+    expect(EVENTS.map((e) => e.price)).toEqual([45, 28, 20, 25, 32, 35]);
+    expect(EVENTS.map((e) => e.level)).toEqual(['raw', 'aldente', 'aldente', 'raw', 'raw', 'raw']);
+    expect(EVENTS.filter((e) => e.soldOut).map((e) => e.id)).toEqual(['cecconis']);
+    // sold out: no date, length or places invented for it
+    const c = EVENTS[0];
+    expect([c.start, c.minutes, c.places]).toEqual([null, null, null]);
+    // the approved dates, times, lengths, places and locations of the others are kept
+    const keep = { 'pasta-atelier': ['2026-11-28T14:00', 180, 16, 'London'], 'make-shoot-share': ['2027-01-17T13:00', 150, 14, 'Liverpool'], aperitivo: ['2026-12-11T18:30', 120, 30, 'Bologna'], 'pasta-after-hours': ['2026-12-04T19:30', 180, 24, 'Manchester'], 'shape-of-pasta': ['2026-11-21T11:00', 150, 12, 'Milan'] };
+    for (const [id, v] of Object.entries(keep)) {
+      const e = EVENTS.find((x) => x.id === id);
+      expect([e.start, e.minutes, e.places, e.city.en]).toEqual(v);
+    }
+    expect(EVENTS.some((e) => e.online || e.price === 0)).toBe(false);
     expect(JSON.stringify(EVENTS)).not.toMatch(/—/);
-    expect(EVENTS.find((e) => e.id === 'make-shoot-share').title.en).toBe('Make, Shoot and Share: Sunday Edition');
     for (const e of EVENTS) {
-      expect(CURRENCY_OF[e.country]).toBeTruthy();
       expect(EVENT_TYPES).toContain(e.type);
       expect(EVENT_LEVELS).toContain(e.level);
       for (const f of e.formats) expect(EVENT_FORMATS).toContain(f);
       for (const lang of LANGS) {
-        for (const k of ['title', 'short', 'description', 'city']) expect(e[k][lang], `${e.id}.${k}.${lang}`).toBeTruthy();
+        for (const k of ['title', 'subtitle', 'short', 'description', 'city']) expect(e[k][lang], `${e.id}.${k}.${lang}`).toBeTruthy();
         for (const x of [...e.included, ...e.make]) expect(x[lang], `${e.id} list ${lang}`).toBeTruthy();
       }
       if (e.start) expect(new Date(e.start).toString()).not.toBe('Invalid Date');
     }
-    // names asked for: no "Shape Lab" and no "Al dente" event; Shape of Pasta translated in Italian
-    expect(EVENTS.some((e) => /shape lab/i.test(e.title.en) || /^al dente$/i.test(e.title.en))).toBe(false);
-    expect(EVENTS.find((e) => e.id === 'shape-of-pasta').title.it).not.toBe('Shape of Pasta');
-    expect(EVENTS.some((e) => e.price === 0)).toBe(true);
+  });
+  it('keeps The Pasta Match apart: £5 / €5 for five weeks, Beginner, start anytime', () => {
+    expect(EVENTS.includes(PASTA_MATCH)).toBe(false);
+    expect([PASTA_MATCH.title.en, PASTA_MATCH.price, PASTA_MATCH.accessWeeks, PASTA_MATCH.level, PASTA_MATCH.online, PASTA_MATCH.recipes]).toEqual(['The Pasta Match', 5, 5, 'raw', true, true]);
+    expect(eventById('recipe-club')).toBe(PASTA_MATCH);
+    expect(eventById('cecconis')).toBe(EVENTS[0]);
+    expect(JSON.stringify(PASTA_MATCH.short)).not.toMatch(/free|gratis|gratuit|kostenlos|免费|मुफ़्त/i);
+  });
+  it('shows the same number in £ (English) or € (Italian), never converted', () => {
+    expect(experienceCurrency('en')).toBe('GBP');
+    expect(experienceCurrency('it')).toBe('EUR');
+    for (const e of [...EVENTS, PASTA_MATCH]) {
+      expect(formatExperiencePrice(e.price, 'en', 'en-GB')).toBe(`£${e.price}`);
+      expect(formatExperiencePrice(e.price, 'it', 'it-IT').replace(/\s/g, ' ')).toBe(`${e.price} €`);
+    }
   });
   it('filters by every field and by any combination', () => {
     expect(filterEvents(EVENTS, {})).toHaveLength(6);
+    expect(filterEvents(EVENTS, { level: 'raw' }).map((e) => e.id)).toEqual(['cecconis', 'aperitivo', 'pasta-after-hours', 'shape-of-pasta']);
+    expect(filterEvents(EVENTS, { level: 'aldente' }).map((e) => e.id)).toEqual(['pasta-atelier', 'make-shoot-share']);
+    expect(filterEvents(EVENTS, { level: 'overcooked' })).toHaveLength(0);
     expect(filterEvents(EVENTS, { country: 'uk' }).every((e) => e.country === 'uk')).toBe(true);
-    expect(filterEvents(EVENTS, { level: 'raw' }).every((e) => e.level === 'raw')).toBe(true);
     for (const type of ['all', ...EVENT_TYPES])
       for (const country of ['all', ...EVENT_COUNTRIES])
         for (const format of ['all', ...EVENT_FORMATS])
@@ -51,13 +68,13 @@ describe('events programme', () => {
             }
           }
   });
-  it('sorts by the numeric price, free first when ascending', () => {
+  it('sorts in programme order by default, or by price or date', () => {
+    expect(sortEvents(EVENTS).map((e) => e.number)).toEqual(['01', '02', '03', '04', '05', '06']);
     const asc = sortEvents(EVENTS, 'priceAsc').map((e) => e.price);
     expect(asc).toEqual([...asc].sort((a, b) => a - b));
-    expect(asc[0]).toBe(0);
     const desc = sortEvents(EVENTS, 'priceDesc').map((e) => e.price);
     expect(desc).toEqual([...desc].sort((a, b) => b - a));
-    const dates = sortEvents(EVENTS, 'date').map((e) => e.start || '');
+    const dates = sortEvents(EVENTS, 'date').map((e) => e.start || '9999');
     expect(dates).toEqual([...dates].sort());
   });
 });

@@ -70,3 +70,30 @@ describe('experiences', () => {
     for (const e of EVENTS) for (const l of LANGS) expect(e.shapes?.[l], `${e.id}/${l}`).toBeTruthy();
   });
 });
+
+describe('sticker quantities and sheets', () => {
+  it('minus goes from 1 to 0 and takes the sticker out; totals follow', async () => {
+    const { useStickerCollection } = await import('../store/useStickerCollection.js');
+    const st = useStickerCollection.getState();
+    useStickerCollection.setState({ stickers: [], editingId: null });
+    const a = st.add([{ id: 'x' }], null);
+    const b = st.add([{ id: 'y' }], null);
+    useStickerCollection.getState().setQty(a, 2);
+    useStickerCollection.getState().setQty(a, 1);
+    expect(useStickerCollection.getState().stickers.find((s) => s.id === a).qty).toBe(1);
+    useStickerCollection.getState().setQty(a, 0);
+    expect(useStickerCollection.getState().stickers.map((s) => s.id)).toEqual([b]);
+    expect(useStickerCollection.getState().editingId).toBe(b);
+    useStickerCollection.getState().setQty(b, 0);
+    expect(useStickerCollection.getState().stickers).toEqual([]);
+    expect(useStickerCollection.getState().editingId).toBe(null);
+  });
+  it('every sticker takes exactly one position: 12 → 12, 24 → 24', () => {
+    const long = { id: 'reginette', items: [{}], qty: 12 };
+    const s12 = layoutSheets([long]);
+    expect(s12.map((x) => x.length)).toEqual([12]);
+    const s24 = layoutSheets([long, { id: 'b', items: [{}], qty: 12 }]);
+    expect(s24.map((x) => x.length)).toEqual([12, 12]);
+    expect(s24.flat().length).toBe(24);
+  });
+});
