@@ -28,12 +28,12 @@ JS = """async ({shape, color, finish, az, el}) => {
 }"""
 # shape, colour, finish, camera azimuth, elevation
 from_args = [
-  ('reginette', '#ffb548', 'raw', 0.2, 0.85),
+  ('reginette', '#e1201b', 'raw', 0.2, 0.85),
   ('sculpture', '#e1201b', 'aldente', 0.25, 0.22),
   ('spaghetti', '#ffb548', 'aldente', 0.3, 0.62),
   ('tagliatelle', '#ffb548', 'raw', 0.3, 0.6),
-  ('gnocchi', '#f8eabe', 'raw', 0.4, 0.5),
-  ('fusilli', '#1a5632', 'aldente', 0.3, 0.42),
+  ('gnocchi', '#ffb548', 'raw', 0.4, 0.5),
+  ('fusilli', '#ffb548', 'aldente', 0.3, 0.42),
   ('ravioli', '#ffb548', 'raw', 0.3, 0.42),
 ]
 only = set(sys.argv[2:])
