@@ -52,6 +52,8 @@ export const tx = (field, lang) => (field && typeof field === 'object' && !Array
 export const EVENTS = [
   {
     id: 'recipe-club',
+    // the pasta shapes the experience is about (as described below)
+    shapes: L('All the shapes in the recipe builder, from spaghetti to tortellini', 'Tutte le forme del compositore di ricette, dagli spaghetti ai tortellini', 'Todas las formas del creador de recetas, de los espaguetis a los tortellini', 'Toutes les formes du créateur de recettes, des spaghetti aux tortellini', 'Alle Formen im Rezeptbaukasten, von Spaghetti bis Tortellini', '食谱搭配器中的所有形状，从意大利面到意式小馄饨', 'रेसिपी बिल्डर के सभी आकार, स्पेगेटी से टॉर्टेलिनी तक'),
     number: '01',
     type: 'workshop',
     formats: ['hands-on', 'social'],
@@ -87,7 +89,7 @@ export const EVENTS = [
       'हर पास्ता आकार की अपनी सॉस क्यों होती है? नीचे एक पास्ता और कुछ सामग्री चुनें, क्लब आपको वह पारंपरिक इतालवी व्यंजन दिखाएगा, उसकी सामग्री, विधि और थोड़ा इतिहास भी। इसे घर पर बनाएँ और चाहें तो अपनी प्लेट की फ़ोटो शेयर करें।',
     ),
     included: [
-      L('Nine traditional recipes, step by step', 'Nove ricette tradizionali, passo per passo', 'Nueve recetas tradicionales, paso a paso', 'Neuf recettes traditionnelles, pas à pas', 'Neun traditionelle Rezepte Schritt für Schritt', '九道传统食谱，逐步讲解', 'नौ पारंपरिक रेसिपी, कदम दर कदम'),
+      L('Traditional regional recipes, step by step', 'Ricette tradizionali regionali, passo dopo passo', 'Recetas tradicionales regionales, paso a paso', 'Des recettes régionales traditionnelles, pas à pas', 'Traditionelle regionale Rezepte, Schritt für Schritt', '传统地方食谱，一步一步教你', 'पारंपरिक क्षेत्रीय रेसिपी, कदम-दर-कदम'),
       L('The story behind each dish', 'La storia di ogni piatto', 'La historia de cada plato', 'L’histoire de chaque plat', 'Die Geschichte hinter jedem Gericht', '每道菜背后的故事', 'हर व्यंजन के पीछे की कहानी'),
       L('Ingredients explained', 'Gli ingredienti spiegati', 'Los ingredientes explicados', 'Les ingrédients expliqués', 'Zutaten erklärt', '配料说明', 'सामग्री की जानकारी'),
     ],
@@ -99,6 +101,8 @@ export const EVENTS = [
   },
   {
     id: 'shape-of-pasta',
+    // the pasta shapes the experience is about (as described below)
+    shapes: L('Tagliatelle, pappardelle and reginette', 'Tagliatelle, pappardelle e reginette', 'Tagliatelle, pappardelle y reginette', 'Tagliatelles, pappardelles et reginette', 'Tagliatelle, Pappardelle und Reginette', '宽面、阔面和花边面', 'टैग्लियाटेले, पापार्देले और रेजिनेट'),
     number: '02',
     type: 'workshop',
     formats: ['hands-on'],
@@ -143,6 +147,8 @@ export const EVENTS = [
   },
   {
     id: 'pasta-atelier',
+    // the pasta shapes the experience is about (as described below)
+    shapes: L('Classic folds and ridges, then a shape of your own', 'Pieghe e rigature classiche, poi una forma tutta tua', 'Pliegues y estrías clásicos, y luego una forma propia', 'Plis et stries classiques, puis une forme à vous', 'Klassische Falten und Rillen, dann eine eigene Form', '经典的褶皱与纹路，再做出你自己的形状', 'क्लासिक मोड़ और धारियाँ, फिर आपका अपना आकार'),
     number: '03',
     type: 'shapelab',
     formats: ['design-led', 'hands-on'],
@@ -187,6 +193,8 @@ export const EVENTS = [
   },
   {
     id: 'pasta-after-hours',
+    // the pasta shapes the experience is about (as described below)
+    shapes: L('Fresh pasta shaped by hand at the table', 'Pasta fresca fatta a mano al tavolo', 'Pasta fresca hecha a mano en la mesa', 'Pâtes fraîches façonnées à la main à table', 'Frische, am Tisch von Hand geformte Pasta', '在餐桌上手工制作的新鲜意面', 'टेबल पर हाथ से बना ताज़ा पास्ता'),
     number: '04',
     type: 'supper',
     formats: ['social'],
@@ -231,6 +239,8 @@ export const EVENTS = [
   },
   {
     id: 'aperitivo',
+    // the pasta shapes the experience is about (as described below)
+    shapes: L('Ridged gnocchi and filled pasta', 'Gnocchi rigati e pasta ripiena', 'Ñoquis con estrías y pasta rellena', 'Gnocchis striés et pâtes farcies', 'Gerillte Gnocchi und gefüllte Pasta', '带纹路的团子和带馅意面', 'धारीदार न्योकी और भरवाँ पास्ता'),
     number: '05',
     type: 'supper',
     kindKey: 'aperitivo',
@@ -276,6 +286,8 @@ export const EVENTS = [
   },
   {
     id: 'make-shoot-share',
+    // the pasta shapes the experience is about (as described below)
+    shapes: L('Fresh fusilli', 'Fusilli freschi', 'Fusilli frescos', 'Fusilli frais', 'Frische Fusilli', '新鲜螺旋面', 'ताज़ा फ़्यूज़िली'),
     number: '06',
     type: 'collab',
     formats: ['design-led', 'social'],
