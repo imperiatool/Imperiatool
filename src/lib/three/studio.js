@@ -71,6 +71,18 @@ export class Studio {
     // mouse: left = rotate, wheel-button held = move up/down, right = move
     this.controls.mouseButtons = { LEFT: THREE.MOUSE.ROTATE, MIDDLE: THREE.MOUSE.PAN, RIGHT: THREE.MOUSE.PAN };
     this.controls.autoRotateSpeed = 1.4;
+    // phones can drop the GPU context (memory pressure, too many 3D views):
+    // keep the page alive, stop drawing, and let three.js restore it
+    this.lost = false;
+    el.addEventListener('webglcontextlost', (e) => {
+      e.preventDefault();
+      this.lost = true;
+      this.onLost?.();
+    });
+    el.addEventListener('webglcontextrestored', () => {
+      this.lost = false;
+      this.onRestored?.();
+    });
     el.addEventListener('pointerdown', () => (el.style.cursor = 'grabbing'));
     el.addEventListener('pointerup', () => (el.style.cursor = 'grab'));
 
@@ -90,7 +102,7 @@ export class Studio {
     this.reducedMotion = !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
     const loop = () => {
       if (!this.running) return;
-      if (!this.visible || document.hidden) {
+      if (!this.visible || document.hidden || this.lost) {
         this.raf = requestAnimationFrame(loop);
         return;
       }
@@ -275,6 +287,9 @@ export class Studio {
     this.controls.dispose();
     this.env.dispose();
     this.renderer.dispose();
+    // give the GPU context back at once (browsers allow only a few at a time;
+    // waiting for garbage collection made later 3D views lose theirs)
+    this.renderer.forceContextLoss();
     this.renderer.domElement.remove();
   }
 }

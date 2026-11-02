@@ -1,9 +1,8 @@
 // Round pattern artwork, from the "Shapes available" icons printed on the
-// Imperia phone-case box (raviolo, maccheroni and penne are drawn here in the
-// same style). Shared by the configurator swatches and the box itself.
+// Imperia phone-case box (raviolo is drawn here in the same style). Shared by the configurator swatches and the box itself.
 import icons from '../assets/packaging/shapeIcons.json';
 
-const ICON_FOR = { spaghetti: 'spaghetti', tagliatelle: 'tagliatelle', reginette: 'reginette', sfoglia: 'sfoglia' };
+const ICON_FOR = { ravioli: 'ravioli', spaghetti: 'spaghetti', tagliatelle: 'tagliatelle', reginette: 'reginette', sfoglia: 'sfoglia' };
 
 function luminance(hex) {
   const n = parseInt(hex.replace('#', ''), 16);
@@ -20,27 +19,8 @@ function raviolo(line) {
   return `<circle r="16.2" fill="none" stroke="${line}" stroke-width="0.6"/><circle r="10.4" fill="none" stroke="${line}" stroke-width="0.6"/>${dots}`;
 }
 
-/** Short tubes in staggered rows (maccheroni) or ridged diagonal tubes (penne). */
-function tubes(line, { angle, len, r, sx, sy, ridges = 0 }) {
-  const out = [];
-  for (let row = -5; row <= 5; row++) {
-    for (let k = -4; k <= 4; k++) {
-      const u = k * sx + (row & 1) * sx * 0.5;
-      const v = row * sy;
-      out.push(`<rect x="${(u - len / 2).toFixed(2)}" y="${(v - r).toFixed(2)}" width="${len}" height="${r * 2}" rx="${r}" fill="none" stroke="${line}" stroke-width="0.6"/>`);
-      for (let i = 1; i < ridges; i++) {
-        const y = v - r + (2 * r * i) / ridges;
-        out.push(`<line x1="${(u - len / 2 + r * 0.6).toFixed(2)}" y1="${y.toFixed(2)}" x2="${(u + len / 2 - r * 0.6).toFixed(2)}" y2="${y.toFixed(2)}" stroke="${line}" stroke-width="0.35"/>`);
-      }
-    }
-  }
-  return `<g transform="rotate(${angle})">${out.join('')}</g>`;
-}
-
 const DRAWN = {
   raviolo,
-  maccheroni: (line) => tubes(line, { angle: 0, len: 8.5, r: 1.7, sx: 10.5, sy: 4.6 }),
-  penne: (line) => tubes(line, { angle: -45, len: 11, r: 1.8, sx: 13.5, sy: 5, ridges: 3 }),
 };
 
 /** SVG markup of a pattern in a 40×40 box centred on 0 (clip it to a circle of r 19.86). */

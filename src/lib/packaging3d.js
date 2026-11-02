@@ -34,11 +34,10 @@ export const PACK_NAMES = {
   reginette: 'Reginette',
   sfoglia: 'Pasta Cuts',
   raviolo: 'Raviolo',
-  maccheroni: 'Macaroni',
-  penne: 'Penne',
+  ravioli: 'Ravioli',
 };
 // title artwork from "Pasta Names for Phone Cases.svg" (already includes "phone case")
-const TITLE_ART = { reginette: 'reginette', sfoglia: 'pastacuts', spaghetti: 'spaghetto', tagliatelle: 'tagliatelle', raviolo: 'raviolo' };
+const TITLE_ART = { ravioli: 'ravioli', reginette: 'reginette', sfoglia: 'pastacuts', spaghetti: 'spaghetto', tagliatelle: 'tagliatelle', raviolo: 'raviolo' };
 // colour circles printed on the back (palette id → circle centre)
 const COLOUR_DOTS = {
   'c-ambra': { name: 'Egg', y: 323.5 },
@@ -50,8 +49,8 @@ const COLOUR_DOTS = {
 // pattern circles printed on the right side ("Patterns available")
 // "Patterns available" on the right side: the list is redrawn over the
 // artwork so it always matches the patterns on sale, same order as the app
-const SIDE_PATTERNS = ['spaghetti', 'tagliatelle', 'reginette', 'sfoglia', 'raviolo', 'maccheroni', 'penne'];
-const SIDE = { x: 1004.65, y0: 330, step: 65.5, r: 17.5 };
+const SIDE_PATTERNS = ['spaghetti', 'tagliatelle', 'ravioli', 'reginette', 'sfoglia', 'raviolo'];
+const SIDE = { x: 1004.65, y0: 330, step: 70, r: 17.5 };
 const PATTERN_DOTS = Object.fromEntries(SIDE_PATTERNS.map((p, i) => [p, SIDE.y0 + i * SIDE.step]));
 export const PACK_FINISH = {
   // protection: the same for every finish
