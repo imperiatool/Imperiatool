@@ -110,7 +110,10 @@ export default function EventDetailPage() {
                 </Fact>
               )}
               <Fact label={t('events.level')}>
-                {f.level(e)} <span className="font-normal text-muted">· {t(`events.levelDesc.${e.level}`)}</span>
+                <span data-testid="event-level">
+                  {f.levelParts(e.level)[0]} <span className="font-normal">({f.levelParts(e.level)[1]})</span>
+                </span>{' '}
+                <span className="font-normal text-muted">· {t(`events.levelDesc.${e.level}`)}</span>
               </Fact>
             </dl>
 
@@ -123,7 +126,7 @@ export default function EventDetailPage() {
 
             <section className="mt-10">
               <h2 className="text-xs font-semibold uppercase tracking-wider text-muted">{t('events.about')}</h2>
-              <p className="mt-3 whitespace-pre-line text-sm leading-relaxed">{f.text(e.description)}</p>
+              <p className="mt-3 text-sm leading-relaxed">{f.text(e.description)}</p>
             </section>
 
             {/* the experience described with the same words as the products

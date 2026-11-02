@@ -64,7 +64,9 @@ export default function RecipeBuilder() {
   // the share card: the dish as composed now (traditional, suggested or the
   // person's own creation), in the app language
   const cardRecipe = exact || (suggestion && !suggestion.missing.length && suggestion.samePasta ? suggestion.recipe : null);
-  const cardKind = exact && !extras.length ? t('recipe.traditional') : t('recipe.variation');
+  // a simple home recipe is never called traditional
+  const kindOf = (r) => (r?.simple ? t('recipe.simple') : t('recipe.traditional'));
+  const cardKind = exact && !extras.length ? kindOf(exact) : t('recipe.variation');
   // the dish's own name only when it is exactly the traditional recipe
   const cardName = exact ? exact.name : pasta ? t('recipe.card.ownName', { pasta: pastaName(pasta) }) : '';
   const card = useMemo(
@@ -116,7 +118,22 @@ export default function RecipeBuilder() {
           <p className="mt-1.5 text-[15px] leading-relaxed text-ink">{tx(r.history, lang)}</p>
         </section>
       )}
-      <p className="mt-3 text-sm">
+      {r.description && (
+        <p className="mt-3 text-sm leading-relaxed text-ink" data-testid="recipe-description">
+          {tx(r.description, lang)}
+        </p>
+      )}
+      {r.quantities && (
+        <>
+          <h4 className="mt-3 text-xs font-semibold uppercase tracking-wider text-muted">{t('recipe.forTwo')}</h4>
+          <ul className="mt-1.5 list-disc space-y-0.5 pl-5 text-sm" data-testid="recipe-quantities">
+            {r.quantities.map((q, n) => (
+              <li key={n}>{tx(q, lang)}</li>
+            ))}
+          </ul>
+        </>
+      )}
+      <p className={`mt-3 text-sm ${r.quantities ? 'hidden' : ''}`}>
         <span className="font-bold">{t('recipe.ingredients')}:</span>{' '}
         {[pastaName(r.pasta), ...r.need.map((i) => (chosen.includes(i) || r.pasta !== pasta ? withNote(i) : `${withNote(i)}, ${t('recipe.toAdd')}`)), ...r.may.filter((i) => chosen.includes(i)).map(withNote)].join('; ')}
       </p>
@@ -278,7 +295,7 @@ export default function RecipeBuilder() {
                 className={`inline-block rounded-full px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider ${exact && !extras.length ? 'bg-brand text-white' : 'bg-cream text-ink/70'}`}
                 data-testid="recipe-kind"
               >
-                {exact ? t('recipe.traditional') : !suggestion.missing.length && extras.length ? t('recipe.variation') : t('recipe.suggested')}
+                {exact ? kindOf(exact) : !suggestion.missing.length && extras.length ? t('recipe.variation') : t('recipe.suggested')}
               </span>
               <h3 className="mt-2 text-lg font-bold leading-tight" data-testid="recipe-name">
                 {shown.name}

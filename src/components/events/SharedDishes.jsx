@@ -19,9 +19,9 @@ function MiniPlate({ recipe, ingImg }) {
 }
 
 /**
- * Shared Dishes: how the Recipe Club could become a pasta community. Only
- * illustrative sample posts by clearly marked demo accounts: no real people,
- * no engagement numbers, no posting or commenting that pretends to work.
+ * Shared Dishes: how the Recipe Club could become a pasta community. Sample
+ * dishes only: no user accounts, comments or engagement numbers (none are
+ * invented), no posting or commenting that pretends to work.
  * "View the recipe" opens that dish in the builder above.
  */
 export default function SharedDishes({ ingImg, onView }) {
@@ -41,11 +41,7 @@ export default function SharedDishes({ ingImg, onView }) {
           if (!r) return null;
           return (
             <article key={post.id} className="flex min-w-0 flex-col rounded-2xl border border-line bg-white p-3" data-testid={`shared-post-${post.id}`}>
-              <header className="flex items-center justify-between gap-2">
-                <span className="min-w-0">
-                  <span className="block truncate text-sm font-semibold">{post.handle}</span>
-                  <span className="block text-[11px] text-muted">{t('recipe.shared.demoAccount')}</span>
-                </span>
+              <header className="flex items-center justify-end gap-2">
                 <span className="shrink-0 rounded-full border border-line px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-ink/70">{t('recipe.shared.sample')}</span>
               </header>
               <div className="mt-3 rounded-xl bg-brand p-4">
@@ -55,16 +51,6 @@ export default function SharedDishes({ ingImg, onView }) {
               {lang !== 'it' && <p className="text-xs text-ink/70">{tx(r.title, lang)}</p>}
               <p className="mt-1.5 text-sm">{tx(post.caption, lang)}</p>
               <p className="mt-1 break-words text-xs font-semibold text-brand">{hashtagsFor(r, r.pasta).join(' ')}</p>
-              <div className="mt-2 border-t border-line pt-2">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted">{t('recipe.shared.comments')}</p>
-                <ul className="mt-1 space-y-1 text-xs">
-                  {post.comments.map((c, i) => (
-                    <li key={i}>
-                      <span className="font-semibold">{c.handle}</span> {tx(c.text, lang)}
-                    </li>
-                  ))}
-                </ul>
-              </div>
               <button type="button" onClick={() => onView(r)} className="mt-auto self-start pt-3 text-sm font-semibold text-brand underline underline-offset-4" data-testid={`shared-view-${post.id}`}>
                 {t('recipe.shared.view')}
               </button>

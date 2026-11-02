@@ -5,7 +5,7 @@ import { useEffect, useId, useRef } from 'react';
 const CORNER = 159.5;
 // How far the fold travels in at the top of the lift (same units).
 const LIFT = 27;
-const PERIOD = 4200; // ms for one lift and settle; the next lift follows straight away
+const PERIOD = 3600; // ms for one lift and settle; the next lift follows straight away
 
 /**
  * Fold depth 0…1 over one period: it starts lifting at once, the breeze

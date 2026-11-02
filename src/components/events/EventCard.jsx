@@ -25,7 +25,10 @@ export default function EventCard({ event: e, search = '', onOpen }) {
         <div className="flex items-center justify-between gap-2">
           <p className="truncate text-[15px] font-bold uppercase leading-tight tracking-[-0.01em] text-brand">{f.kind(e)}</p>
           <span className="shrink-0 rounded-full bg-cream px-2 py-0.5 text-[11px] font-medium text-ink/75" title={t(`events.levelDesc.${e.level}`)}>
-            {t('events.level')}: <span className="font-semibold text-ink" data-testid="event-card-level">{f.level(e)}</span>
+            {t('events.level')}:{' '}
+            <span className="text-ink" data-testid="event-card-level">
+              <span className="font-semibold">{f.levelParts(e.level)[0]}</span> ({f.levelParts(e.level)[1]})
+            </span>
           </span>
         </div>
         <h3 className="mt-1 text-xl font-bold leading-tight tracking-tight" data-testid="event-card-title">
