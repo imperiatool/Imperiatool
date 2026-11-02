@@ -339,6 +339,41 @@ export const RECIPES = [
       L('Bake until golden and bubbling, then let it rest a few minutes before cutting.', 'Cuoci in forno finché è dorata e sfrigolante, poi lasciala riposare qualche minuto prima di tagliarla.', 'Hornea hasta que esté dorada y burbujeante y deja reposar unos minutos antes de cortar.', 'Faites cuire au four jusqu’à ce qu’elles soient dorées et frémissantes, puis laissez reposer quelques minutes avant de couper.', 'Backen, bis sie goldbraun ist und Blasen wirft, dann vor dem Schneiden ein paar Minuten ruhen lassen.', '烤到表面金黄冒泡，静置几分钟再切。', 'सुनहरा और बुलबुलेदार होने तक बेक करें, फिर काटने से पहले कुछ मिनट रहने दें।'),
     ],
   },
+  {
+    id: 'reginettepomodoro',
+    pasta: 'reginette',
+    name: 'Reginette al pomodoro',
+    // a simple home recipe: no regional or historical claim is made for it
+    simple: true,
+    title: L('Reginette with tomato sauce', 'Reginette al pomodoro', 'Reginette con salsa de tomate', 'Reginette à la sauce tomate', 'Reginette mit Tomatensauce', '番茄酱花边面', 'टमाटर सॉस वाली रेजिनेट'),
+    need: ['tomato', 'oliveoil', 'garlic', 'basil'],
+    may: [],
+    description: L(
+      'Ribbon-shaped reginette with a quick tomato sauce of olive oil, garlic and basil. The ruffled edges of the pasta hold the sauce well.',
+      'Reginette dal bordo arricciato con un sugo veloce di pomodoro, olio d’oliva, aglio e basilico. I bordi ondulati della pasta trattengono bene il sugo.',
+      'Reginette de bordes rizados con una salsa rápida de tomate, aceite de oliva, ajo y albahaca. Los bordes ondulados de la pasta retienen bien la salsa.',
+      'Des reginette aux bords ondulés avec une sauce tomate rapide à l’huile d’olive, à l’ail et au basilic. Les bords ondulés des pâtes retiennent bien la sauce.',
+      'Reginette mit gewelltem Rand und einer schnellen Tomatensauce mit Olivenöl, Knoblauch und Basilikum. Die gewellten Ränder halten die Sauce gut.',
+      '带波浪边的花边面，配上用橄榄油、大蒜和罗勒快速做成的番茄酱。面条的波浪边很能挂住酱汁。',
+      'लहरदार किनारों वाली रेजिनेट, जैतून के तेल, लहसुन और तुलसी के साथ जल्दी बनने वाली टमाटर सॉस में। पास्ता के लहरदार किनारे सॉस को अच्छी तरह पकड़ते हैं।',
+    ),
+    // for 2 people
+    quantities: [
+      L('160 g reginette', '160 g di reginette', '160 g de reginette', '160 g de reginette', '160 g Reginette', '花边面 160 克', '160 ग्राम रेजिनेट'),
+      L('400 g tomatoes: ripe fresh tomatoes, or 1 tin of peeled tomatoes', '400 g di pomodori: maturi freschi, oppure 1 barattolo di pelati', '400 g de tomates: frescos y maduros, o 1 lata de tomates pelados', '400 g de tomates : bien mûres, ou 1 boîte de tomates pelées', '400 g Tomaten: reife frische oder 1 Dose geschälte Tomaten', '番茄 400 克：成熟的新鲜番茄，或 1 罐去皮番茄', '400 ग्राम टमाटर: पके ताज़ा टमाटर, या छिले टमाटर का 1 डिब्बा'),
+      L('2 tablespoons extra virgin olive oil, plus a little to finish', '2 cucchiai di olio extravergine d’oliva, più un filo per finire', '2 cucharadas de aceite de oliva virgen extra, y un poco más para terminar', '2 cuillères à soupe d’huile d’olive vierge extra, plus un filet pour finir', '2 EL natives Olivenöl extra, dazu etwas zum Beträufeln', '特级初榨橄榄油 2 汤匙，另留少许收尾', '2 बड़े चम्मच एक्स्ट्रा वर्जिन जैतून का तेल, और आख़िर में थोड़ा सा'),
+      L('1 garlic clove', '1 spicchio d’aglio', '1 diente de ajo', '1 gousse d’ail', '1 Knoblauchzehe', '大蒜 1 瓣', 'लहसुन की 1 कली'),
+      L('6 to 8 basil leaves', '6-8 foglie di basilico', '6 a 8 hojas de albahaca', '6 à 8 feuilles de basilic', '6 bis 8 Basilikumblätter', '罗勒叶 6 至 8 片', 'तुलसी की 6 से 8 पत्तियाँ'),
+      L('Salt, to taste', 'Sale, q.b.', 'Sal, al gusto', 'Sel, selon votre goût', 'Salz nach Geschmack', '盐适量', 'स्वादानुसार नमक'),
+    ],
+    steps: [
+      L('Chop the tomatoes (or crush the tinned ones by hand).', 'Taglia i pomodori a pezzi (o schiaccia i pelati con le mani).', 'Trocea los tomates (o aplasta los de lata con las manos).', 'Coupez les tomates en morceaux (ou écrasez les tomates pelées à la main).', 'Tomaten klein schneiden (oder die Dosentomaten mit der Hand zerdrücken).', '番茄切块（罐装番茄用手捏碎）。', 'टमाटर काट लें (या डिब्बे वाले टमाटर हाथ से मसल लें)।'),
+      L('Warm the olive oil with the lightly crushed garlic clove over a low heat for 1 to 2 minutes, without letting it brown.', 'Scalda l’olio con lo spicchio d’aglio schiacciato a fuoco basso per 1-2 minuti, senza farlo scurire.', 'Calienta el aceite con el diente de ajo machacado a fuego bajo durante 1 o 2 minutos, sin que se dore.', 'Faites chauffer l’huile avec la gousse d’ail écrasée à feu doux pendant 1 à 2 minutes, sans la laisser dorer.', 'Olivenöl mit der angedrückten Knoblauchzehe bei schwacher Hitze 1 bis 2 Minuten erwärmen, ohne dass er bräunt.', '小火加热橄榄油和拍碎的蒜瓣 1 至 2 分钟，不要炒焦。', 'हल्की कुटी लहसुन की कली के साथ तेल को धीमी आँच पर 1 से 2 मिनट गरम करें, भूरा न होने दें।'),
+      L('Add the tomatoes and a pinch of salt and simmer for about 15 minutes, stirring now and then. Remove the garlic.', 'Aggiungi i pomodori e un pizzico di sale e cuoci per circa 15 minuti, mescolando ogni tanto. Togli l’aglio.', 'Añade los tomates y una pizca de sal y cuece unos 15 minutos, removiendo de vez en cuando. Retira el ajo.', 'Ajoutez les tomates et une pincée de sel et laissez mijoter environ 15 minutes en remuant de temps en temps. Retirez l’ail.', 'Tomaten und eine Prise Salz zugeben und etwa 15 Minuten köcheln, gelegentlich umrühren. Den Knoblauch entfernen.', '加入番茄和少许盐，小火煮约 15 分钟，不时搅拌。取出蒜瓣。', 'टमाटर और एक चुटकी नमक डालें और लगभग 15 मिनट पकाएँ, बीच-बीच में चलाते रहें। लहसुन निकाल दें।'),
+      L('Cook the reginette in plenty of salted boiling water until al dente, keeping a cup of the cooking water.', 'Cuoci le reginette in abbondante acqua salata bollente fino a renderle al dente, tenendo da parte una tazza d’acqua di cottura.', 'Cuece las reginette en abundante agua hirviendo con sal hasta que estén al dente y guarda una taza del agua de cocción.', 'Faites cuire les reginette dans beaucoup d’eau bouillante salée jusqu’à ce qu’elles soient al dente, en gardant une tasse d’eau de cuisson.', 'Reginette in reichlich kochendem Salzwasser al dente garen und eine Tasse Kochwasser aufheben.', '用大量加盐沸水把花边面煮至弹牙，留一杯煮面水。', 'रेजिनेट को ख़ूब नमक वाले उबलते पानी में अल डेंटे होने तक पकाएँ और एक कप पकाने का पानी बचा लें।'),
+      L('Drain, toss in the pan with the sauce for a minute, adding a little cooking water if needed. Finish with torn basil and a drizzle of olive oil.', 'Scola e salta in padella con il sugo per un minuto, aggiungendo un po’ d’acqua di cottura se serve. Completa con basilico spezzato e un filo d’olio.', 'Escurre y saltea en la sartén con la salsa un minuto, añadiendo un poco de agua de cocción si hace falta. Termina con albahaca troceada y un hilo de aceite.', 'Égouttez et faites sauter une minute dans la poêle avec la sauce, en ajoutant un peu d’eau de cuisson si besoin. Terminez avec du basilic déchiré et un filet d’huile.', 'Abgießen und eine Minute mit der Sauce in der Pfanne schwenken, bei Bedarf etwas Kochwasser zugeben. Mit gezupftem Basilikum und etwas Olivenöl vollenden.', '沥干后放入锅中与酱汁翻拌一分钟，需要时加点煮面水。撒上手撕罗勒，淋少许橄榄油。', 'पानी निकालकर सॉस के साथ पैन में एक मिनट मिलाएँ, ज़रूरत हो तो थोड़ा पकाने का पानी डालें। तोड़ी हुई तुलसी और थोड़े जैतून के तेल से पूरा करें।'),
+    ],
+  },
 ];
 
 /**
@@ -421,7 +456,7 @@ const DISH_TAG = {
   pomodoro: 'PastaAlPomodoro', cacioepepe: 'CacioEPepe', carbonara: 'Carbonara', gricia: 'Gricia', amatriciana: 'Amatriciana', ragu: 'TagliatelleAlRagu',
   sorrentina: 'GnocchiAllaSorrentina', gnocchiburro: 'BurroESalvia', raviolibutter: 'BurroESalvia', aglioolio: 'AglioOlioEPeperoncino', vongole: 'SpaghettiAlleVongole',
   arrabbiata: 'Arrabbiata', norma: 'PastaAllaNorma', cimedirapa: 'OrecchietteAlleCimeDiRapa', pesto: 'PestoGenovese', bucatiniamatriciana: 'Amatriciana', rigatonigricia: 'Gricia',
-  tortelliniinbrodo: 'TortelliniInBrodo', lasagne: 'LasagneAllaBolognese',
+  tortelliniinbrodo: 'TortelliniInBrodo', lasagne: 'LasagneAllaBolognese', reginettepomodoro: 'ReginetteAlPomodoro',
 };
 /** The hashtags for a card: three branded ones plus the dish (or, for a creative plate, the pasta). */
 export function hashtagsFor(recipe, pastaId) {
@@ -429,41 +464,28 @@ export function hashtagsFor(recipe, pastaId) {
   return own ? [...HASHTAGS, `#${own}`] : [...HASHTAGS];
 }
 
-/* ---- Shared Dishes: illustrative sample posts (no real users, no real posts) ---- */
-// A demonstration of how the Recipe Club could become a community. The
-// accounts are made up and marked "demo"; nothing here was posted by anyone.
+/* ---- Shared Dishes: sample dishes (no users, no posts, no comments) ---- */
+// A demonstration of how the Recipe Club could become a community: sample
+// dishes with a short caption. No accounts or comments are made up.
 export const SAMPLE_POSTS = [
   {
     id: 'p1',
-    handle: '@demo.cacio_club',
     recipe: 'cacioepepe',
     caption: L('Three ingredients, zero drama. Cacio e pepe on a Tuesday.', 'Tre ingredienti, zero drammi. Cacio e pepe di martedì.', 'Tres ingredientes, cero dramas. Cacio e pepe un martes.', 'Trois ingrédients, zéro drame. Cacio e pepe un mardi.', 'Drei Zutaten, null Drama. Cacio e pepe an einem Dienstag.', '三种食材，零压力。周二的芝士胡椒意面。', 'तीन चीज़ें, कोई झंझट नहीं। मंगलवार की कैचो ए पेपे।'),
-    comments: [
-      { handle: '@demo.sunday_sauce', text: L('the creamy part is a skill fr', 'la cremina è un’arte', 'la cremita es un arte', 'la crème, c’est un art', 'die Cremigkeit ist echte Kunst', '那层奶油感是真功夫', 'वो क्रीमीपन असली कला है') },
-      { handle: '@demo.pasta_notes', text: L('pasta water supremacy', 'acqua di cottura sempre', 'agua de cocción, siempre', 'l’eau de cuisson, toujours', 'Nudelwasser for the win', '煮面水才是灵魂', 'पास्ता पानी ही राज़ है') },
-    ],
   },
   {
     id: 'p2',
-    handle: '@demo.liguria_lunch',
     recipe: 'pesto',
     caption: L('Mortar out, phone down. Trofie al pesto, never cooked.', 'Fuori il mortaio, giù il telefono. Trofie al pesto, mai cotto.', 'Mortero fuera, móvil abajo. Trofie al pesto, nunca cocinado.', 'Mortier sorti, téléphone posé. Trofie au pesto, jamais cuit.', 'Mörser raus, Handy weg. Trofie al pesto, nie gekocht.', '拿出研钵，放下手机。热那亚青酱特罗菲面，青酱从不加热。', 'ओखली बाहर, फ़ोन नीचे। पेस्तो वाली ट्रोफ़ी, कभी पकाया नहीं।'),
-    comments: [{ handle: '@demo.cacio_club', text: L('that green tho', 'quel verde però', 'ese verde, eh', 'ce vert quand même', 'dieses Grün!', '这个绿也太好看', 'वो हरा रंग तो देखो') }],
   },
   {
     id: 'p3',
-    handle: '@demo.bari_bites',
     recipe: 'cimedirapa',
     caption: L('Orecchiette and cime di rapa, cooked in the same pot. Less washing up.', 'Orecchiette e cime di rapa nella stessa pentola. Meno piatti da lavare.', 'Orecchiette y grelos en la misma olla. Menos platos que fregar.', 'Orecchiette et brocoli-rave dans la même casserole. Moins de vaisselle.', 'Orecchiette und Stängelkohl im selben Topf. Weniger Abwasch.', '猫耳朵面和芜菁嫩叶同锅煮，少洗一个锅。', 'ओरेक्कियेत्ते और शलजम के पत्ते एक ही बर्तन में। कम बर्तन धोने।'),
-    comments: [{ handle: '@demo.pasta_notes', text: L('breadcrumbs on top = mandatory', 'pangrattato sopra = obbligatorio', 'pan rallado encima = obligatorio', 'chapelure dessus = obligatoire', 'Semmelbrösel obendrauf = Pflicht', '上面撒面包屑 = 必须', 'ऊपर ब्रेडक्रम्ब्स = ज़रूरी') }],
   },
   {
     id: 'p4',
-    handle: '@demo.brodo_sundays',
     recipe: 'tortelliniinbrodo',
     caption: L('Tortellini in brodo: a hug in a bowl.', 'Tortellini in brodo: un abbraccio nel piatto.', 'Tortellini en caldo: un abrazo en un plato.', 'Tortellini en bouillon : un câlin dans un bol.', 'Tortellini in Brühe: eine Umarmung im Teller.', '清汤意式小馄饨：一碗温暖。', 'ब्रॉथ में टॉर्टेलिनी: कटोरे में एक झप्पी।'),
-    comments: [
-      { handle: '@demo.liguria_lunch', text: L('how many did you fold?', 'quanti ne hai chiusi?', '¿cuántos has cerrado?', 'tu en as plié combien ?', 'wie viele hast du gefaltet?', '你包了多少个？', 'कितने मोड़े?') },
-    ],
   },
 ];

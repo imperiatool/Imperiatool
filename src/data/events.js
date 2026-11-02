@@ -65,7 +65,8 @@ export const tx = (field, lang) => (field && typeof field === 'object' && !Array
 
 // The six in-person Experiences, in the order they are shown.
 // visual = the pasta object (rendered with the app's 3D studio, see
-// scripts/render-events.py) + palette colours for the object and its backdrop
+// scripts/render-events.py) + its backdrop: the Imperia colours in turn
+// (red, yellow, basil green, cream)
 // Titles are the experiences' own names and stay the same in every language.
 const N = (name) => L(name, name, name, name, name, name, name);
 
@@ -87,7 +88,7 @@ export const EVENTS = [
     places: null,
     level: 'raw',
     soldOut: true,
-    visual: { shape: 'tagliatelle', color: '#ffb548', finish: 'raw', bg: '#1d1d1b', ink: '#ffffff', img: tagliatelleImg },
+    visual: { shape: 'tagliatelle', color: '#ffb548', finish: 'raw', bg: '#e1201b', ink: '#ffffff', img: tagliatelleImg },
     title: N('Cecconi’s × Imperia'),
     subtitle: L('Traditional Pasta Masterclass', 'Masterclass di pasta tradizionale', 'Masterclass de pasta tradicional', 'Masterclass de pâtes traditionnelles', 'Masterclass für traditionelle Pasta', '传统意面大师课', 'पारंपरिक पास्ता मास्टरक्लास'),
     short: L(
@@ -135,7 +136,7 @@ export const EVENTS = [
     price: 28,
     places: 16,
     level: 'aldente',
-    visual: { shape: 'sculpture', color: '#e1201b', finish: 'aldente', bg: '#f8eabe', ink: '#1d1d1b', img: sculptureImg },
+    visual: { shape: 'sculpture', color: '#e1201b', finish: 'aldente', bg: '#ffb548', ink: '#1d1d1b', img: sculptureImg },
     title: N('Pasta Atelier'),
     subtitle: L('Pasta Design Workshop', 'Workshop di design della pasta', 'Taller de diseño de pasta', 'Atelier de design des pâtes', 'Pasta-Design-Workshop', '意面设计工作坊', 'पास्ता डिज़ाइन वर्कशॉप'),
     short: L(
@@ -148,13 +149,13 @@ export const EVENTS = [
       'एक रचनात्मक वर्कशॉप जहाँ पास्ता प्रयोग की सामग्री बन जाता है: आकार, मोड़, बनावट और अनोखे रूप।',
     ),
     description: L(
-      'The Pasta Atelier is a space for pasta experimentation and creative exploration. Beyond traditional recipes, participants work with coloured doughs, tools and different techniques to develop original pasta shapes.\n\nThrough folds, grooves, textures and hands-on experimentation, each participant creates a unique pasta form.',
-      'Il Pasta Atelier è uno spazio di sperimentazione e di esplorazione creativa della pasta. Oltre le ricette tradizionali, i partecipanti lavorano con impasti colorati, attrezzi e tecniche diverse per sviluppare forme di pasta originali.\n\nTra pieghe, scanalature, texture e sperimentazione pratica, ogni partecipante crea una forma di pasta unica.',
-      'El Pasta Atelier es un espacio de experimentación y exploración creativa con la pasta. Más allá de las recetas tradicionales, los participantes trabajan con masas de colores, herramientas y distintas técnicas para desarrollar formas de pasta originales.\n\nA través de pliegues, estrías, texturas y experimentación práctica, cada participante crea una forma de pasta única.',
-      'Le Pasta Atelier est un espace d’expérimentation et d’exploration créative autour des pâtes. Au-delà des recettes traditionnelles, les participants travaillent avec des pâtes colorées, des outils et différentes techniques pour créer des formes de pâtes originales.\n\nÀ travers plis, rainures, textures et expérimentation pratique, chaque participant crée une forme de pâte unique.',
-      'Das Pasta Atelier ist ein Raum für Experimente und kreative Entdeckungen mit Pasta. Über traditionelle Rezepte hinaus arbeiten die Teilnehmenden mit farbigen Teigen, Werkzeugen und verschiedenen Techniken, um eigene Pastaformen zu entwickeln.\n\nMit Falten, Rillen, Texturen und praktischem Ausprobieren gestaltet jede und jeder eine einzigartige Pastaform.',
-      'Pasta Atelier 是一个进行意面实验和创意探索的空间。在传统食谱之外，参与者使用彩色面团、工具和不同技法，开发原创的意面形状。\n\n通过褶皱、凹槽、纹理和动手实验，每位参与者都会创造出独一无二的意面造型。',
-      'Pasta Atelier पास्ता के साथ प्रयोग और रचनात्मक खोज की जगह है। पारंपरिक रेसिपी से आगे, प्रतिभागी रंगीन आटे, औज़ारों और अलग-अलग तकनीकों से मौलिक पास्ता आकार बनाते हैं।\n\nमोड़, खाँचे, बनावट और हाथों से प्रयोग के ज़रिए हर प्रतिभागी एक अनोखा पास्ता रूप बनाता है।',
+      'The Pasta Atelier is a space for pasta experimentation and creative exploration. Beyond traditional recipes, participants work with coloured doughs, tools and different techniques to develop original pasta shapes. Through folds, grooves, textures and hands-on experimentation, each participant creates a unique pasta form.',
+      'Il Pasta Atelier è uno spazio di sperimentazione e di esplorazione creativa della pasta. Oltre le ricette tradizionali, i partecipanti lavorano con impasti colorati, attrezzi e tecniche diverse per sviluppare forme di pasta originali. Tra pieghe, scanalature, texture e sperimentazione pratica, ogni partecipante crea una forma di pasta unica.',
+      'El Pasta Atelier es un espacio de experimentación y exploración creativa con la pasta. Más allá de las recetas tradicionales, los participantes trabajan con masas de colores, herramientas y distintas técnicas para desarrollar formas de pasta originales. A través de pliegues, estrías, texturas y experimentación práctica, cada participante crea una forma de pasta única.',
+      'Le Pasta Atelier est un espace d’expérimentation et d’exploration créative autour des pâtes. Au-delà des recettes traditionnelles, les participants travaillent avec des pâtes colorées, des outils et différentes techniques pour créer des formes de pâtes originales. À travers plis, rainures, textures et expérimentation pratique, chaque participant crée une forme de pâte unique.',
+      'Das Pasta Atelier ist ein Raum für Experimente und kreative Entdeckungen mit Pasta. Über traditionelle Rezepte hinaus arbeiten die Teilnehmenden mit farbigen Teigen, Werkzeugen und verschiedenen Techniken, um eigene Pastaformen zu entwickeln. Mit Falten, Rillen, Texturen und praktischem Ausprobieren gestaltet jede und jeder eine einzigartige Pastaform.',
+      'Pasta Atelier 是一个进行意面实验和创意探索的空间。在传统食谱之外，参与者使用彩色面团、工具和不同技法，开发原创的意面形状。 通过褶皱、凹槽、纹理和动手实验，每位参与者都会创造出独一无二的意面造型。',
+      'Pasta Atelier पास्ता के साथ प्रयोग और रचनात्मक खोज की जगह है। पारंपरिक रेसिपी से आगे, प्रतिभागी रंगीन आटे, औज़ारों और अलग-अलग तकनीकों से मौलिक पास्ता आकार बनाते हैं। मोड़, खाँचे, बनावट और हाथों से प्रयोग के ज़रिए हर प्रतिभागी एक अनोखा पास्ता रूप बनाता है।',
     ),
     included: [
       L('Coloured pasta doughs', 'Impasti colorati per la pasta', 'Masas de pasta de colores', 'Pâtes colorées', 'Farbige Pastateige', '彩色意面面团', 'रंगीन पास्ता आटा'),
@@ -185,7 +186,7 @@ export const EVENTS = [
     price: 20,
     places: 14,
     level: 'aldente',
-    visual: { shape: 'fusilli', color: '#1a5632', finish: 'aldente', bg: '#ffb548', ink: '#1d1d1b', img: fusilliImg },
+    visual: { shape: 'fusilli', color: '#ffb548', finish: 'aldente', bg: '#1a5632', ink: '#ffffff', img: fusilliImg },
     title: N('Pasta Shoot'),
     subtitle: L('Pasta Styling & Photography', 'Styling e fotografia della pasta', 'Estilismo y fotografía de pasta', 'Stylisme et photographie des pâtes', 'Pasta-Styling & Fotografie', '意面造型与摄影', 'पास्ता स्टाइलिंग और फ़ोटोग्राफ़ी'),
     short: L(
@@ -234,7 +235,7 @@ export const EVENTS = [
     price: 25,
     places: 30,
     level: 'raw',
-    visual: { shape: 'gnocchi', color: '#f8eabe', finish: 'raw', bg: '#1a5632', ink: '#ffffff', img: gnocchiImg },
+    visual: { shape: 'gnocchi', color: '#ffb548', finish: 'raw', bg: '#f8eabe', ink: '#1d1d1b', img: gnocchiImg },
     title: N('Imperia Aperitivo'),
     subtitle: L('Social Experience', 'Esperienza conviviale', 'Experiencia social', 'Expérience conviviale', 'Geselliges Erlebnis', '社交体验', 'सामाजिक अनुभव'),
     short: L(
@@ -281,7 +282,7 @@ export const EVENTS = [
     price: 32,
     places: 24,
     level: 'raw',
-    visual: { shape: 'spaghetti', color: '#ffb548', finish: 'aldente', bg: '#6a3933', ink: '#ffffff', img: spaghettiImg },
+    visual: { shape: 'spaghetti', color: '#ffb548', finish: 'aldente', bg: '#e1201b', ink: '#ffffff', img: spaghettiImg },
     title: N('Pasta After Hours'),
     subtitle: L('Pasta Supper Club', 'Supper club della pasta', 'Supper club de pasta', 'Supper club des pâtes', 'Pasta-Supper-Club', '意面晚餐俱乐部', 'पास्ता सपर क्लब'),
     short: L(
@@ -329,7 +330,7 @@ export const EVENTS = [
     price: 35,
     places: 12,
     level: 'raw',
-    visual: { shape: 'reginette', color: '#ffb548', finish: 'raw', bg: '#e1201b', ink: '#ffffff', img: reginetteImg },
+    visual: { shape: 'reginette', color: '#e1201b', finish: 'raw', bg: '#ffb548', ink: '#1d1d1b', img: reginetteImg },
     title: N('Shape of Pasta'),
     subtitle: L('Traditional Pasta-Making Workshop', 'Workshop di pasta tradizionale', 'Taller de pasta tradicional', 'Atelier de pâtes traditionnelles', 'Workshop für traditionelle Pasta', '传统意面制作工作坊', 'पारंपरिक पास्ता बनाने की वर्कशॉप'),
     short: L(
@@ -342,13 +343,13 @@ export const EVENTS = [
       'पारंपरिक इतालवी पास्ता बनाने का हैंड्स-ऑन परिचय, ताज़ा आटा तैयार करने से लेकर जाने-पहचाने पास्ता आकार बनाने तक।',
     ),
     description: L(
-      'Discover the fundamentals of traditional pasta-making. Shape of Pasta is designed for beginners who want to learn how fresh pasta is made, understand the role of dough and explore traditional shaping techniques.\n\nNo previous experience is needed. Just curiosity and a willingness to get your hands involved.',
-      'Scopri le basi della pasta tradizionale. Shape of Pasta è pensato per i principianti che vogliono imparare come si fa la pasta fresca, capire il ruolo dell’impasto ed esplorare le tecniche tradizionali per darle forma.\n\nNon serve alcuna esperienza. Bastano curiosità e voglia di mettere le mani in pasta.',
-      'Descubre los fundamentos de la pasta tradicional. Shape of Pasta está pensado para principiantes que quieren aprender cómo se hace la pasta fresca, entender el papel de la masa y explorar las técnicas tradicionales de formado.\n\nNo hace falta experiencia previa. Solo curiosidad y ganas de meter las manos en la masa.',
-      'Découvrez les bases des pâtes traditionnelles. Shape of Pasta s’adresse aux débutants qui veulent apprendre comment se font les pâtes fraîches, comprendre le rôle de la pâte et explorer les techniques de façonnage traditionnelles.\n\nAucune expérience n’est nécessaire. Juste de la curiosité et l’envie de mettre la main à la pâte.',
-      'Entdecke die Grundlagen der traditionellen Pasta. Shape of Pasta richtet sich an Einsteiger, die lernen möchten, wie frische Pasta entsteht, welche Rolle der Teig spielt und wie man ihn traditionell formt.\n\nVorkenntnisse sind nicht nötig. Nur Neugier und Lust, selbst Hand anzulegen.',
-      '了解传统意面制作的基础。Shape of Pasta 专为初学者设计，帮助你了解新鲜意面是怎样做成的、面团起什么作用，并探索传统的塑形技法。\n\n无需任何经验，只需要好奇心和动手的意愿。',
-      'पारंपरिक पास्ता बनाने की बुनियादी बातें जानें। Shape of Pasta उन शुरुआती लोगों के लिए है जो सीखना चाहते हैं कि ताज़ा पास्ता कैसे बनता है, आटे की क्या भूमिका है और पारंपरिक तरीक़े से आकार कैसे दिए जाते हैं।\n\nपहले के किसी अनुभव की ज़रूरत नहीं। बस जिज्ञासा और हाथ लगाने की इच्छा चाहिए।',
+      'Discover the fundamentals of traditional pasta-making. Shape of Pasta is designed for beginners who want to learn how fresh pasta is made, understand the role of dough and explore traditional shaping techniques. No previous experience is needed. Just curiosity and a willingness to get your hands involved.',
+      'Scopri le basi della pasta tradizionale. Shape of Pasta è pensato per i principianti che vogliono imparare come si fa la pasta fresca, capire il ruolo dell’impasto ed esplorare le tecniche tradizionali per darle forma. Non serve alcuna esperienza. Bastano curiosità e voglia di mettere le mani in pasta.',
+      'Descubre los fundamentos de la pasta tradicional. Shape of Pasta está pensado para principiantes que quieren aprender cómo se hace la pasta fresca, entender el papel de la masa y explorar las técnicas tradicionales de formado. No hace falta experiencia previa. Solo curiosidad y ganas de meter las manos en la masa.',
+      'Découvrez les bases des pâtes traditionnelles. Shape of Pasta s’adresse aux débutants qui veulent apprendre comment se font les pâtes fraîches, comprendre le rôle de la pâte et explorer les techniques de façonnage traditionnelles. Aucune expérience n’est nécessaire. Juste de la curiosité et l’envie de mettre la main à la pâte.',
+      'Entdecke die Grundlagen der traditionellen Pasta. Shape of Pasta richtet sich an Einsteiger, die lernen möchten, wie frische Pasta entsteht, welche Rolle der Teig spielt und wie man ihn traditionell formt. Vorkenntnisse sind nicht nötig. Nur Neugier und Lust, selbst Hand anzulegen.',
+      '了解传统意面制作的基础。Shape of Pasta 专为初学者设计，帮助你了解新鲜意面是怎样做成的、面团起什么作用，并探索传统的塑形技法。 无需任何经验，只需要好奇心和动手的意愿。',
+      'पारंपरिक पास्ता बनाने की बुनियादी बातें जानें। Shape of Pasta उन शुरुआती लोगों के लिए है जो सीखना चाहते हैं कि ताज़ा पास्ता कैसे बनता है, आटे की क्या भूमिका है और पारंपरिक तरीक़े से आकार कैसे दिए जाते हैं। पहले के किसी अनुभव की ज़रूरत नहीं। बस जिज्ञासा और हाथ लगाने की इच्छा चाहिए।',
     ),
     included: [
       L('Pasta ingredients', 'Ingredienti per la pasta', 'Ingredientes para la pasta', 'Ingrédients pour les pâtes', 'Zutaten für die Pasta', '意面食材', 'पास्ता की सामग्री'),
@@ -388,7 +389,7 @@ export const PASTA_MATCH = {
   places: null,
   level: 'raw',
   recipes: true,
-  visual: { shape: 'ravioli', color: '#ffb548', finish: 'raw', bg: '#ffffff', ink: '#1d1d1b', img: ravioliImg },
+  visual: { shape: 'ravioli', color: '#ffb548', finish: 'raw', bg: '#1a5632', ink: '#ffffff', img: ravioliImg },
   title: N('The Pasta Match'),
   short: L(
     'An online recipe club for five weeks, at your own pace: pair pasta shapes with the sauces they were made for.',

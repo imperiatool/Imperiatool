@@ -21,6 +21,9 @@ describe('events programme', () => {
       expect([e.start, e.minutes, e.places, e.city.en]).toEqual(v);
     }
     expect(EVENTS.some((e) => e.online || e.price === 0)).toBe(false);
+    // backgrounds: the Imperia colours in turn (red, yellow, basil green, cream)
+    expect(EVENTS.map((e) => e.visual.bg)).toEqual(['#e1201b', '#ffb548', '#1a5632', '#f8eabe', '#e1201b', '#ffb548']);
+    for (const e of [...EVENTS, PASTA_MATCH]) expect(['#e1201b', '#ffb548', '#1a5632', '#f8eabe']).toContain(e.visual.bg);
     expect(JSON.stringify(EVENTS)).not.toMatch(/—/);
     for (const e of EVENTS) {
       expect(EVENT_TYPES).toContain(e.type);
@@ -130,7 +133,9 @@ describe('recipe builder', () => {
     expect(grouped.sort()).toEqual(INGREDIENTS.map((i) => i.id).sort());
     for (const i of INGREDIENTS) for (const lang of LANGS) expect(i.name[lang], `${i.id}:${lang}`).toBeTruthy();
     for (const r of RECIPES) {
-      for (const lang of LANGS) expect(regionOf(r)?.[lang], `${r.id}:${lang}`).toBeTruthy();
+      // every traditional dish has its origin; a simple home recipe makes no such claim
+      if (r.simple) expect(regionOf(r)).toBeFalsy();
+      else for (const lang of LANGS) expect(regionOf(r)?.[lang], `${r.id}:${lang}`).toBeTruthy();
       const tags = hashtagsFor(r, r.pasta);
       expect(tags[0]).toBe('#ImperiaRecipeClub');
       expect(tags.length).toBe(4);

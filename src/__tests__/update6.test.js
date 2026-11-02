@@ -29,9 +29,24 @@ describe('recipe club', () => {
     expect(matchRecipe('lasagne', ['ragu', 'bechamel', 'parmigiano']).recipe.id).toBe('lasagne');
     expect(INGREDIENT_GROUPS.flatMap((g) => g.ids).sort()).toEqual(INGREDIENTS.map((i) => i.id).sort());
   });
-  it('sample posts are demo accounts and point to real recipes of the builder', () => {
+  it('has Reginette al pomodoro in the recipe data, selectable, with quantities and steps', () => {
+    const r = RECIPES.find((x) => x.id === 'reginettepomodoro');
+    expect(r.pasta).toBe('reginette');
+    expect(r.name).toBe('Reginette al pomodoro');
+    expect([...r.need].sort()).toEqual(['basil', 'garlic', 'oliveoil', 'tomato']);
+    expect(matchRecipe('reginette', ['tomato', 'oliveoil', 'garlic', 'basil'])).toEqual({ kind: 'traditional', recipe: r });
+    expect(r.history).toBeUndefined(); // no regional or historical claims
+    for (const l of LANGS) {
+      expect(r.description[l]).toBeTruthy();
+      expect(r.title[l]).toBeTruthy();
+      for (const q of r.quantities) expect(q[l]).toBeTruthy();
+      for (const st of r.steps) expect(st[l]).toBeTruthy();
+    }
+  });
+  it('sample dishes have no invented accounts or comments and point to real recipes of the builder', () => {
     for (const p of SAMPLE_POSTS) {
-      expect(p.handle.startsWith('@demo.')).toBe(true);
+      expect(p.handle).toBeUndefined();
+      expect(p.comments).toBeUndefined();
       expect(RECIPES.some((r) => r.id === p.recipe)).toBe(true);
       for (const l of LANGS) expect(p.caption[l]).toBeTruthy();
     }
