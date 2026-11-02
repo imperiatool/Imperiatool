@@ -47,19 +47,7 @@ function Handles({ item, asset, unit, onPointerDown }) {
 
   return (
     <g>
-      {/* the whole frame grabs the selected element: a press inside it never
-          picks another element by mistake (duplicates overlap) */}
-      <polygon
-        points={corners.map((c) => `${c.x},${c.y}`).join(' ')}
-        fill="transparent"
-        stroke="#e1201b"
-        strokeWidth={sw}
-        strokeDasharray={`${6 * unit} ${4 * unit}`}
-        pointerEvents="all"
-        style={{ cursor: 'move' }}
-        onPointerDown={(e) => onPointerDown(e, item, 'move')}
-        data-handle="frame"
-      />
+      <polygon points={corners.map((c) => `${c.x},${c.y}`).join(' ')} fill="none" stroke="#e1201b" strokeWidth={sw} strokeDasharray={`${6 * unit} ${4 * unit}`} pointerEvents="none" />
       <line x1={top.x} y1={top.y} x2={rot.x} y2={rot.y} stroke="#e1201b" strokeWidth={sw} pointerEvents="none" />
       {sides.stretchX.map((p, i) => handle(p, 'stretchX', `sx${i}`, 'ew-resize', 'rect'))}
       {sides.stretchY.map((p, i) => handle(p, 'stretchY', `sy${i}`, 'ns-resize', 'rect'))}
@@ -146,7 +134,7 @@ export default function StickerCanvas({ assetsById, svgRef: externalRef, label, 
     const { select } = useEditorStore.getState();
     select(item.uid);
     const start = clientToSvg(svgRef.current, e.clientX, e.clientY);
-    drag.current = { mode, id: item.uid, start, orig: { ...item }, snapped: false, pointerId: e.pointerId, touch: e.pointerType !== 'mouse' };
+    drag.current = { mode, id: item.uid, start, orig: { ...item }, snapped: false, pointerId: e.pointerId };
     svgRef.current.setPointerCapture?.(e.pointerId);
   };
 
@@ -168,10 +156,7 @@ export default function StickerCanvas({ assetsById, svgRef: externalRef, label, 
     const store = useEditorStore.getState();
     const p = clientToSvg(svgRef.current, e.clientX, e.clientY);
     if (!d.snapped) {
-      // a deliberate drag is needed: a light touch or brush never resizes,
-      // stretches or rotates (bigger threshold for fingers and for handles)
-      const px = (d.mode === 'move' ? 3 : 7) * (d.touch ? 2 : 1);
-      if (dist(p, d.start) < px * unit) return;
+      if (dist(p, d.start) < 1.5 * unit) return; // ignore micro-moves on click
       store.snapshot();
       d.snapped = true;
     }

@@ -39,7 +39,6 @@ export default function Viewer3D({ kind, items, assetsById, material, attachment
 
   const coverKey = cover ? JSON.stringify(cover) : '';
   const lastKind = useRef(kind);
-  const lastMat = useRef(null);
   const [busy, setBusy] = useState(false);
   useEffect(() => {
     const studio = studioRef.current;
@@ -48,37 +47,23 @@ export default function Viewer3D({ kind, items, assetsById, material, attachment
     if (lastKind.current !== kind) studio.reframe = true;
     lastKind.current = kind;
     let cancelled = false;
-    // build after the click has been painted: the option highlights at once,
-    // the 3D follows a moment later (no frozen page while it rebuilds)
-    const timer = setTimeout(() => {
-      if (cancelled) return;
-      try {
-        if (kind === 'packaging') {
-          setBusy(true);
-          buildPackaging(cover)
-            .then((obj) => {
-              if (cancelled) return;
-              studio.setObject(obj, { height: 2.3 });
-            })
-            .catch((e) => console.error(e))
-            .finally(() => !cancelled && setBusy(false));
-        } else if (kind === 'cover') studio.setObject(buildCover(cover), { height: 2.2 });
-        else studio.setObject(buildCharm(items || [], assetsById || {}, material, { attachment, sizeMm }), { height: 2 });
-        // "jelly" bounce when the finish changes, once the new model is shown:
-        // you can see how soft it is (same strengths as before)
-        const mat = kind === 'charm' ? material : cover?.material;
-        if (kind !== 'packaging' && lastMat.current && lastMat.current !== mat) {
-          const strength = { overcooked: 0.11, aldente: 0.035, raw: 0 }[mat] ?? 0;
-          if (strength) studio.wobble(strength);
-        }
-        if (kind !== 'packaging') lastMat.current = mat;
-      } catch (e) {
-        console.error(e);
-      }
-    }, 40);
+    try {
+      if (kind === 'packaging') {
+        setBusy(true);
+        buildPackaging(cover)
+          .then((obj) => {
+            if (cancelled) return;
+            studio.setObject(obj, { height: 2.3 });
+          })
+          .catch((e) => console.error(e))
+          .finally(() => !cancelled && setBusy(false));
+      } else if (kind === 'cover') studio.setObject(buildCover(cover), { height: 2.2 });
+      else studio.setObject(buildCharm(items || [], assetsById || {}, material, { attachment, sizeMm }), { height: 2 });
+    } catch (e) {
+      console.error(e);
+    }
     return () => {
       cancelled = true;
-      clearTimeout(timer);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [kind, items, assetsById, material, coverKey, attachment, sizeMm]);
@@ -89,7 +74,18 @@ export default function Viewer3D({ kind, items, assetsById, material, attachment
     studioRef.current?.pan(dir);
   };
 
-
+  // "jelly" bounce when the material changes: you can see how soft it is
+  const mat = kind === 'charm' ? material : cover?.material;
+  const firstMat = useRef(true);
+  useEffect(() => {
+    if (firstMat.current) {
+      firstMat.current = false;
+      return;
+    }
+    const strength = { overcooked: 0.11, aldente: 0.035, raw: 0 }[mat] ?? 0;
+    if (strength && kind !== 'packaging') studioRef.current?.wobble(strength);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mat]);
 
   const btn = 'grid h-10 w-10 place-items-center rounded-full bg-white text-ink shadow-sm ring-1 ring-ink/10 transition hover:text-brand active:scale-95';
   return (
