@@ -488,4 +488,9 @@ export const SAMPLE_POSTS = [
     recipe: 'tortelliniinbrodo',
     caption: L('Tortellini in brodo: a hug in a bowl.', 'Tortellini in brodo: un abbraccio nel piatto.', 'Tortellini en caldo: un abrazo en un plato.', 'Tortellini en bouillon : un câlin dans un bol.', 'Tortellini in Brühe: eine Umarmung im Teller.', '清汤意式小馄饨：一碗温暖。', 'ब्रॉथ में टॉर्टेलिनी: कटोरे में एक झप्पी।'),
   },
+  {
+    id: 'p5',
+    recipe: 'reginettepomodoro',
+    caption: L('Ruffled edges, a simple tomato sauce and a few basil leaves.', 'Bordi arricciati, un semplice sugo di pomodoro e qualche foglia di basilico.', 'Bordes rizados, una salsa de tomate sencilla y unas hojas de albahaca.', 'Des bords ondulés, une sauce tomate toute simple et quelques feuilles de basilic.', 'Gewellte Ränder, eine einfache Tomatensauce und ein paar Basilikumblätter.', '波浪花边、简单的番茄酱，再加几片罗勒叶。', 'लहरदार किनारे, सादी टमाटर सॉस और तुलसी की कुछ पत्तियाँ।'),
+  },
 ];

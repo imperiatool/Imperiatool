@@ -124,6 +124,14 @@ input[type='range'] {
     transition: background-size 0.35s cubic-bezier(0.2, 0.7, 0.2, 1);
   }
   .home-card:hover .home-link, .home-card:focus-visible .home-link { background-size: 100% 1.5px; }
+  /* Experience cards: "View experience" behaves like the home call to action
+     and grows slightly, with the same timing and easing */
+  .event-cta { transform-origin: 100% 50%; transition: transform 0.35s cubic-bezier(0.2, 0.7, 0.2, 1); }
+  .group:hover .event-cta, .group:focus-visible .event-cta { transform: scale(1.06); }
+  .group:hover .event-cta .home-link, .group:focus-visible .event-cta .home-link { background-size: 100% 1.5px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .event-cta { transition: none; }
 }
 @media (hover: none) {
   .home-card:active { transform: scale(0.985); }
@@ -137,3 +145,9 @@ input[type='range'] {
 }
 .sticker-breeze { animation: sticker-breeze 6s ease-in-out infinite; transform-origin: 18% 85%; }
 @media (prefers-reduced-motion: reduce) { .sticker-breeze { animation: none; } }
+
+/* touch screens: taps on controls respond at once and quick repeated taps
+   (+ and −, options) never zoom the page by mistake */
+a, button, input, select, textarea, label, summary, [role='button'], [role='tab'], [role='option'], [role='radio'] {
+  touch-action: manipulation;
+}

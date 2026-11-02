@@ -112,3 +112,29 @@ describe('sticker quantities and sheets', () => {
     expect(s24.flat().length).toBe(24);
   });
 });
+
+describe('creative recipes', () => {
+  it('every pasta shape has recipes, and any combination of ingredients makes a full creative recipe', async () => {
+    const { creativeRecipe, ideaFor } = await import('../data/creativeRecipes.js');
+    const ids = INGREDIENTS.map((i) => i.id);
+    for (const p of RECIPE_PASTAS) {
+      const idea = ideaFor(p.id);
+      expect(idea, p.id).toBeTruthy();
+      expect(idea.creative).toBe(true);
+      // a few combinations per shape, unexpected ones included
+      for (let k = 0; k < 12; k++) {
+        const pick = ids.filter((_, n) => (n * 7 + k * 3 + p.id.length) % 5 === 0).slice(0, 1 + (k % 5));
+        const r = creativeRecipe(p.id, pick);
+        expect(r.need).toEqual(pick);
+        expect(r.steps.length).toBeGreaterThan(0);
+        expect(r.quantities.length).toBe(pick.length + 2);
+        for (const l of LANGS) {
+          expect(r.title[l], `${p.id}/${l}`).toBeTruthy();
+          for (const st of r.steps) expect(st[l]).toMatch(/\S/);
+          for (const st of r.steps) expect(st[l]).not.toMatch(/\{|\}/);
+        }
+      }
+    }
+    expect(creativeRecipe('fusilli', [])).toBe(null);
+  });
+});
