@@ -36,6 +36,8 @@ SHAPES = [
   ('ravioli', EGG, 0.3, 0.42), ('fusilli', WHEAT, 0.3, 0.42), ('penne', WHEAT, 0.3, 0.5),
   ('maccheroni', WHEAT, 0.3, 0.55), ('rigatoni', WHEAT, 0.35, 0.5), ('bucatini', WHEAT, 0.5, 0.55),
   ('orecchiette', WHEAT, 0.3, 0.7), ('farfalle', WHEAT, 0.3, 0.62), ('trofie', WHEAT, 0.3, 0.65),
+  ('reginette', WHEAT, 0.2, 0.85), ('tortellini', EGG, 0.3, 0.6), ('conchiglie', WHEAT, 0.3, 0.55), ('anelli', WHEAT, 0.3, 0.75),
+  ('cavatappi', WHEAT, 0.3, 0.5), ('lasagne', EGG, 0.3, 0.7),
 ]
 only = set(sys.argv[2:])
 with sync_playwright() as p:
