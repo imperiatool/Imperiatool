@@ -1,4 +1,6 @@
-import { Suspense, lazy, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
+import Safe3D from '../three/Safe3D.jsx';
+import { lazyRetry } from '../../lib/lazyRetry.js';
 import Button from '../ui/Button.jsx';
 import Icon from '../ui/Icon.jsx';
 import PatternIcon from './PatternIcon.jsx';
@@ -12,8 +14,9 @@ import PageHeader from '../layout/PageHeader.jsx';
 import PreviewHint from '../ui/PreviewHint.jsx';
 import { useCartStore } from '../../store/useCartStore.js';
 import { useI18n } from '../../i18n/index.js';
+import { useMeta } from '../../lib/useMeta.js';
 
-const Viewer3D = lazy(() => import('../three/Viewer3D.jsx'));
+const Viewer3D = lazyRetry(() => import('../three/Viewer3D.jsx'), 'viewer3d');
 
 function Option({ title, value, children }) {
   return (
@@ -49,6 +52,21 @@ function Circle({ active, onClick, label, children, testid }) {
 export default function CoverPage() {
   const { t, label, money } = useI18n();
   const { palette } = useLibrary();
+  useMeta({
+    title: `Imperia® ${t('home.case.title')}`,
+    description: t('meta.case.desc'),
+    jsonld: {
+      '@context': 'https://schema.org',
+      '@type': 'Product',
+      name: `Imperia® ${t('home.case.title')}`,
+      brand: { '@type': 'Brand', name: 'Imperia' },
+      description: t('meta.case.desc'),
+      category: t('home.case.title'),
+      color: palette.map((c) => label(c)),
+      material: ['raw', 'aldente', 'overcooked'].map((m) => `${t(`order.materials.${m}.name`)}: ${t(`spec.material.${m}`)}`),
+      additionalProperty: COVER_OPTIONS.patterns.map((p) => ({ '@type': 'PropertyValue', name: t('spec.pattern'), value: t(`cover.p.${p}`) })),
+    },
+  });
   const cover = useCoverStore();
   const addToCart = useCartStore((s) => s.add);
   const viewer = useRef(null);
@@ -113,9 +131,9 @@ export default function CoverPage() {
           </div>
           <div className="relative min-h-0 flex-1">
             <div className="absolute inset-0">
-              <Suspense fallback={<div className="grid h-full place-items-center text-sm text-muted">{t('order.loading3d')}</div>}>
+              <Safe3D fallback={<div className="grid h-full place-items-center text-sm text-muted">{t('order.loading3d')}</div>}>
                 <Viewer3D kind={view === 'packaging' ? 'packaging' : 'cover'} cover={scene} hint={false} onReady={(api) => (viewer.current = api)} className="h-full w-full" />
-              </Suspense>
+              </Safe3D>
             </div>
           </div>
           <PreviewHint className="pb-3">{t('viewer.hint3d')}</PreviewHint>
