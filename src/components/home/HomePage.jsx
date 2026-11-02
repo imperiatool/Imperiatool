@@ -87,10 +87,7 @@ export default function HomePage() {
         </div>
 
         {/* closing message */}
-        <section className="mx-auto mt-14 max-w-3xl pb-6 text-center sm:mt-20" data-testid="home-bottom">
-          <h2 className="text-[28px] font-bold leading-[1.1] tracking-tight text-brand sm:text-[34px]">{t('home.bottom.title')}</h2>
-          <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-ink">{t('home.bottom.text')}</p>
-        </section>
+
       </div>
     </div>
   );
